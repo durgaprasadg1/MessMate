@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/page.jsx", "app/mess/page.jsx", "app/mess/[id]/page.jsx", "app/mess/[id]/update-menu/page.jsx", "app/(auth)/login/page.jsx", "app/(auth)/signup/page.jsx", "app/mess/[id]/delete-mess/page.jsx", "context/MessContext.jsx", "lib/mongodb.js", "app/layout.tsx"  ],
   "exclude": ["node_modules"]
 }
