@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 
 export default function NotFound() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-white via-slate-50 to-slate-100 text-slate-800 px-5">
+    <main className="min-h-screen flex flex-col items-center justify-center  text-slate-800 px-5">
       <div className="text-center">
         <h1 className="text-8xl font-extrabold text-orange-600 tracking-tight">404</h1>
         <motion.div
