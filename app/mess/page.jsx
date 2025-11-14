@@ -1,5 +1,6 @@
 import AllMesses from '../../Component/AllMess'
 import MessNotFound from '../../Component/MessNotFound'
+import { toast } from 'react-toastify';
 export default async function AllMess(){
   try {
      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/mess`, {cache : "no-store"});

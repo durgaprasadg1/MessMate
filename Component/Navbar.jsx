@@ -15,7 +15,11 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
   const router = useRouter();
   const handleLogout = () => {
     signOut({ redirect: false })
-      .then(() => router.replace("/mess"))
+      .then(() => {
+        toast.success("Logged Out Successfully.")
+        router.replace("/mess")
+      
+      })
       .catch((err) => {
         console.log("error While Logging out : ", err);
       });
