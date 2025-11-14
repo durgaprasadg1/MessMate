@@ -134,6 +134,12 @@ const messSchema = Schema({
     type: Date,
     default: Date.now(),
   },
+  certificate: {
+    url: {
+      type: String,
+    },
+    filename: String,
+  },
 });
 
 // on Delete Cascade

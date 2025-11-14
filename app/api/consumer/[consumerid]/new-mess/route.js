@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../../../../lib/mongodb";
 import cloudinary from "@/lib/cloudinary";
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export const runtime = "nodejs";
 
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions)
-      if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     await connectDB();
     const mod = await import("../../../../../models/mess");
@@ -29,34 +29,41 @@ export async function POST(request) {
     const lon = parseFloat(formData.get("lon")?.toString() || "0");
 
     const file = formData.get("image");
+    const certificate = formData.get("certificate");
 
-    if (!name || !file) {
+    if (!name || !file || !certificate) {
       return NextResponse.json(
-        { message: "Name and image are required" },
+        { message: "Make sure you have given name and uploaded banner and certificate" },
         { status: 400 }
       );
     }
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const uploadResult = await new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream(
-          {
-            folder: "mess_images",
-          },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        )
-        .end(buffer);
+
+    const bannerBuffer = Buffer.from(await file.arrayBuffer());
+    const bannerUpload = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { folder: "MessImage" },
+        (err, result) => (err ? reject(err) : resolve(result))
+      ).end(bannerBuffer);
     });
 
-    let url = uploadResult.secure_url;
-    let fileName = "MessImage";
-    let imageObj = { url, filename: fileName };
+    const certBuffer = Buffer.from(await certificate.arrayBuffer());
+    const certificateUpload = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { folder: "Mess_certificate" },
+        (err, result) => (err ? reject(err) : resolve(result))
+      ).end(certBuffer);
+    });
 
-    // Ensure menus are initialized as empty arrays and refs are null on creation
+    const imageObj = {
+      url: bannerUpload.secure_url,
+      filename: file.name
+    };
+
+    const certification = {
+      url: certificateUpload.secure_url,
+      filename: certificate.name
+    };
+
     const messData = {
       name,
       description,
@@ -69,15 +76,13 @@ export async function POST(request) {
       lat: isNaN(lat) ? undefined : lat,
       lon: isNaN(lon) ? undefined : lon,
       image: imageObj,
+      certificate: certification,
       vegMenu: [],
       nonVegMenu: [],
       vegMenuRef: null,
       nonVegMenuRef: null,
       owner: session.user.id
     };
-
-    // TODO :  Mess Owner Addition
-
 
     const created = await Mess.create(messData);
     return NextResponse.json({ id: created._id }, { status: 201 });

@@ -20,11 +20,9 @@ async function computePricePerPlate(mess, menutype, selectedDish) {
       }
     }
   } catch (e) {
-    // ignore and fallback to inline arrays on mess
     console.error("Menu doc lookup failed, falling back to mess arrays", e);
   }
 
-  // Return both price and a human friendly dish name when possible
   let pricePerPlate = 0;
   let dishName = null;
   if (
@@ -35,7 +33,6 @@ async function computePricePerPlate(mess, menutype, selectedDish) {
     const idx = Number(selectedDish);
     const dish = menuArray[idx];
     if (dish) {
-      // If the dish itself has a price, use it
       if (
         typeof dish === "object" &&
         dish.price !== undefined &&
@@ -54,7 +51,6 @@ async function computePricePerPlate(mess, menutype, selectedDish) {
         );
       }
 
-      // Determine a suitable dish name
       if (dish && typeof dish === "object") {
         if (dish.name && String(dish.name).trim()) {
           dishName = String(dish.name).trim();
@@ -75,9 +71,7 @@ async function computePricePerPlate(mess, menutype, selectedDish) {
     else pricePerPlate = mess.nonVegPrice || 0;
   }
 
-  // Final fallback for dishName: if we still don't have a name but selectedDish was provided,
-  // use the selected index as a string so it's not an ambiguous empty value.
-  if (!dishName) {
+ if (!dishName) {
     if (
       selectedDish !== undefined &&
       selectedDish !== null &&
@@ -125,7 +119,6 @@ export async function POST(request, { params }) {
 
     const amount = Math.round(pricePerPlate * 100 * (noOfPlate || 1));
 
-    // create razorpay order
     const Razorpay = (await import("razorpay")).default;
     const razor = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
@@ -137,7 +130,6 @@ export async function POST(request, { params }) {
       receipt: `receipt_${Date.now()}`,
     });
 
-    // create DB order record
     const dbOrder = new Order({
       mess: id,
       consumer: session.user.id,
@@ -217,16 +209,8 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ message: "Order not found" }, { status: 404 });
     }
 
-    // Log verification details for debugging
-    console.log("Razorpay verify:");
-    console.log("  providedSignature =", razorpay_signature);
-    console.log("  expectedSignature =", expectedSign);
-    console.log("  order_id =", razorpay_order_id);
-    console.log("  payment_id =", razorpay_payment_id);
 
-    // --- Verification check ---
     if (expectedSign === razorpay_signature) {
-      // ✅ Mark order as paid and update references (no transactions)
       dbOrder.status = "paid";
       dbOrder.razorpayPaymentId = razorpay_payment_id;
       dbOrder.razorpaySignature = razorpay_signature;
@@ -245,7 +229,6 @@ export async function PATCH(request, { params }) {
         { status: 200 }
       );
     } else {
-      // ❌ Signature mismatch
       dbOrder.status = "failed";
       await dbOrder.save();
       return NextResponse.json(

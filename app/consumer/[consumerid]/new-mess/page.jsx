@@ -22,6 +22,7 @@ const NewMessForm = () => {
     lon: '',
   })
   const [image, setImage] = useState(null)
+  const [certificate, setCertificate] = useState(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState(null)
 
@@ -45,6 +46,10 @@ const NewMessForm = () => {
   const handleFile = (e) => {
     setImage(e.target.files?.[0] ?? null)
   }
+  const handleCertificate = (e) => {
+    setCertificate(e.target.files?.[0] ?? null)
+  }
+
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -55,20 +60,22 @@ const NewMessForm = () => {
       console.log("formData : ",fd)
       Object.entries(form).forEach(([k, v]) => fd.append(k, v))
       if (image) fd.append('image', image)
+      if (certificate) fd.append('certificate', certificate)
+
 
         
       const res = await fetch(`/api/consumer/${session?.user?.id}/new-mess`, { method: 'POST', body: fd })
       const data = await res.json();
 
       if (!res.ok) {
-        // throw new Error(data?.error || data?.message || 'Failed')
         toast.error(data?.error || data?.message )
         return
       }
       setMessage({ type: 'success', text: 'Mess added successfully' })
       setForm({ name: '', description: '', address: '', category: '', limits: 'true', ownerName: '', adharNumber: '', phoneNumber: '', lat: form.lat, lon: form.lon })
       setImage(null)
-      alert("Mess Verification will be done and after successfull verification, your mess will be added automatically.")
+      setCertificate(null)
+      alert("Mess aapplication is gone for verification first and after successfull verification, your mess will be added automatically.")
       router.push('/mess')
     } catch (err) {
       console.error(err)
@@ -159,6 +166,11 @@ const NewMessForm = () => {
           <div>
             <label className="block font-medium text-gray-700">Mess Banner (jpg, jpeg, png)</label>
             <input type="file" name="image" accept=".jpg,.jpeg,.png" onChange={handleFile}  className="mt-1 w-full border-gray-600" />
+          </div>
+
+          <div>
+            <label className="block font-medium text-gray-700"> Certificate of Verification (jpg, jpeg, png)</label>
+            <input type="file" name="certificate" accept=".jpg,.jpeg,.png,.pdf" onChange={handleCertificate}  className="mt-1 w-full border-gray-600" />
           </div>
 
           <div>

@@ -39,7 +39,7 @@ export default function AllMesses({
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredMesses.map((mess) => {
-            if (!mess.isVerified) return null; // <- clean way to skip unverified mess
+            if (!mess.isVerified) return null; 
 
             const {
               _id,
@@ -58,17 +58,15 @@ export default function AllMesses({
             return (
               <div
                 key={_id}
-                className="bg-white rounded-2xl shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition duration-300 border-4 border-amber-200 flex flex-col"
+                className="bg-white rounded-3xl mt-3 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition duration-300 border-2 border-gray-200 flex flex-col"
               >
-                {/* Image */}
                 <img
                   src={image?.url || "https://via.placeholder.com/400x250"}
                   alt={name}
-                  className="h-48 w-full object-cover"
+                  className="h-56 w-full object-cover"
                 />
 
-                {/* Content */}
-                <div className="p-5 flex flex-col justify-between flex-1">
+                <div className="p-2 flex flex-col justify-between flex-1">
                   <div>
                     <h2 className="text-2xl font-semibold text-amber-900">
                       {name}
@@ -102,19 +100,8 @@ export default function AllMesses({
                         {isOpen ? "Open" : "Closed"}
                       </span>
                     </div>
-
-                    {/* Price Section */}
-                    <div className="mt-4 flex justify-between font-semibold">
-                      {vegPrice && (
-                        <p className="text-green-700">🌿 Veg: ₹{vegPrice}</p>
-                      )}
-                      {nonVegPrice && (
-                        <p className="text-red-700">🍗 Non-Veg: ₹{nonVegPrice}</p>
-                      )}
-                    </div>
                   </div>
 
-                  {/* Buttons */}
                   <div className="flex items-center justify-between mt-4">
                     {session?.user?.id === owner && (
                       <Link href={`/mess/${_id}/orders`}>
