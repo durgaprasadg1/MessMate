@@ -39,8 +39,6 @@ export default function OrdersPage() {
     fetchOrders();
   }, [id]);
 
-  // Poll for updates when the signed-in user is the mess owner so owner sees
-  // cancellations/changes made by consumers within a few seconds.
   useEffect(() => {
     if (!messOwnerId || !session?.user) return; // need both
     if (session.user.id !== String(messOwnerId)) return;
@@ -63,17 +61,7 @@ export default function OrdersPage() {
     return () => clearInterval(interval);
   }, [id, messOwnerId, session]);
 
-  if (loading) return <LoadingComponent />;
-
-  return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h2 className="mb-6 text-2xl font-semibold">Orders for this Mess</h2>
-
-      {session && session.user && session.user.id === messOwnerId && (
-        <div className="mb-4">
-        {orders.length === 0 ?  "": 
-          <button
-            onClick={async () => {
+  const handleClickOfDelete =async () => {
               if (
                 !confirm(
                   "Delete ALL completed orders for this mess? This cannot be undone."
@@ -98,7 +86,18 @@ export default function OrdersPage() {
               } finally {
                 setLoading(false);
               }
-            }}
+   }
+  if (loading) return <LoadingComponent />;
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <h2 className="mb-6 text-2xl font-semibold">Orders for this Mess</h2>
+
+      {session && session.user && session.user.id === messOwnerId && (
+        <div className="mb-4">
+        {orders.length === 0 ?  "": 
+          <button
+            onClick={handleClickOfDelete}
             className="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700"
           >
             Delete All Completed Orders

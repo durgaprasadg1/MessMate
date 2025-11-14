@@ -85,7 +85,7 @@ const NewMessForm = () => {
     }
   }
 
-  if(loading){
+  if(loading ){
     <Loading/>
   }
   return (
