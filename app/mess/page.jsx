@@ -1,5 +1,5 @@
-import AllMesses from "../../Component/AllMess";
-import MessNotFound from "../../Component/MessNotFound";
+import AllMesses from "@/Component/AllMess/AllMess";
+import MessNotFound from "../../Component/Others/MessNotFound";
 
 export default async function AllMessPage() {
   try {
@@ -12,7 +12,6 @@ export default async function AllMessPage() {
     const messes = await res.json();
     return <AllMesses messes={messes} />;
   } catch (error) {
-    // Server-side: avoid client-only APIs like toast during prerender.
     console.error("Error fetching messes:", error?.message || error);
     return <MessNotFound />;
   }

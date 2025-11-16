@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import Loading from "../Others/Loading";
 
 export default function EditUserInfoPage({ messID }) {
   const router = useRouter();
@@ -67,8 +68,7 @@ export default function EditUserInfoPage({ messID }) {
       setLoading(false);
     }
   };
-    if(loading) return <Loading/>
-  
+  if (loading) return <Loading />;
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-6">

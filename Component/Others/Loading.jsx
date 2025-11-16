@@ -1,3 +1,4 @@
+import React from "react";
 
 const Loading = () => {
   return (
@@ -6,15 +7,13 @@ const Loading = () => {
         🍱 MessMate
       </h1>
 
-      <div className="relative flex items-center justify-center">
+      {/* <div className="relative flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-orange-300 border-t-transparent rounded-full animate-spin"></div>
-      </div>
+      </div> */}
 
-      <p className="mt-5 text-lg text-gray-700 font-medium">
-        Loading... please wait 🍛
-      </p>
+    
     </div>
-  )
-}
+  );
+};
 
-export default Loading
+export default Loading;

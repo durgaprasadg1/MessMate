@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
-
+import Loading from '../Others/Loading';
 export default function OrderActionConsumer({
   orderId,
   consumerId,
@@ -76,7 +76,7 @@ export default function OrderActionConsumer({
 
     if(loading) return <Loading/>
   
-    
+
   return (
     <div>
       <button

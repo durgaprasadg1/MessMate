@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import Loading from './Loading'
+import Loading from "../Others/Loading";
 export default function EditUserInfoPage({ consumerid }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -17,7 +17,9 @@ export default function EditUserInfoPage({ consumerid }) {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await fetch(`/api/consumer/${consumerid}`, { cache: "no-store" });
+        const res = await fetch(`/api/consumer/${consumerid}`, {
+          cache: "no-store",
+        });
         if (!res.ok) throw new Error("Failed to fetch user info");
 
         const data = await res.json();
@@ -64,12 +66,14 @@ export default function EditUserInfoPage({ consumerid }) {
     }
   };
 
-  if(loading) return <Loading/>
+  if (loading) return <Loading />;
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-6">
       <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8">
-        <h2 className="text-2xl font-semibold mb-6 text-center">Edit Your Info</h2>
+        <h2 className="text-2xl font-semibold mb-6 text-center">
+          Edit Your Info
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Username */}

@@ -1,4 +1,4 @@
-import SignupComponent from '../../../Component/SignupComponent'
+import SignupComponent from '@/Component/Auth/SignupComponent';
 
 const AdminReg = () => {
   return (

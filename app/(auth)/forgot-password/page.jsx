@@ -1,15 +1,15 @@
-'use client'
+"use client";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import Loading from "../../../Component/Loading";
+import Loading from "../../../Component/Others/Loading";
 import { useRouter } from "next/navigation";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false); 
-  const handleBacktoLogin = () =>{
-    router.push('/login')
-  }
+  const [loading, setLoading] = useState(false);
+  const handleBacktoLogin = () => {
+    router.push("/login");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,15 +35,16 @@ export default function ForgotPasswordPage() {
         return;
       }
 
-      toast.success( "Mail sent successfully");
+      toast.success("Mail sent successfully");
     } catch (error) {
+      console.log("Error in forget-password route :", error);
       toast.error("Server Error");
     }
 
     setLoading(false);
   };
-  if(loading){
-    return <Loading/>
+  if (loading) {
+    return <Loading />;
   }
 
   return (
@@ -55,8 +56,11 @@ export default function ForgotPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="forgotEmail" className="block mb-1 ml-3 font-medium">
-              Email : 
+            <label
+              htmlFor="forgotEmail"
+              className="block mb-1 ml-3 font-medium"
+            >
+              Email :
             </label>
             <input
               type="email"
@@ -68,13 +72,22 @@ export default function ForgotPasswordPage() {
               className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring focus:ring-gray-400"
             />
           </div>
-          <p className="text-black hover:cursor-pointer " onClick={handleBacktoLogin}>Back to Login</p>
+          <p
+            className="text-black hover:cursor-pointer "
+            onClick={handleBacktoLogin}
+          >
+            Back to Login
+          </p>
 
           <button
             type="submit"
             disabled={loading}
             className={`w-full py-2 rounded text-white transition 
-            ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-gray-600 hover:bg-black"}`}
+            ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gray-600 hover:bg-black"
+            }`}
           >
             {loading ? (
               <div className="flex items-center justify-center gap-2">

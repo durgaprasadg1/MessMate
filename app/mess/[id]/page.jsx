@@ -1,6 +1,6 @@
 import Navbar from "@/Component/Navbar";
-import MessDetails from "../../../Component/MessDetails";
-import MessNotFound from "../../../Component/MessNotFound";
+import MessDetails from "../../../Component/IndividualMess/MessDetails";
+import MessNotFound from "../../../Component/Others/MessNotFound";
 
 export default async function ShowMess({ params }) {
   try {
@@ -18,7 +18,6 @@ export default async function ShowMess({ params }) {
         <MessDetails mess={mess} />
       </div>
     );
-
   } catch (error) {
     console.log("error in showing a Mess :", error);
 

@@ -1,10 +1,10 @@
 "use client";
 
 import React, { use, useEffect, useState, useCallback } from "react";
-import ConsumerHistoryUI from "../../../../Component/ConsumerHistory";
+import ConsumerHistoryUI from "../../../../Component/Consumer/ConsumerHistory";
 import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
-import Loading from "../../../../Component/Loading";
+import Loading from "@/Component/Others/Loading";
 
 export default function ConsumerHistory({ params }) {
   const { consumerid } = use(params);
@@ -82,8 +82,7 @@ export default function ConsumerHistory({ params }) {
     return () => window.removeEventListener("order-updated", onUpdate);
   }, [consumerid, fetchHistory]);
 
-  if (loading)
-   return<Loading/>
+  if (loading) return <Loading />;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (

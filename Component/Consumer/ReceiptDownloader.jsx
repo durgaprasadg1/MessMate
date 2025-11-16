@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSession } from "next-auth/react";
+import Loading from '../Others/Loading';
 
 function formatDate(iso) {
   try {
@@ -71,7 +72,6 @@ function drawReceiptToCanvas(order, consumerName) {
     y
   );
 
-  // footer
   y += lineHeight * 2;
   ctx.fillStyle = "#6b7280";
   ctx.font = "12px Arial";
@@ -115,6 +115,8 @@ export default function ReceiptDownloader({
       setLoading(false);
     }
   };
+
+  if(loading) return <Loading/>
 
   return (
     <button

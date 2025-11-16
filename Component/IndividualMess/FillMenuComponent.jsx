@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
-
+import Loading from "@/Others/Loading";
 export default function MessMenuComponent({
   messId,
   initial = null,
@@ -173,8 +173,7 @@ export default function MessMenuComponent({
       setLoading(false);
     }
   }
-    if(loading) return <Loading/>
-  
+  if (loading) return <Loading />;
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm">

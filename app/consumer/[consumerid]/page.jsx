@@ -1,5 +1,5 @@
-import PersonalInfo from "../../../Component/PersonalInfo";
-import Navbar from "../../../Component/Navbar";
+import PersonalInfo from "@/Component/Consumer/PersonalInfo";
+import Navbar from "@/Component/Others/Navbar";
 export default async function ConsumerPage({ params }) {
   const { consumerid } = await params; 
 

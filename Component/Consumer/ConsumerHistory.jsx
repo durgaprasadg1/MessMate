@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import OrderActionConsumer from "@/Component/OrderActionConsumer";
-import ReceiptDownloader from "@/Component/ReceiptDownloader";
+import OrderActionConsumer from "./OrderActionConsumer";
+import ReceiptDownloader from "@/Component/Consumer/ReceiptDownloader";
 
 export default function ConsumerHistoryUI({ orders, consumerid }) {
   const list = (orders || [])
@@ -91,7 +91,6 @@ export default function ConsumerHistoryUI({ orders, consumerid }) {
                       done={!!o.done}
                       messId={o.mess && o.mess._id ? String(o.mess._id) : null}
                     />
-                    {/* Show receipt download for paid/completed orders */}
                     {(o.status === "paid" ||
                       o.status === "completed" ||
                       o.done) && <ReceiptDownloader order={o} />}

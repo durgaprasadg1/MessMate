@@ -1,5 +1,5 @@
 'use client'
-import VerificationComponent from '../../../Component/VerificationComponent'
+import VerificationComponent from '@/Component/Admin/VerificationComponent'
 import { useSession } from 'next-auth/react'
 import NotFound from '../../not-found'
 const PendingVerification = () => {

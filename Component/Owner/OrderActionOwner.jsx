@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
+import Loading from "../Others/Loading";
 
 export default function OrderActionOwner({
   messId,
@@ -12,7 +13,7 @@ export default function OrderActionOwner({
   isTaken,
   done,
   refundInitiated,
-  isCancelled, 
+  isCancelled,
 }) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -159,8 +160,7 @@ export default function OrderActionOwner({
     !takenLocal ||
     cancelledLocal;
 
-      if(loading) return <Loading/>
-    
+  if (loading) return <Loading />;
 
   return (
     <div className="flex gap-2">

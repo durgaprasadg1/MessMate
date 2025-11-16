@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Utensils, Star, Users } from "lucide-react";
-import Navbar from "@/Component/Navbar";
+import Navbar from "@/Component/Others/Navbar";
 
 export default function Home() {
   return (

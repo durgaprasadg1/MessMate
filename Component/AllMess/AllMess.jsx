@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import Navbar from "./Navbar";
+import Navbar from "../Others/Navbar";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
@@ -39,7 +39,7 @@ export default function AllMesses({
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredMesses.map((mess) => {
-            if (!mess.isVerified) return null; 
+            if (!mess.isVerified) return null;
 
             const {
               _id,

@@ -4,12 +4,15 @@ import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import Loading from "../Others/Loading";
+import Navbar from "../Others/Navbar";
 
 const LoginComponent = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [show, setShow] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,11 +60,12 @@ const LoginComponent = () => {
       router.push("/mess");
     }
   }, [session]);
-  
-  if(loading) return <Loading/>
+
+  if (loading) return <Loading />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+      <Navbar />
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Welcome Back 👋
@@ -95,11 +99,17 @@ const LoginComponent = () => {
               name="password"
               value={form.password}
               onChange={handleChange}
-              
               placeholder="Enter your password"
               required
               className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
+            <button
+              type="button"
+              onClick={() => setShow(!show)}
+              className="absolute right-3 top-2 text-gray-500"
+            >
+              {show ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
 
           <button

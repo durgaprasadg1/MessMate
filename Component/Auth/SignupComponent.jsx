@@ -2,6 +2,9 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter, usePathname } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
+import Loading from "../Others/Loading";
+import Navbar from "../Others/Navbar";
 
 const RegisterComponent = () => {
   const path = usePathname();
@@ -60,11 +63,11 @@ const RegisterComponent = () => {
       setLoading(false);
     }
   };
-    if(loading) return <Loading/>
-  
+  if (loading) return <Loading />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+      <Navbar />
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Create Your Account

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import Loading from "./Loading";
+import Loading from "@/Component/Others/Loading";
 import { useSession } from "next-auth/react";
 import { Pencil, Trash2 } from "lucide-react";
 
@@ -48,7 +48,6 @@ export default function PersonalInfo({ consumerid }) {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-14">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl border border-gray-100">
-
         {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
@@ -68,15 +67,16 @@ export default function PersonalInfo({ consumerid }) {
               <Pencil size={16} /> Edit
             </Link>
 
-            <button className="flex items-center gap-1 text-sm bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 transition">
-              <Trash2 size={16} /> Delete
-            </button>
+            <Link href={`/consumer/${user._id}/new-mess`}>
+              <button className="bg-gray-600 text-white px-3 py-2 rounded shadow-md hover:bg-black transition duration-200 ">
+                Add mess
+              </button>
+            </Link>
           </div>
         </div>
 
         {/* INFO */}
         <div className="space-y-4">
-
           <div>
             <label className="text-gray-600 font-medium text-sm">Name</label>
             <div className="mt-1 p-3 bg-gray-100 rounded-lg border border-gray-200">
@@ -106,7 +106,9 @@ export default function PersonalInfo({ consumerid }) {
           </div>
 
           <div>
-            <label className="text-gray-600 font-medium text-sm">Account Role</label>
+            <label className="text-gray-600 font-medium text-sm">
+              Account Role
+            </label>
             <div className="mt-1 p-3 bg-gray-100 rounded-lg border border-gray-200 flex items-center gap-2">
               <span>{isAdmin ? "Admin" : "User"}</span>
               <span className="px-2 py-1 bg-gray-200 rounded-full text-xs">

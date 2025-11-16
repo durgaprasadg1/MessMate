@@ -3,9 +3,9 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
-
+import Loading from "./Others/Loading";
 const ReviewSection = ({ messID }) => {
-    const { data: session } = useSession();
+  const { data: session } = useSession();
 
   const router = useRouter();
   const [rating, setRating] = useState(0);
@@ -15,13 +15,11 @@ const ReviewSection = ({ messID }) => {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-
-    
     e.preventDefault();
-    if(!session?.user?.id){
-      console.log("Login kro phle")
+    if (!session?.user?.id) {
+      console.log("Login kro phle");
       toast.error("Please Login");
-      router.push('/login')
+      router.push("/login");
       return;
     }
     if (!rating || !reviewText.trim()) {
@@ -30,7 +28,7 @@ const ReviewSection = ({ messID }) => {
       toast.error(txt);
       return;
     }
-    
+
     setLoading(true);
     try {
       const res = await fetch(`/api/mess/${messID}/review`, {
@@ -61,8 +59,7 @@ const ReviewSection = ({ messID }) => {
       router.refresh();
     }
   };
-    if(loading) return <Loading/>
-  
+  if (loading) return <Loading />;
 
   return (
     <div className="w-full p-6 min-h-9 bg-gray-100 rounded-2xl shadow-md mt-6 ">

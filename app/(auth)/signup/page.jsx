@@ -1,11 +1,11 @@
-import SignupComponent from '../../../Component/SignupComponent'
+import SignupComponent from "@/Component/Auth/SignupComponent";
 
 const SignUp = () => {
   return (
     <div>
-        <SignupComponent/>
+      <SignupComponent />
     </div>
-  )
-}
+  );
+};
 
-export default SignUp
+export default SignUp;

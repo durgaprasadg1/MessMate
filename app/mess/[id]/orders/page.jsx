@@ -3,9 +3,9 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import OrderActionOwner from "@/Component/OrderActionOwner";
+import OrderActionOwner from "@/Component/Owner/OrderActionOwner";
 import { useSession } from "next-auth/react";
-import LoadingComponent from "../../../../Component/Loading";
+import LoadingComponent from "../../../../Component/Others/Loading";
 
 export default function OrdersPage() {
   const { id } = useParams();
@@ -40,7 +40,7 @@ export default function OrdersPage() {
   }, [id]);
 
   useEffect(() => {
-    if (!messOwnerId || !session?.user) return; 
+    if (!messOwnerId || !session?.user) return;
     if (session.user.id !== String(messOwnerId)) return;
 
     const interval = setInterval(async () => {
@@ -61,32 +61,32 @@ export default function OrdersPage() {
     return () => clearInterval(interval);
   }, [id, messOwnerId, session]);
 
-  const handleClickOfDelete =async () => {
-              if (
-                !confirm(
-                  "Delete ALL completed orders for this mess? This cannot be undone."
-                )
-              )
-                return;
-              setLoading(true);
-              try {
-                const res = await fetch(`/api/mess/${id}/orders`, {
-                  method: "DELETE",
-                });
-                const data = await res.json();
-                if (res.ok) {
-                  alert(data.message || "Deleted completed orders");
-                  router.refresh();
-                } else {
-                  alert(data.message || "Failed to delete completed orders");
-                }
-              } catch (e) {
-                console.error(e);
-                alert("Failed to delete completed orders");
-              } finally {
-                setLoading(false);
-              }
-   }
+  const handleClickOfDelete = async () => {
+    if (
+      !confirm(
+        "Delete ALL completed orders for this mess? This cannot be undone."
+      )
+    )
+      return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/mess/${id}/orders`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || "Deleted completed orders");
+        router.refresh();
+      } else {
+        alert(data.message || "Failed to delete completed orders");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to delete completed orders");
+    } finally {
+      setLoading(false);
+    }
+  };
   if (loading) return <LoadingComponent />;
 
   return (
@@ -95,14 +95,16 @@ export default function OrdersPage() {
 
       {session && session.user && session.user.id === messOwnerId && (
         <div className="mb-4">
-        {orders.length === 0 ?  "": 
-          <button
-            onClick={handleClickOfDelete}
-            className="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700"
-          >
-            Delete All Completed Orders
-          </button>
-        } 
+          {orders.length === 0 ? (
+            ""
+          ) : (
+            <button
+              onClick={handleClickOfDelete}
+              className="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700"
+            >
+              Delete All Completed Orders
+            </button>
+          )}
         </div>
       )}
 

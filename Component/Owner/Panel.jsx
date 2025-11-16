@@ -1,5 +1,5 @@
 "use client";
-import Botton from "./Botton";
+import Botton from "../Others/Botton";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
