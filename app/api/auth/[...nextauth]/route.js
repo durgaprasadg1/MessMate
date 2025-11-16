@@ -70,7 +70,7 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.username = user.username;
-        token.isAdmin = user.isAdmin; // IMPORTANT
+        token.isAdmin = user.isAdmin; 
       }
       return token;
     },

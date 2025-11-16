@@ -20,6 +20,12 @@ const LoginComponent = () => {
     e.preventDefault();
     setLoading(true);
 
+    if (!form.password.trim()) {
+      toast.error("Please enter your password");
+      setLoading(false);
+      return;
+    }
+
     try {
       const result = await signIn("credentials", {
         redirect: false,
@@ -28,8 +34,7 @@ const LoginComponent = () => {
       });
 
       if (result?.error) {
-        const txt = result.error;
-        toast.error(txt);
+        toast.error(result.error);
       } else {
         toast.success("Login successful");
         router.push("/mess");
@@ -40,6 +45,11 @@ const LoginComponent = () => {
       setLoading(false);
     }
   };
+
+  const showForgetPassWordPage = () => {
+    router.push("/forgot-password");
+  };
+
   useEffect(() => {
     if (session?.user?.isAdmin) {
       router.push("/mess/pending-verification");
@@ -90,6 +100,14 @@ const LoginComponent = () => {
           </div>
 
           <button
+            type="button"
+            onClick={showForgetPassWordPage}
+            className="text-gray-600 mb-3 hover:underline"
+          >
+            Forgot password ?
+          </button>
+
+          <button
             type="submit"
             disabled={loading}
             className="w-full bg-gray-600 hover:bg-black text-white py-2 rounded-xl font-semibold transition-all duration-200"
@@ -101,6 +119,7 @@ const LoginComponent = () => {
         <p className="text-center text-gray-500 text-sm mt-3">
           Don’t have an account?{" "}
           <button
+            type="button"
             onClick={() => router.push("/signup")}
             className="text-gray-700 font-semibold hover:underline"
           >
