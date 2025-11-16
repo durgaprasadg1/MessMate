@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Loading from "./Loading";
 import { useSession } from "next-auth/react";
-import PersonalInfoWalaBox from "./PersonalInfoWalaBox";
+import { Pencil, Trash2 } from "lucide-react";
 
 export default function PersonalInfo({ consumerid }) {
   const { data: session } = useSession();
@@ -31,7 +31,6 @@ export default function PersonalInfo({ consumerid }) {
 
         const pickedUser = data.consumer || data.admin;
         setUser(pickedUser);
-
       } catch (err) {
         console.error("Error fetching user:", err);
         toast.error("Failed to fetch user info");
@@ -44,49 +43,84 @@ export default function PersonalInfo({ consumerid }) {
   }, [consumerid, session]);
 
   if (loading) return <Loading />;
-
-  if (!user) return <></>;
-
+  if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-14">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl border border-gray-100">
-        <h1 className="text-3xl font-bold text-gray-800 text-center mb-8">
-          Personal Information
-        </h1>
-        
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {isAdmin ? <PersonalInfoWalaBox keyy="Name" value={user.name} />: <PersonalInfoWalaBox keyy="Username" value={user.username} /> }
-          {isAdmin ? <PersonalInfoWalaBox keyy="Phone" value={user.phoneNumber} />: <PersonalInfoWalaBox keyy="Phone" value={user.phone} /> }
-          
-          <PersonalInfoWalaBox keyy="Email" value={user.email} />
-          <PersonalInfoWalaBox keyy="Address" value={user.address} />
-          <PersonalInfoWalaBox keyy="User ID" value={user._id} />
+        {/* Header */}
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <span>Personal Information</span>
+            </h1>
+            <p className="text-gray-500 text-sm mt-1">
+              Update your personal information and manage your account settings.
+            </p>
+          </div>
 
-          {!session?.user?.isAdmin && (
-            <div className="p-5 bg-gray-100 rounded-xl shadow-sm border border-gray-200">
-              <p className="text-sm text-gray-500 mb-1">
-                Infuse your delightful creations...
-              </p>
-              <div className="flex gap-2">
-                <Link href={`/consumer/${user._id}/new-mess`}>
-                  <button className="bg-gray-600 text-white px-3 py-2 rounded shadow-md hover:bg-black transition duration-200 ">
-                    Add mess
-                  </button>
-                </Link>
-                <div className="bg-gray-600 rounded p-2 w-30 text-white hover:bg-black">
-                  
-                  <Link href={`/consumer/${user._id}/edit-info`}>
-                    <button className="text-white text-center">Edit your info</button>
-                  </Link>
-                </div>
-              </div>
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/consumer/${user._id}/edit-info`}
+              className="flex items-center gap-1 text-sm px-3 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition"
+            >
+              <Pencil size={16} /> Edit
+            </Link>
+
+            <button className="flex items-center gap-1 text-sm bg-red-600 text-white px-3 py-2 rounded-md hover:bg-red-700 transition">
+              <Trash2 size={16} /> Delete
+            </button>
+          </div>
+        </div>
+
+        {/* INFO */}
+        <div className="space-y-4">
+
+          <div>
+            <label className="text-gray-600 font-medium text-sm">Name</label>
+            <div className="mt-1 p-3 bg-gray-100 rounded-lg border border-gray-200">
+              {isAdmin ? user.name : user.username}
             </div>
-          )}
+          </div>
 
+          <div>
+            <label className="text-gray-600 font-medium text-sm">Email</label>
+            <div className="mt-1 p-3 bg-gray-100 rounded-lg border border-gray-200">
+              {user.email}
+            </div>
+          </div>
 
-          
+          <div>
+            <label className="text-gray-600 font-medium text-sm">Phone</label>
+            <div className="mt-1 p-3 bg-gray-100 rounded-lg border border-gray-200">
+              {isAdmin ? user.phoneNumber : user.phone}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-gray-600 font-medium text-sm">Address</label>
+            <div className="mt-1 p-3 bg-gray-100 rounded-lg border border-gray-200">
+              {user.address}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-gray-600 font-medium text-sm">Account Role</label>
+            <div className="mt-1 p-3 bg-gray-100 rounded-lg border border-gray-200 flex items-center gap-2">
+              <span>{isAdmin ? "Admin" : "User"}</span>
+              <span className="px-2 py-1 bg-gray-200 rounded-full text-xs">
+                {isAdmin ? "Admin" : "User"}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-gray-600 font-medium text-sm">User ID</label>
+            <div className="mt-1 p-3 bg-gray-100 rounded-lg border border-gray-200">
+              {user._id}
+            </div>
+          </div>
         </div>
       </div>
     </div>
