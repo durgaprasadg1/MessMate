@@ -4,14 +4,15 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
-import Loading from "@/Others/Loading";
+import Loading from "@/Component/Others/Loading";
+import Label from "../Helper/Label";
 export default function MessMenuComponent({
   messId,
   initial = null,
   category = "both",
   mess = null,
 }) {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   console.log(session);
   const router = useRouter();
   const [dishes, setDishes] = useState(() => initial?.dishes || []);
@@ -43,7 +44,6 @@ export default function MessMenuComponent({
     }
   }, [menutype, mess]);
 
-  // Fetch canonical Menu document (to obtain subdocument _id values)
   useEffect(() => {
     let mounted = true;
     async function fetchMenuDoc() {
@@ -56,7 +56,6 @@ export default function MessMenuComponent({
         const data = await res.json();
         if (!mounted) return;
         if (data && data.dishes) {
-          // use canonical dishes (with _id) when available
           const norm = data.dishes.map((s) => ({
             _id: s._id,
             name: s.name || "",
@@ -140,7 +139,6 @@ export default function MessMenuComponent({
     e.preventDefault();
     setLoading(true);
     try {
-      // compute deleted dish ids (existing menu dishes removed by user)
       const currentIds = dishes
         .map((d) => (d._id ? d._id.toString() : null))
         .filter(Boolean);
@@ -180,8 +178,8 @@ export default function MessMenuComponent({
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-sm font-medium">Meal Time</label>
-            <select
+            <Label labelName="Meal Time" />
+            <select   
               value={mealTime}
               onChange={(e) => setMealTime(e.target.value)}
               className="mt-1 block w-full border rounded-md px-3 py-2"
@@ -191,7 +189,7 @@ export default function MessMenuComponent({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium">Menu Type</label>
+            <Label labelName="Menu Type" />
             <select
               value={menutype}
               onChange={(e) => setMenutype(e.target.value)}
@@ -214,7 +212,7 @@ export default function MessMenuComponent({
             <div key={di} className="border rounded-md p-3">
               <div className="flex justify-between items-center">
                 <div className="w-3/4">
-                  <label className="block text-sm font-medium">Dish Name</label>
+                  <Label labelName="Dish Name" />
                   <input
                     value={dish.name}
                     onChange={(e) => updateDish(di, { name: e.target.value })}
@@ -224,7 +222,7 @@ export default function MessMenuComponent({
                   />
                 </div>
                 <div className="w-1/4 pl-3">
-                  <label className="block text-sm font-medium">Price</label>
+                  <Label labelName="Price" />
                   <input
                     type="number"
                     value={dish.price}
@@ -262,7 +260,7 @@ export default function MessMenuComponent({
                     />
                     <input
                       type="number"
-                      value={item.price}
+                      value={item?.price}
                       onChange={(e) =>
                         setDishes((prev) =>
                           prev.map((d, i) =>
@@ -282,7 +280,7 @@ export default function MessMenuComponent({
                       className="w-28 border rounded-md px-2 py-1"
                       placeholder="Price"
                     />
-                    <label className="flex items-center gap-2 text-sm">
+                    <Label labelName="Limited" />
                       <input
                         type="checkbox"
                         checked={!!item.isLimited}
@@ -304,7 +302,7 @@ export default function MessMenuComponent({
                         }
                       />{" "}
                       Limited
-                    </label>
+                    
                     <input
                       type="number"
                       value={item.limitCount ?? ""}

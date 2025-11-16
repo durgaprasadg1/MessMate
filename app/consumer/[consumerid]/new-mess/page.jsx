@@ -135,7 +135,7 @@ const NewMessForm = () => {
           <span className="font-semibold">
             current location will be automatically tracked.{"\n"}The mess will
             be gone for verification after successfull verification it is added
-            automatically.
+            automatically. 
           </span>
           .
         </p>
@@ -254,7 +254,7 @@ const NewMessForm = () => {
                 pattern="\d{12}"
                 required
                 className="mt-1 w-full border rounded-md px-3 py-2"
-                placeholder="000000000000"
+                placeholder="987654321098"
               />
             </div>
           </div>
@@ -270,7 +270,7 @@ const NewMessForm = () => {
               pattern="\d{10}"
               required
               className="mt-1 w-full border rounded-md px-3 py-2"
-              placeholder="9999999999"
+              placeholder="98765412335"
             />
           </div>
 

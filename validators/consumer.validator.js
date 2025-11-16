@@ -7,7 +7,13 @@ export const createConsumerSchema = z.object({
   email: z.string().email("Invalid email"),
   address: z.string().min(2, "address should be at least 2 characters"),
   phone: z.string().regex(/^[0-9]{10}$/, "Phone must be 10 digits"),
-  password: z.string().min(6, "password should be at least 6 characters"),
+  password: z
+    .string()
+    .min(6, "password should be at least 6 characters")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).+$/,
+      "Password must contain at least one uppercase letter, one lowercase letter, and one special character"
+    ),
   mess: z.array(objectId).optional(),
 });
 

@@ -5,14 +5,17 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Loading from "@/Component/Others/Loading";
 import { useSession } from "next-auth/react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil} from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function PersonalInfo({ consumerid }) {
+  const router = useRouter();
   const { data: session } = useSession();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const isAdmin = session?.user?.isAdmin;
 
+  
   useEffect(() => {
     if (!consumerid) return;
     if (session === undefined) return;
@@ -41,6 +44,10 @@ export default function PersonalInfo({ consumerid }) {
 
     fetchUser();
   }, [consumerid, session]);
+  
+  const EditInfo = () =>{
+    router.push(`/consumer/${consumerid}/edit-info`);
+  }
 
   if (loading) return <Loading />;
   if (!user) return null;
@@ -48,7 +55,6 @@ export default function PersonalInfo({ consumerid }) {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-14">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl border border-gray-100">
-        {/* Header */}
         <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -60,12 +66,9 @@ export default function PersonalInfo({ consumerid }) {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              href={`/consumer/${user._id}/edit-info`}
-              className="flex items-center gap-1 text-sm px-3 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition"
-            >
-              <Pencil size={16} /> Edit
-            </Link>
+            
+              <button className="text-black" onClick={EditInfo}><div className="flex items-center justify-center"><Pencil size={16} /> </div> </button>
+          
 
             <Link href={`/consumer/${user._id}/new-mess`}>
               <button className="bg-gray-600 text-white px-3 py-2 rounded shadow-md hover:bg-black transition duration-200 ">

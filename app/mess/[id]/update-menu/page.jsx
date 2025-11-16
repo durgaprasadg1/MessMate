@@ -1,5 +1,5 @@
-import Navbar from '@/Component/Navbar'
-import MessMenuComponent from '@/Component/FillMenuComponent'
+import Navbar from '@/Component/Others/Navbar'
+import MessMenuComponent from '@/Component/IndividualMess/FillMenuComponent'
 
 export default async function UpdateMenuPage({ params }) {
   const { id } = await params

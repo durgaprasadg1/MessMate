@@ -5,6 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import Loading from "../Others/Loading";
 import Navbar from "../Others/Navbar";
+import { Input } from "@/components/ui/input";
+import Label from "../Helper/Label";
 
 const RegisterComponent = () => {
   const path = usePathname();
@@ -29,6 +31,15 @@ const RegisterComponent = () => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).+$/;
+    if (!passwordRegex.test(form.password)) {
+      setLoading(false);
+      const msg =
+        "Password must contain at least one uppercase letter, one lowercase letter, and one special character";
+      toast.error(msg);
+      setMessage(`❌ ${msg}`);
+      return;
+    }
 
     try {
       const endpoint =
@@ -68,7 +79,7 @@ const RegisterComponent = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
       <Navbar />
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 mt-5">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Create Your Account
         </h1>
@@ -78,10 +89,9 @@ const RegisterComponent = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              First Name
-            </label>
-            <input
+            <Label labelName="First Name : " />
+
+            <Input
               type="text"
               name="username"
               value={form.username}
@@ -94,10 +104,8 @@ const RegisterComponent = () => {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Email
-            </label>
-            <input
+            <Label labelName="Email : " />
+            <Input
               type="email"
               name="email"
               value={form.email}
@@ -110,10 +118,8 @@ const RegisterComponent = () => {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Phone Number
-            </label>
-            <input
+            <Label labelName="Phone Number : " />
+            <Input
               type="tel"
               name="phoneNumber"
               value={form.phoneNumber}
@@ -127,9 +133,7 @@ const RegisterComponent = () => {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Address
-            </label>
+            <Label labelName="Address" />
             <textarea
               name="address"
               value={form.address}
@@ -143,9 +147,7 @@ const RegisterComponent = () => {
           </div>
 
           <div className="relative">
-            <label className="block text-gray-700 font-semibold mb-2">
-              Password
-            </label>
+            <Label labelName="Password" />
             <input
               type={show ? "text" : "password"}
               name="password"

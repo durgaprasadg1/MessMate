@@ -51,8 +51,6 @@ export default function AllMesses({
               ownerName,
               category,
               isOpen,
-              vegPrice,
-              nonVegPrice,
             } = mess;
 
             return (
@@ -105,14 +103,14 @@ export default function AllMesses({
                   <div className="flex items-center justify-between mt-4">
                     {session?.user?.id === owner && (
                       <Link href={`/mess/${_id}/orders`}>
-                        <button className="p-2 bg-gray-600 text-white hover:bg-black rounded">
+                        <button className="p-2 bg-gray-600 text-white transition-colors duration-300 hover:bg-black rounded">
                           See Orders
                         </button>
                       </Link>
                     )}
 
                     <Link href={`/mess/${_id}`}>
-                      <button className="p-2 bg-gray-600 text-white hover:bg-black rounded">
+                      <button className="p-2 bg-gray-600 text-white transition-colors duration-300  hover:bg-black rounded">
                         Get More Info
                       </button>
                     </Link>

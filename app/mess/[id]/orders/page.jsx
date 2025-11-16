@@ -134,14 +134,11 @@ export default function OrdersPage() {
                     {String(o._id).slice(0, 8)}
                   </td>
                   <td className="px-4 py-3">
-                    <Link
-                      href={`/consumer/${o.consumer?._id || "#"}/history`}
-                      className="text-blue-600 hover:underline"
-                    >
+                    
                       {o.consumer
                         ? o.consumer.username || o.consumer.email
                         : "Unknown"}
-                    </Link>
+                   
                   </td>
                   <td className="px-4 py-3">{o.selectedDishName || "-"}</td>
                   <td className="px-4 py-3 text-center">{o.noOfPlate}</td>

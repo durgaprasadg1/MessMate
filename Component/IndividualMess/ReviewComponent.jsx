@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
-import Loading from "./Others/Loading";
+import Loading from "../Others/Loading";
 const ReviewSection = ({ messID }) => {
   const { data: session } = useSession();
 
@@ -11,7 +11,6 @@ const ReviewSection = ({ messID }) => {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [reviewText, setReviewText] = useState("");
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -24,7 +23,6 @@ const ReviewSection = ({ messID }) => {
     }
     if (!rating || !reviewText.trim()) {
       const txt = "Please give both rating and review.";
-      setMessage(`❌ ${txt}`);
       toast.error(txt);
       return;
     }
@@ -41,18 +39,15 @@ const ReviewSection = ({ messID }) => {
 
       if (res.ok) {
         const ok = "Review submitted successfully!";
-        setMessage("✅ Review submitted successfully!");
         toast.success(ok);
         setReviewText("");
         setRating(0);
       } else {
-        // console.log(data)
-        // const errMsg = data.message || "Something went wrong";
-        // setMessage(`❌ ${errMsg}`);
-        // toast.error(errMsg);
+        console.log(data)
+        const errMsg = "Something went wrong, Review not submitted.";
+        toast.error(errMsg);
       }
     } catch (error) {
-      setMessage("❌ Failed to submit review.");
       toast.error("Failed to submit review.");
     } finally {
       setLoading(false);
@@ -68,7 +63,6 @@ const ReviewSection = ({ messID }) => {
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* ⭐ Star Rating */}
         <div className="flex justify-center mb-2">
           {[1, 2, 3, 4, 5].map((star) => (
             <span
@@ -104,15 +98,7 @@ const ReviewSection = ({ messID }) => {
         </button>
       </form>
 
-      {message && (
-        <p
-          className={`mt-4 text-center font-medium ${
-            message.startsWith("✅") ? "text-green-700" : "text-red-600"
-          }`}
-        >
-          {message}
-        </p>
-      )}
+      
     </div>
   );
 };

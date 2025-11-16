@@ -1,4 +1,4 @@
-import Navbar from "@/Component/Navbar";
+import Navbar from "@/Component/Others/Navbar";
 import MessDetails from "../../../Component/IndividualMess/MessDetails";
 import MessNotFound from "../../../Component/Others/MessNotFound";
 

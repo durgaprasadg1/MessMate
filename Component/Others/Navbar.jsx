@@ -6,7 +6,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { toast } from "react-toastify";
 import { FaRegUser } from "react-icons/fa";
 import { usePathname, useRouter } from "next/navigation";
-
+import ProfileComponent from "./ProfileComponent";
 const Navbar = ({ searchQuery, setSearchQuery }) => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin;
@@ -37,14 +37,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
     toast.info("Opening login...");
   };
 
-  const handleUserProfileClick = () => {
-    let endpt = "";
-    if (!isAdmin) endpt = `/consumer/${session.user.id}`;
-    else {
-      endpt = `/admin/${session.user.id}`;
-    }
-    router.push(endpt);
-  };
+  
 
   return (
     <nav className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
@@ -80,7 +73,6 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
           </div>
         </div>
 
-        {/* Search Bar st */}
 
         {pathname === "/mess" ? (
           <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-1.5 shadow-sm w-80">
@@ -93,9 +85,8 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
             />
             <button
               onClick={() => {
-                /* optional: could trigger something else */
               }}
-              className="bg-gray-600 hover:bg-black text-white px-3 py-1 rounded text-sm flex items-center gap-1 transition"
+              className="bg-gray-600 hover:bg-black text-white px-3 py-1 rounded text-sm flex items-center gap-1  duration-300 hover:text-black"
             >
               <Search size={16} /> Search
             </button>
@@ -103,24 +94,13 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
         ) : (
           ""
         )}
-        {/* Search Bar Exit */}
 
         {session ? (
           <div className="flex items-center gap-4 rounded">
-            <div
-              className="flex items-center gap-2 hover:cursor-pointer"
-              onClick={handleUserProfileClick}
-            >
-              <FaRegUser />
-              <span className="text-sm font-medium text-gray-700 hover:text-black">
-                {session.user?.username ||
-                  session.user?.name ||
-                  session.user?.email}
-              </span>
-            </div>
+            <ProfileComponent  />
             <button
               onClick={() => handleLogout()}
-              className="bg-gray-600 text-white px-2 py-2 rounded shadow-md hover:bg-black transition duration-200"
+              className="bg-gray-600 text-white px-2 py-2 rounded shadow-md hover:bg-black transition duration-300"
             >
               Logout
             </button>

@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Loading from "../Others/Loading";
 import Navbar from "../Others/Navbar";
+import { Eye, EyeOff } from "lucide-react";
+import Label from "../Helper/Label";
 
 const LoginComponent = () => {
   const { data: session } = useSession();
@@ -55,7 +57,7 @@ const LoginComponent = () => {
 
   useEffect(() => {
     if (session?.user?.isAdmin) {
-      router.push("/mess/pending-verification");
+      router.push("/admin");
     } else if (session?.user) {
       router.push("/mess");
     }
@@ -76,9 +78,8 @@ const LoginComponent = () => {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Email
-            </label>
+            <Label labelName="Email" />
+
             <input
               type="email"
               name="email"
@@ -91,9 +92,8 @@ const LoginComponent = () => {
           </div>
 
           <div>
-            <label className="block text-gray-700 font-semibold mb-2">
-              Password
-            </label>
+            <Label labelName="Password" />
+
             <input
               type="password"
               name="password"

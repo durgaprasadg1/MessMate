@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Loading from "../Others/Loading";
+import Label from "../Helper/Label";
 
 export default function EditUserInfoPage({ messID }) {
   const router = useRouter();
@@ -80,7 +81,7 @@ export default function EditUserInfoPage({ messID }) {
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Name */}
           <div>
-            <label className="block mb-1 font-medium">Name</label>
+            <Label labelName="Name" />
             <input
               type="text"
               name="name"
@@ -93,7 +94,7 @@ export default function EditUserInfoPage({ messID }) {
 
           {/* Description */}
           <div>
-            <label className="block mb-1 font-medium">Description</label>
+            <Label labelName="Description" />
             <textarea
               name="description"
               value={messData.description}
@@ -106,7 +107,7 @@ export default function EditUserInfoPage({ messID }) {
 
           {/* Address */}
           <div>
-            <label className="block mb-1 font-medium">Address</label>
+            <Label labelName="Address" />
             <input
               type="text"
               name="address"
@@ -119,7 +120,7 @@ export default function EditUserInfoPage({ messID }) {
 
           {/* Phone */}
           <div>
-            <label className="block mb-1 font-medium">Phone</label>
+            <Label labelName="Phone Number" />
             <input
               type="tel"
               name="phone"
@@ -130,9 +131,8 @@ export default function EditUserInfoPage({ messID }) {
             />
           </div>
 
-          {/* Category */}
           <div>
-            <label className="block mb-1 font-medium">Category</label>
+            <Label labelName="Category" />
             <select
               name="category"
               value={messData.category}
@@ -147,9 +147,8 @@ export default function EditUserInfoPage({ messID }) {
             </select>
           </div>
 
-          {/* Limits */}
           <div>
-            <label className="block mb-1 font-medium">Limits</label>
+            <Label labelName="Limits" />
             <select
               name="limits"
               value={messData.limits}
@@ -163,7 +162,6 @@ export default function EditUserInfoPage({ messID }) {
             </select>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading}

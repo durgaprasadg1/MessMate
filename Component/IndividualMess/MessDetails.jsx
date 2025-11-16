@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import Panel from "../Owner/Panel";
-import ReviewSection from "@/Component/ReviewComponent";
+import ReviewSection from "./ReviewComponent";
 import ShowReviewComponent from "@/Component/IndividualMess/showReviewComponent";
 import BookingForm from "./PlateBookingComponent";
 import Link from "next/link";

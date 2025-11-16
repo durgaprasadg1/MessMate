@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -8,11 +8,20 @@ const ResetPasswordForm = ({ token }) => {
   const router = useRouter();
 
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).+$/;
+    if (!passwordRegex.test(password)) {
+      toast.error(
+        "Password must contain at least one uppercase letter, one lowercase letter, and one special character"
+      );
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch(`/api/auth/reset-password/${token}`, {
@@ -32,7 +41,7 @@ const ResetPasswordForm = ({ token }) => {
       }
 
       toast.success(data.message || "Password updated successfully");
-      router.push('login')
+      router.push("login");
       setTimeout(() => router.push("/login"), 1500);
     } catch (error) {
       toast.error("Server Error");
@@ -47,8 +56,7 @@ const ResetPasswordForm = ({ token }) => {
       </div>
     );
   }
-    if(loading) return <Loading/>
-  
+  if (loading) return <Loading />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
@@ -79,7 +87,11 @@ const ResetPasswordForm = ({ token }) => {
             type="submit"
             disabled={loading}
             className={`w-full py-3 rounded-xl text-white transition 
-            ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-gray-600 hover:bg-black"}`}
+            ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gray-600 hover:bg-black"
+            }`}
           >
             {loading ? (
               <div className="flex items-center justify-center gap-2">

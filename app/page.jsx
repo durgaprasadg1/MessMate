@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowRight, Utensils, Star, Users } from "lucide-react";
 import Navbar from "@/Component/Others/Navbar";
+import Footer from "@/Component/Others/Footer";
+
 
 export default function Home() {
   return (
@@ -120,17 +122,9 @@ export default function Home() {
         </div>
       </section>
 
-      
+      <Footer/>
 
-      <footer className="border-t border-slate-200 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6 py-8 text-sm text-slate-500 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div>
-            © {new Date().getFullYear()} MessMate — Connecting students &
-            community kitchens
-          </div>
-          
-        </div>
-      </footer>
+      
     </main>
   );
 }
