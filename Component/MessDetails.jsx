@@ -25,7 +25,7 @@ export default function MessDetails({ mess }) {
             <div>
               <h1 className="text-3xl font-bold text-gray-800">{mess.name}</h1>
               <p className="text-gray-500 mt-1 text-md">
-                Type : {mess.category === "Both" ? "Veg + Non-Veg" : mess.category}
+                Type : {mess.category === "both" ? "Veg + Non-Veg" : mess.category}
               </p>
               <p className="text-gray-500 mt-1 text-md font-medium"> {mess.isLimited ? "Limited" : "Unlimited"}</p>
 

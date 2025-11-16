@@ -26,7 +26,7 @@ export default function AllMesses({
   }, [messes, searchQuery, passedFiltered]);
 
   const formattedCategory = (cat) =>
-    cat === "both" ? "Veg + Non-Veg" : cat;
+    cat === "Both" || "both" ? "Veg + Non-Veg" : cat;
 
   return (
     <>

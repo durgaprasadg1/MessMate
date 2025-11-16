@@ -1,6 +1,3 @@
-// Simple smoke tests for unauthenticated protection of write endpoints
-// Usage: NODE_OPTIONS=--experimental-fetch node tests/api-auth-tests.js
-// or with Node 18+ simply: node tests/api-auth-tests.js
 
 const BASE = process.env.BASE_URL || "http://localhost:3000";
 

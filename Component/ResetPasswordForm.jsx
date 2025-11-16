@@ -33,7 +33,7 @@ const ResetPasswordForm = ({ token }) => {
 
       toast.success(data.message || "Password updated successfully");
       router.push('login')
-      setTimeout(() => router.push("/auth/login"), 1500);
+      setTimeout(() => router.push("/login"), 1500);
     } catch (error) {
       toast.error("Server Error");
       setLoading(false);
