@@ -79,6 +79,7 @@ const NewMessForm = () => {
       router.push('/mess')
     } catch (err) {
       console.error(err)
+      toast.error(err)
       setMessage({ type: 'error', text: err.message ?? 'Submission failed' })
     } finally {
       setLoading(false)
@@ -86,7 +87,7 @@ const NewMessForm = () => {
   }
 
   if(loading ){
-    <Loading/>
+   return <Loading/>
   }
   return (
     <div className="min-h-screen bg-[--light-bg] py-12 px-4">

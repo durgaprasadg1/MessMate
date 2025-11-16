@@ -161,16 +161,7 @@ const RegisterComponent = () => {
           </button>
         </form>
 
-        {message && (
-          <p
-            className={`mt-5 text-center font-semibold ${
-              message.startsWith("✅") ? "text-green-700" : "text-red-700"
-            }`}
-          >
-            {message}
-          </p>
-        )}
-
+       
         <p className="text-center text-gray-500 text-sm mt-3">
           Already have an account?{" "}
           <button

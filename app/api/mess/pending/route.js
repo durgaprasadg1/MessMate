@@ -5,9 +5,6 @@ import Mess from "../../../../models/mess";
 
 
 export async function GET() {
-
-   
-
   try {
       await connectDB();
         const messes = await Mess.find({ isVerified: false });

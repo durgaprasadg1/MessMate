@@ -15,11 +15,10 @@ export const authOptions = {
       async authorize(credentials) {
         await connectDB();
 
-        // ADMIN CHECK
         const Admin_mod = await import("../../../../models/admin.js");
         const Admin = Admin_mod.default || Admin_mod;
         const admin = await Admin.findOne({ email: credentials.email });
-
+        console.log("Email Hai Ye : ",credentials.email)
         if (admin) {
           const isValid = await bcrypt.compare(
             credentials.password,
@@ -35,7 +34,6 @@ export const authOptions = {
           };
         }
 
-        // CONSUMER CHECK
         const mod = await import("../../../../models/consumer");
         const UserModel = mod.default || mod;
 

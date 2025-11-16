@@ -4,7 +4,10 @@ import { useSession } from 'next-auth/react'
 import NotFound from '../../not-found'
 const PendingVerification = () => {
   const { data: session } = useSession();
+
   if(session && session?.user?.isAdmin){
+   
+    console.log("Sesion Verification DOne")
     return (
       <div>
           <VerificationComponent/>
@@ -12,7 +15,8 @@ const PendingVerification = () => {
     )
   }
   else{
-    <NotFound/>
+    
+    return <NotFound/>
   }
 
 }

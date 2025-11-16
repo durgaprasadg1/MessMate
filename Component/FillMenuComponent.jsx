@@ -6,15 +6,13 @@ import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 
 export default function MessMenuComponent({
-
   messId,
   initial = null,
   category = "both",
   mess = null,
 }) {
-
-    const { data: session, status } = useSession();
-    console.log(session);
+  const { data: session, status } = useSession();
+  console.log(session);
   const router = useRouter();
   const [dishes, setDishes] = useState(() => initial?.dishes || []);
   const [mealTime, setMealTime] = useState(initial?.mealTime || "lunch");
@@ -22,6 +20,8 @@ export default function MessMenuComponent({
     initial?.menutype || (category === "veg" ? "vegMenu" : "vegMenu")
   );
   const [loading, setLoading] = useState(false);
+  const [originalDishIds, setOriginalDishIds] = useState([]);
+  const [replaceWholeMenu, setReplaceWholeMenu] = useState(false);
 
   useEffect(() => {
     if (!dishes.length) addDish();
@@ -42,6 +42,44 @@ export default function MessMenuComponent({
       setDishes(norm);
     }
   }, [menutype, mess]);
+
+  // Fetch canonical Menu document (to obtain subdocument _id values)
+  useEffect(() => {
+    let mounted = true;
+    async function fetchMenuDoc() {
+      try {
+        const res = await fetch(
+          `/api/mess/${messId}/menu?menutype=${menutype}`,
+          { cache: "no-store" }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!mounted) return;
+        if (data && data.dishes) {
+          // use canonical dishes (with _id) when available
+          const norm = data.dishes.map((s) => ({
+            _id: s._id,
+            name: s.name || "",
+            price: s.price ?? "",
+            items: s.items || [
+              { name: "", price: "", isLimited: false, limitCount: "" },
+            ],
+          }));
+          setDishes(norm);
+          setMealTime(data.mealTime || mealTime);
+          setOriginalDishIds(
+            norm.map((d) => d._id && d._id.toString()).filter(Boolean)
+          );
+        }
+      } catch (e) {
+        console.warn("Could not fetch menu doc", e);
+      }
+    }
+    fetchMenuDoc();
+    return () => {
+      mounted = false;
+    };
+  }, [menutype, messId]);
 
   function addDish(prefill) {
     setDishes((prev) => {
@@ -102,7 +140,21 @@ export default function MessMenuComponent({
     e.preventDefault();
     setLoading(true);
     try {
-      const payload = { mealTime, menutype, dishes };
+      // compute deleted dish ids (existing menu dishes removed by user)
+      const currentIds = dishes
+        .map((d) => (d._id ? d._id.toString() : null))
+        .filter(Boolean);
+      const deletedDishIds = originalDishIds.filter(
+        (id) => !currentIds.includes(id)
+      );
+
+      const payload = {
+        mealTime,
+        menutype,
+        dishes,
+        replace: replaceWholeMenu,
+        deletedDishIds,
+      };
       const res = await fetch(`/api/mess/${messId}/menu`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -318,6 +370,15 @@ export default function MessMenuComponent({
           >
             Add Dish
           </button>
+          <label className="inline-flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={replaceWholeMenu}
+              onChange={(e) => setReplaceWholeMenu(e.target.checked)}
+            />
+            <span className="text-sm text-slate-600">Replace entire menu</span>
+          </label>
+
           <button
             type="submit"
             disabled={loading}
@@ -326,10 +387,7 @@ export default function MessMenuComponent({
             {loading ? "Saving..." : "Save Menu"}
           </button>
         </div>
-
-        
       </form>
     </div>
   );
 }
-
