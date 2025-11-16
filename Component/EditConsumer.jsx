@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-
+import Loading from './Loading'
 export default function EditUserInfoPage({ consumerid }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -63,6 +63,8 @@ export default function EditUserInfoPage({ consumerid }) {
       setLoading(false);
     }
   };
+
+  if(loading) return <Loading/>
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-6">

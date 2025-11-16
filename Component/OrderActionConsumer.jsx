@@ -74,6 +74,9 @@ export default function OrderActionConsumer({
     }
   };
 
+    if(loading) return <Loading/>
+  
+    
   return (
     <div>
       <button

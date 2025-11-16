@@ -173,6 +173,8 @@ export default function MessMenuComponent({
       setLoading(false);
     }
   }
+    if(loading) return <Loading/>
+  
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm">

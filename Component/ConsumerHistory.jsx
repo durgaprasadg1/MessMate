@@ -5,7 +5,6 @@ import OrderActionConsumer from "@/Component/OrderActionConsumer";
 import ReceiptDownloader from "@/Component/ReceiptDownloader";
 
 export default function ConsumerHistoryUI({ orders, consumerid }) {
-  // render newest first
   const list = (orders || [])
     .slice()
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

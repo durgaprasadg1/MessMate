@@ -67,6 +67,8 @@ export default function EditUserInfoPage({ messID }) {
       setLoading(false);
     }
   };
+    if(loading) return <Loading/>
+  
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-6">

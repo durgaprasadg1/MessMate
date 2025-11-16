@@ -61,6 +61,8 @@ const ReviewSection = ({ messID }) => {
       router.refresh();
     }
   };
+    if(loading) return <Loading/>
+  
 
   return (
     <div className="w-full p-6 min-h-9 bg-gray-100 rounded-2xl shadow-md mt-6 ">

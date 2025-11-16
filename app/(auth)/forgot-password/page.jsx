@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
     setLoading(false);
   };
   if(loading){
-    <Loading/>
+    return <Loading/>
   }
 
   return (

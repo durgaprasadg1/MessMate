@@ -47,7 +47,7 @@ export default function PersonalInfo({ consumerid }) {
 
   if (!user) return <></>;
 
-  console.log("User Hai Hum : ",user)
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl border border-gray-100">

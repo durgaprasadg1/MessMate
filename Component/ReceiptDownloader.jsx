@@ -22,11 +22,9 @@ function drawReceiptToCanvas(order, consumerName) {
   canvas.height = height;
   const ctx = canvas.getContext("2d");
 
-  // background
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, width, height);
 
-  // header
   ctx.fillStyle = "#111827";
   ctx.font = "bold 22px Arial";
   ctx.fillText("Order Receipt", padding, padding + 6);
@@ -40,11 +38,9 @@ function drawReceiptToCanvas(order, consumerName) {
     padding + 6 + lineHeight * 2
   );
 
-  // divider
   ctx.fillStyle = "#e5e7eb";
   ctx.fillRect(padding, padding + lineHeight * 2 + 8, width - padding * 2, 1);
 
-  // details
   let y = padding + lineHeight * 3 + 16;
   ctx.fillStyle = "#111827";
   ctx.font = "bold 16px Arial";

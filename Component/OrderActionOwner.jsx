@@ -159,6 +159,9 @@ export default function OrderActionOwner({
     !takenLocal ||
     cancelledLocal;
 
+      if(loading) return <Loading/>
+    
+
   return (
     <div className="flex gap-2">
       {!done ? (
