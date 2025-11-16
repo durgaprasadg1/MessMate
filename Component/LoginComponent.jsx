@@ -34,7 +34,7 @@ const LoginComponent = () => {
       });
 
       if (result?.error) {
-        toast.error(result.error);
+        toast.error("Failed to login. Check your credentials.");
       } else {
         toast.success("Login successful");
         router.push("/mess");
@@ -93,6 +93,7 @@ const LoginComponent = () => {
               name="password"
               value={form.password}
               onChange={handleChange}
+              
               placeholder="Enter your password"
               required
               className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"

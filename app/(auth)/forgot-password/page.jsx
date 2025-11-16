@@ -30,12 +30,12 @@ export default function ForgotPasswordPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.message || "Failed to send email");
+        toast.error("Failed to send email");
         setLoading(false);
         return;
       }
 
-      toast.success(data.message || "Mail sent successfully");
+      toast.success( "Mail sent successfully");
     } catch (error) {
       toast.error("Server Error");
     }

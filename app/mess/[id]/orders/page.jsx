@@ -40,7 +40,7 @@ export default function OrdersPage() {
   }, [id]);
 
   useEffect(() => {
-    if (!messOwnerId || !session?.user) return; // need both
+    if (!messOwnerId || !session?.user) return; 
     if (session.user.id !== String(messOwnerId)) return;
 
     const interval = setInterval(async () => {

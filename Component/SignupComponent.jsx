@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { useRouter,usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 const RegisterComponent = () => {
   const path = usePathname();
@@ -15,6 +15,7 @@ const RegisterComponent = () => {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [show, setShow] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -52,7 +53,7 @@ const RegisterComponent = () => {
         setTimeout(() => router.push("/login"), 1200);
       }
     } catch (err) {
-      console.log("ERROR : ",err)
+      console.log("ERROR : ", err);
       setMessage("❌ Server error. Please try again.");
       toast.error("Server error. Please try again.");
     } finally {
@@ -136,12 +137,12 @@ const RegisterComponent = () => {
             />
           </div>
 
-          <div>
+          <div className="relative">
             <label className="block text-gray-700 font-semibold mb-2">
               Password
             </label>
             <input
-              type="password"
+              type={show ? "text" : "password"}
               name="password"
               value={form.password}
               onChange={handleChange}
@@ -150,6 +151,13 @@ const RegisterComponent = () => {
               required
               className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
+            <button
+              type="button"
+              onClick={() => setShow(!show)}
+              className="absolute right-3 top-2 text-gray-500"
+            >
+              {show ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
 
           <button
@@ -161,7 +169,6 @@ const RegisterComponent = () => {
           </button>
         </form>
 
-       
         <p className="text-center text-gray-500 text-sm mt-3">
           Already have an account?{" "}
           <button

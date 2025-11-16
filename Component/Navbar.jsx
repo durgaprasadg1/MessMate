@@ -73,7 +73,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
                 className="text-gray-600 hover:text-black"
                 onClick={handleHistoryClick}
               >
-                History
+                Your Orders
               </button>
             )}
 

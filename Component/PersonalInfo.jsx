@@ -15,7 +15,7 @@ export default function PersonalInfo({ consumerid }) {
 
   useEffect(() => {
     if (!consumerid) return;
-    if (session === undefined) return; // wait until session loads
+    if (session === undefined) return;
 
     const fetchUser = async () => {
       try {

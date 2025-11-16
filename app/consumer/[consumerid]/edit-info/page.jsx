@@ -1,4 +1,4 @@
-import EditConsumer from '../../../../Component/EditConsumer';
+import EditConsumer from '@/Component/EditConsumer';
 
 const EditInfoOfConsumer = async({params}) => {
   const {consumerid} = await params;
