@@ -29,13 +29,16 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
   const handleHistoryClick = async () => {
     router.push(`/consumer/${session?.user?.id}/history`);
   };
+  const handlenewmess = async () => {
+    router.push(`/consumer/${session?.user?.id}/new-mess`);
+  };
 
   const handleLoginClick = async () => {
     router.push("/login");
     await signIn();
 
     router.refresh();
-    toast.info("Opening login...");
+    
   };
 
   
@@ -70,6 +73,13 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
                 onClick={handleHistoryClick}
               >
                 Your Orders
+              </button>
+              
+              <button
+                className="text-gray-600 hover:text-black"
+                onClick={handlenewmess}
+              >
+                Add New Mess
               </button>
             </div>
             )}
