@@ -7,6 +7,7 @@ import Loading from "@/Component/Others/Loading";
 import { useSession } from "next-auth/react";
 import { Pencil} from "lucide-react";
 import { useRouter } from "next/navigation";
+import Button from "@/Component/Others/Button"
 
 export default function PersonalInfo({ consumerid }) {
   const router = useRouter();
@@ -70,11 +71,7 @@ export default function PersonalInfo({ consumerid }) {
               {isAdmin? "" :<button className="text-black" onClick={EditInfo}><div className="flex items-center justify-center"><Pencil size={16} /> </div> </button>}
           
 
-            <Link href={`/consumer/${user._id}/new-mess`}>
-              <button className="bg-gray-600 text-white px-3 py-2 rounded shadow-md hover:bg-black transition duration-200 ">
-                Add mess
-              </button>
-            </Link>
+            <Button data="Add Mess" link={`/consumer/${user._id}/new-mess`}/>
           </div>
         </div>
 

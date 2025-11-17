@@ -39,7 +39,7 @@ const LoginComponent = () => {
       });
 
       if (result?.error) {
-        toast.error("Failed to login. Check your credentials.");
+        toast.error("Invalid credentials Or Internet Connection Lost");
       } else {
         toast.success("Login successful");
         router.push("/mess");
