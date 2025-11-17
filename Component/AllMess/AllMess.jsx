@@ -112,14 +112,15 @@ export default function AllMesses({
                       </span>
                     </div>
                   </div>
-                    <ButtonComponent
-                            data="Get More Info"
-                            link={`/mess/${_id}`}
-                          />
+                    
                   {session ? (
                     <>
                       {!isAdmin ? (
                         <div className="flex items-center justify-between mt-4">
+                          <ButtonComponent
+                            data="Get More Info"
+                            link={`/mess/${_id}`}
+                          />
                           {session.user.id === owner && (
                             <ButtonComponent
                               data="See Orders"

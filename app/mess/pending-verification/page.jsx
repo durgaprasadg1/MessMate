@@ -7,7 +7,6 @@ const PendingVerification = () => {
 
   if(session && session?.user?.isAdmin){
    
-    console.log("Sesion Verification DOne")
     return (
       <div>
           <VerificationComponent/>
