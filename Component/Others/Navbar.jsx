@@ -4,9 +4,10 @@ import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { toast } from "react-toastify";
-import { FaRegUser } from "react-icons/fa";
 import { usePathname, useRouter } from "next/navigation";
 import ProfileComponent from "./ProfileComponent";
+import ButtonComponent from "./Button";
+import AdminLandingPage from '../../app/admin/page'
 const Navbar = ({ searchQuery, setSearchQuery }) => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin;
@@ -38,8 +39,9 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
   };
 
   
-
+ 
   return (
+   
     <nav className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
         <div className="flex items-center gap-8">
@@ -55,22 +57,23 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
               </button>
             </Link>
           </motion.div>
+        {session?.user && !isAdmin && (
 
           <div className="hidden md:flex gap-6 text-gray-700 font-medium">
             <Link href="/" className="  ">
               <button className="text-gray-600 hover:text-black">Home</button>
             </Link>
 
-           {session?.user && !isAdmin && (
+           
               <button
                 className="text-gray-600 hover:text-black"
                 onClick={handleHistoryClick}
               >
                 Your Orders
               </button>
+            </div>
             )}
-
-          </div>
+          
         </div>
 
 

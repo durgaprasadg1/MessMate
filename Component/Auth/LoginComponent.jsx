@@ -66,7 +66,7 @@ const LoginComponent = () => {
   if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 mt-6">
       <Navbar />
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">

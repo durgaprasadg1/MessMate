@@ -1,13 +1,12 @@
+import AdminNavbar from "@/Component/Admin/AdminNavbar";
 import PersonalInfo from "../../../Component/Consumer/PersonalInfo";
-import Navbar from "../../../Component/Others/Navbar";
 export default async function ConsumerPage({ params }) {
   const { id } = await params;
 
   return (
     <div>
-      <Navbar />
-      <br />
-      <br />
+      <AdminNavbar />
+      
       <PersonalInfo consumerid={id} />
     </div>
   );

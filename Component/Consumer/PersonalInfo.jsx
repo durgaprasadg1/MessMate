@@ -53,8 +53,8 @@ export default function PersonalInfo({ consumerid }) {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-14">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl border border-gray-100">
+    <div className={isAdmin? "min-h-screen bg-violet-100 flex items-center justify-center py-14" :"min-h-screen bg-gray-50 flex items-center justify-center py-14"}>
+      <div className={isAdmin?"bg-purple-50 rounded-2xl shadow-xl p-8 w-full max-w-3xl border border-gray-100": "bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl border border-gray-100"}>
         <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -67,7 +67,7 @@ export default function PersonalInfo({ consumerid }) {
 
           <div className="flex items-center gap-3">
             
-              <button className="text-black" onClick={EditInfo}><div className="flex items-center justify-center"><Pencil size={16} /> </div> </button>
+              {isAdmin? "" :<button className="text-black" onClick={EditInfo}><div className="flex items-center justify-center"><Pencil size={16} /> </div> </button>}
           
 
             <Link href={`/consumer/${user._id}/new-mess`}>

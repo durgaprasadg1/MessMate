@@ -140,6 +140,10 @@ const messSchema = Schema({
     },
     filename: String,
   },
+  avgRating:{
+    type : Number, 
+    
+  }
 });
 
 // on Delete Cascade

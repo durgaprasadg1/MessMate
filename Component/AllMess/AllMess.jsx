@@ -1,18 +1,20 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Navbar from "../Others/Navbar";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import AdminNavbar from "../Admin/AdminNavbar";
+import ButtonComponent from "../Others/Button";
 
 export default function AllMesses({
   messes = [],
   filteredMesses: passedFiltered,
 }) {
   const { data: session } = useSession();
+  const isAdmin = session?.user?.isAdmin;
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter Logic
   const filteredMesses = useMemo(() => {
     if (passedFiltered) return passedFiltered;
     const q = searchQuery.toLowerCase().trim();
@@ -30,9 +32,14 @@ export default function AllMesses({
 
   return (
     <>
-      <Navbar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-
-      <div className="py-10 px-6 mt-10">
+      {isAdmin ? (
+        <AdminNavbar />
+      ) : (
+        <Navbar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+      )}
+      <div
+        className={isAdmin ? "py-10 px-6 bg-purple-200" : "py-10 px-6 mt-10"}
+      >
         <h1 className="text-4xl font-extrabold text-center text-amber-800 mb-10 drop-shadow-md">
           🍱 All Mess Listings
         </h1>
@@ -56,7 +63,11 @@ export default function AllMesses({
             return (
               <div
                 key={_id}
-                className="bg-white rounded-3xl mt-3 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition duration-300 border-2 border-gray-200 flex flex-col"
+                className={
+                  isAdmin
+                    ? "bg-purple-100"
+                    : "bg-white rounded-3xl mt-3 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition duration-300 border-2 border-gray-200 flex flex-col"
+                }
               >
                 <img
                   src={image?.url || "https://via.placeholder.com/400x250"}
@@ -64,11 +75,37 @@ export default function AllMesses({
                   className="h-56 w-full object-cover"
                 />
 
+                {(() => {
+                  const avgFromProp =
+                    mess.avgRating || mess.averageRating || mess.avg || null;
+                  const avgFromReviews =
+                    Array.isArray(mess.reviews) && mess.reviews.length
+                      ? mess.reviews.reduce(
+                          (s, r) => s + (Number(r.rating) || 0),
+                          0
+                        ) / mess.reviews.length
+                      : null;
+                  mess._computedAvg = (avgFromProp ?? avgFromReviews ?? 0)
+                    .toFixed
+                    ? (avgFromProp ?? avgFromReviews ?? 0).toFixed(1)
+                    : avgFromProp ?? avgFromReviews ?? 0;
+                })()}
+
                 <div className="p-2 flex flex-col justify-between flex-1">
                   <div>
                     <h2 className="text-2xl font-semibold text-amber-900">
                       {name}
                     </h2>
+                    <div className="flex items-center gap-3 mt-1">
+                      <div className="text-yellow-500 font-semibold">
+                        {"★"
+                          .repeat(Math.round(Number(mess._computedAvg) || 0))
+                          .padEnd(5, "☆")}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {mess._computedAvg} / 5
+                      </div>
+                    </div>
                     <p className="text-sm text-gray-600 italic">
                       {formattedCategory(category)}
                     </p>
@@ -100,21 +137,53 @@ export default function AllMesses({
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between mt-4">
-                    {session?.user?.id === owner && (
-                      <Link href={`/mess/${_id}/orders`}>
-                        <button className="p-2 bg-gray-600 text-white transition-colors duration-300 hover:bg-black rounded">
-                          See Orders
-                        </button>
-                      </Link>
-                    )}
+                  {session ? (
+                    <>
+                      {!isAdmin ? (
+                        <div className="flex items-center justify-between mt-4">
+                          {session.user.id === owner && (
+                            <ButtonComponent
+                              data="See Orders"
+                              link={`/mess/${_id}/orders`}
+                            />
+                          )}
 
-                    <Link href={`/mess/${_id}`}>
-                      <button className="p-2 bg-gray-600 text-white transition-colors duration-300  hover:bg-black rounded">
-                        Get More Info
-                      </button>
-                    </Link>
-                  </div>
+                          <ButtonComponent
+                            data="Get More Info"
+                            link={`/mess/${_id}`}
+                          />
+                        </div>
+                      ) : (
+                        <div className="">
+                          <div className="flex items-center justify-between gap-2">
+                            
+
+                            <ButtonComponent
+                              data="Message"
+                              link={`/admin/all-messes/${_id}/reviews`}
+                            />
+                    
+                            <ButtonComponent
+                                  data="Block Mess"
+                                  link={`/admin/all-messes/${_id}/reviews`}
+                                />
+                                <ButtonComponent
+                                  data="Delete Mess"
+                                  link={`/admin/all-messes/${_id}/reviews`}
+                                />
+                            
+                            </div>
+                          <div className=" mt-2 flex items-center justify-between gap-2 ">
+                                 <ButtonComponent
+                              data="See Reviews & Ratings"
+                              link={`/admin/all-messes/${_id}/reviews`}
+                            />
+                            </div>
+                          </div>
+                       
+                      )}
+                    </>
+                  ) : null}
                 </div>
               </div>
             );

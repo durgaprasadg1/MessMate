@@ -3,8 +3,12 @@
 import AdminNavbar from "@/Component/Admin/AdminNavbar";
 import SectionPart from "@/Component/Section/SectionPartLinks";
 import SectionStats from "@/Component/Section/SectionStats";
-import AdminActionCard from "@/Component/Admin/AdminActionCard";
 import { useEffect, useState } from "react";
+import TableBody from "@/Component/HTML_components/table_body";
+import { tableContext } from "@/hooks/tableContext";
+import ULs from "../../Component/HTML_components/uls";
+import { useSession } from "next-auth/react";
+import NotFound from "../not-found";
 
 export default function AdminLandingPage() {
   const [stats, setStats] = useState({
@@ -13,6 +17,7 @@ export default function AdminLandingPage() {
     pendingCount: 0,
   });
 
+  const { data: session } = useSession();
   const [recentSignups, setRecentSignups] = useState([]);
   const [pendingMesses, setPendingMesses] = useState([]);
 
@@ -26,8 +31,12 @@ export default function AdminLandingPage() {
       });
   }, []);
 
+  if (!session?.user?.isAdmin) {
+    return <NotFound />;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-purple-50">
       <AdminNavbar />
 
       <main className="max-w-7xl mx-auto p-6">
@@ -38,86 +47,26 @@ export default function AdminLandingPage() {
           </p>
         </header>
 
-        
+        <SectionPart />
 
-        <SectionPart/>
-        <SectionStats totalUsers={stats.totalUsers} totalMesses={stats.totalMesses} pendingCount={stats.pendingCount}/>
-        
+        <SectionStats
+          totalUsers={stats.totalUsers}
+          totalMesses={stats.totalMesses}
+          pendingCount={stats.pendingCount}
+        />
 
-        {/* Recent signups & pending */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white p-4 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-3">Recent Signups</h3>
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="text-gray-500">
-                  <th className="pb-2">Name</th>
-                  <th className="pb-2">Email</th>
-                  <th className="pb-2">Joined</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentSignups.map((c) => (
-                  <tr key={c._id} className="border-t">
-                    <td className="py-2">{c.username}</td>
-                    <td className="py-2">{c.email}</td>
-                    <td className="py-2">
-                      {new Date(c.joined).toLocaleDateString()}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <tableContext.Provider
+          value={{ recentSignups, pendingMesses }}
+        >
+          <ULs />
 
-          <div className="bg-white p-4 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-3">
-              Pending Verifications
-            </h3>
-
-            <ul className="text-sm text-gray-700 space-y-2">
-              {pendingMesses.map((m) => (
-                <li key={m._id} className="flex items-center justify-between">
-                  <span>{m.name}</span>
-                  <button
-                    onClick={() =>
-                      (window.location.href = "/admin/pending-verification")
-                    }
-                    className="px-3 py-1 bg-yellow-500 text-white rounded-md"
-                  >
-                    Review
-                  </button>
-                </li>
-              ))}
-
-              {pendingMesses.length === 0 && (
-                <li className="text-gray-500">No pending verifications</li>
-              )}
-            </ul>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="mt-8 text-sm text-gray-500">
-          <p>
-            Quick Links:{" "}
-            <button
-              className="text-indigo-600 underline"
-              onClick={() => (window.location.href = "/admin/analytics")}
-            >
-              Analytics
-            </button>{" "}
-            ·{" "}
-            <button
-              className="text-indigo-600 underline"
-              onClick={() =>
-                (window.location.href = "/admin/pending-verification")
-              }
-            >
-              Pending Verification
-            </button>
-          </p>
-        </footer>
+          <TableBody
+            tableName="Recent Signups"
+            heading1="Name"
+            heading2="Email"
+            heading3="Joined"
+          />
+        </tableContext.Provider>
       </main>
     </div>
   );

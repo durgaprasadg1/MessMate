@@ -1,21 +1,13 @@
+import SmallDivs from "../Others/SmallDivs";
 const SectionStats = ({totalUsers, totalMesses, pendingCount}) => {
-return (<section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div className="p-4 bg-white rounded-lg shadow">
-            <p className="text-sm text-gray-500">Total Users</p>
-            <p className="text-2xl font-bold mt-2">{totalUsers}</p>
-          </div>
+ 
 
-          <div className="p-4 bg-white rounded-lg shadow">
-            <p className="text-sm text-gray-500">Total Messes</p>
-            <p className="text-2xl font-bold mt-2">{totalMesses}</p>
-          </div>
-
-          <div className="p-4 bg-white rounded-lg shadow">
-            <p className="text-sm text-gray-500">Pending Verifications</p>
-            <p className="text-2xl font-bold mt-2 text-yellow-600">
-              {pendingCount}
-            </p>
-          </div>
-        </section>)
+  return (
+          <section className=" grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <SmallDivs desc="Total Users" count={totalUsers} link='/admin/all-users'/>
+            <SmallDivs desc="Total Messes" count={totalMesses} link='/admin/all-messes'/>
+            <SmallDivs desc="Pending Verifications" count={pendingCount} link='/admin/pending-verification'/>
+          </section>
+    )
 }
 export default SectionStats;

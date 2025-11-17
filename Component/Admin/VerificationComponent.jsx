@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Loading from "../Others/Loading";
-import Navbar from "../Others/Navbar";
 import Link from "next/link";
+// import AdminNavbar from "./AdminNavbar";
 
 const VerificationComponent = () => {
   const [pendingMesses, setPendingMesses] = useState([]);
@@ -61,8 +61,7 @@ const VerificationComponent = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <Navbar />
-
+      
       <h1 className="text-3xl font-bold mb-8 text-center text-gray-800 tracking-wide">
         Mess Verification Panel
       </h1>
