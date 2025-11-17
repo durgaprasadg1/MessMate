@@ -81,7 +81,7 @@ export async function POST(request) {
       nonVegMenu: [],
       vegMenuRef: null,
       nonVegMenuRef: null,
-      owner: session.user.id
+      owner: session?.user?.id
     };
 
     const created = await Mess.create(messData);

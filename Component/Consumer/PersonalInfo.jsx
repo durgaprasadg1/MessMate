@@ -1,6 +1,4 @@
 "use client";
-
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Loading from "@/Component/Others/Loading";
@@ -35,6 +33,7 @@ export default function PersonalInfo({ consumerid }) {
 
         const pickedUser = data.consumer || data.admin;
         setUser(pickedUser);
+        console.log("Fetched user:", user);
       } catch (err) {
         console.error("Error fetching user:", err);
         toast.error("Failed to fetch user info");
@@ -73,9 +72,6 @@ export default function PersonalInfo({ consumerid }) {
               <button className="text-black" onClick={EditInfo}><div className="flex items-center justify-center"><Pencil size={16} /> </div> </button>
               <Button data="Add Mess" link={`/consumer/${user._id}/new-mess`}/>
               </>)}
-          
-
-            
           </div>
         </div>
 
