@@ -1,9 +1,11 @@
+'use client'
 import PersonalInfo from "@/Component/Consumer/PersonalInfo";
 import Navbar from "@/Component/Others/Navbar";
-import {useSession} from "next-auth/react";
-export default async function ConsumerPage({ params }) {
-  const { consumerid } = params;
-  const {data :session} = await useSession();
+import { useSession } from "next-auth/react";
+import { useParams } from "next/navigation";
+export default  function ConsumerPage({ params }) {
+  const { consumerid } = useParams();
+  const {data :session} =  useSession();
   const isCurrentUserTheSameCustomer = session?.user?.id === consumerid;
  
 
@@ -11,9 +13,9 @@ export default async function ConsumerPage({ params }) {
   <div>
     <Navbar/>
     <br /><br />
-    {
-      isCurrentUserTheSameCustomer? <PersonalInfo consumerid={consumerid} /> : "Unauthorized Access"
-    }
+    
+      {isCurrentUserTheSameCustomer?<PersonalInfo consumerid={consumerid} />:""}
+    
     
   </div>);
 }

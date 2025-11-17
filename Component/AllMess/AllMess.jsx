@@ -75,37 +75,13 @@ export default function AllMesses({
                   className="h-56 w-full object-cover"
                 />
 
-                {(() => {
-                  const avgFromProp =
-                    mess.avgRating || mess.averageRating || mess.avg || null;
-                  const avgFromReviews =
-                    Array.isArray(mess.reviews) && mess.reviews.length
-                      ? mess.reviews.reduce(
-                          (s, r) => s + (Number(r.rating) || 0),
-                          0
-                        ) / mess.reviews.length
-                      : null;
-                  mess._computedAvg = (avgFromProp ?? avgFromReviews ?? 0)
-                    .toFixed
-                    ? (avgFromProp ?? avgFromReviews ?? 0).toFixed(1)
-                    : avgFromProp ?? avgFromReviews ?? 0;
-                })()}
-
+                
                 <div className="p-2 flex flex-col justify-between flex-1">
                   <div>
                     <h2 className="text-2xl font-semibold text-amber-900">
                       {name}
                     </h2>
-                    <div className="flex items-center gap-3 mt-1">
-                      <div className="text-yellow-500 font-semibold">
-                        {"★"
-                          .repeat(Math.round(Number(mess._computedAvg) || 0))
-                          .padEnd(5, "☆")}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {mess._computedAvg} / 5
-                      </div>
-                    </div>
+                    
                     <p className="text-sm text-gray-600 italic">
                       {formattedCategory(category)}
                     </p>
@@ -136,7 +112,10 @@ export default function AllMesses({
                       </span>
                     </div>
                   </div>
-
+                    <ButtonComponent
+                            data="Get More Info"
+                            link={`/mess/${_id}`}
+                          />
                   {session ? (
                     <>
                       {!isAdmin ? (
@@ -148,10 +127,7 @@ export default function AllMesses({
                             />
                           )}
 
-                          <ButtonComponent
-                            data="Get More Info"
-                            link={`/mess/${_id}`}
-                          />
+                          
                         </div>
                       ) : (
                         <div className="">

@@ -91,15 +91,15 @@ const LoginComponent = () => {
             />
           </div>
 
-          <div>
+          <div className="relative">
             <Label labelName="Password" />
-
             <input
-              type="password"
+              type={show ? "text" : "password"}
               name="password"
               value={form.password}
               onChange={handleChange}
-              placeholder="Enter your password"
+              placeholder="Create a strong password"
+              minLength={8}
               required
               className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
             />

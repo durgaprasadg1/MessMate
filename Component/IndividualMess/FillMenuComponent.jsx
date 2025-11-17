@@ -280,7 +280,6 @@ export default function MessMenuComponent({
                       className="w-28 border rounded-md px-2 py-1"
                       placeholder="Price"
                     />
-                    <Label labelName="Limited" />
                       <input
                         type="checkbox"
                         checked={!!item.isLimited}
