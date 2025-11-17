@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Navbar from "../Others/Navbar";
-import Link from "next/link";
 import { useSession } from "next-auth/react";
 import AdminNavbar from "../Admin/AdminNavbar";
 import ButtonComponent from "../Others/Button";
@@ -11,6 +10,7 @@ export default function AllMesses({
   messes = [],
   filteredMesses: passedFiltered,
 }) {
+  
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin;
   const [searchQuery, setSearchQuery] = useState("");
@@ -160,7 +160,10 @@ export default function AllMesses({
                        
                       )}
                     </>
-                  ) : null}
+                  ) : <ButtonComponent
+                            data="Get More Info"
+                            link={`/mess/${_id}`}
+                          />}
                 </div>
               </div>
             );
