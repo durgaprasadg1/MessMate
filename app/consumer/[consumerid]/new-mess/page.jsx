@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import  { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Loading from "../../../../Component/Others/Loading";
 import { useSession } from "next-auth/react";
@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 
 const NewMessForm = () => {
   const { data: session } = useSession();
-  console.log("Session ID ", session?.user?.id);
+  // console.log("Session ID ", session?.user?.id);
   const router = useRouter();
   const [form, setForm] = useState({
     name: "",

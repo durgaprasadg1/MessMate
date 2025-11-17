@@ -79,7 +79,6 @@ export default function PersonalInfo({ consumerid }) {
           </div>
         </div>
 
-        {/* INFO */}
         <div className="space-y-4">
           <div>
             <label className="text-gray-600 font-medium text-sm">Name</label>
