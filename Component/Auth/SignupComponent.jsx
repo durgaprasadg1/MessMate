@@ -1,14 +1,25 @@
 "use client";
-import React, { useState } from "react";
+import  { useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter, usePathname } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import Loading from "../Others/Loading";
+import { useSession } from "next-auth/react";
 import Navbar from "../Others/Navbar";
 import { Input } from "@/components/ui/input";
 import Label from "../Helper/Label";
+import { useEffect } from "react";
 
 const RegisterComponent = () => {
+  const {data : session,status} = useSession();
+  
+  useEffect(() => {
+    if (session?.user?.isAdmin) {
+      router.replace("/admin");
+    } else if (session?.user) {
+      router.replace("/mess");
+    }
+  }, []);
   const path = usePathname();
   const router = useRouter();
   const [form, setForm] = useState({
@@ -40,6 +51,9 @@ const RegisterComponent = () => {
       setMessage(`❌ ${msg}`);
       return;
     }
+
+  
+
 
     try {
       const endpoint =
@@ -76,6 +90,7 @@ const RegisterComponent = () => {
   };
   if (loading) return <Loading />;
 
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
       <Navbar />
