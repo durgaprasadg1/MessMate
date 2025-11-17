@@ -9,10 +9,13 @@ import { useRouter } from "next/navigation";
 export default function Home() {
   const router = useRouter();
   const { data: session }  = useSession();
-  const isAdmin = session?.user?.isAdmin
-  if(isAdmin){
-    router.replace('/admin');
-  }
+  
+  useEffect(() => {
+
+    if (session?.user?.isAdmin) {
+      router.replace("/admin");
+    }
+  }, [session, router]);
   return (
     <main className="min-h-screen text-slate-800  from-white via-slate-50 to-white">
       <header className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
