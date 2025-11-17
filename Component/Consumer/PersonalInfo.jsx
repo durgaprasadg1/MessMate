@@ -68,10 +68,14 @@ export default function PersonalInfo({ consumerid }) {
 
           <div className="flex items-center gap-3">
             
-              {isAdmin? "" :<button className="text-black" onClick={EditInfo}><div className="flex items-center justify-center"><Pencil size={16} /> </div> </button>}
+              {isAdmin? "" :
+              (<>
+              <button className="text-black" onClick={EditInfo}><div className="flex items-center justify-center"><Pencil size={16} /> </div> </button>
+              <Button data="Add Mess" link={`/consumer/${user._id}/new-mess`}/>
+              </>)}
           
 
-            <Button data="Add Mess" link={`/consumer/${user._id}/new-mess`}/>
+            
           </div>
         </div>
 
