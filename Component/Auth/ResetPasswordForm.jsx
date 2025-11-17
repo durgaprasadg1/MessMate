@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import Loading from "./Loading";
+import Loading from "@/Component/Others/Loading";
 
 const ResetPasswordForm = ({ token }) => {
   const router = useRouter();
