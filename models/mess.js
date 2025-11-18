@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Review from "./reviews";
 import Order from "./order";
 import Consumer from "./consumer";
+import cloudinary from "../lib/cloudinary";
 const Schema = mongoose.Schema;
 
 const messSchema = Schema({
@@ -20,6 +21,7 @@ const messSchema = Schema({
       type: String,
     },
     filename: String,
+    public_id: String,
   },
 
   address: {
@@ -139,17 +141,37 @@ const messSchema = Schema({
       type: String,
     },
     filename: String,
+    public_id: String,
   },
-  avgRating:{
-    type : Number, 
-    
-  }
+  avgRating: {
+    type: Number,
+  },
 });
 
 // on Delete Cascade
 
 messSchema.post("findOneAndDelete", async function (doc) {
   if (doc) {
+    try {
+      if (doc.image && doc.image.public_id) {
+        await cloudinary.uploader.destroy(doc.image.public_id, {
+          resource_type: "image",
+        });
+      }
+    } catch (e) {
+      console.error("Error deleting mess image from Cloudinary:", e);
+    }
+
+    try {
+      if (doc.certificate && doc.certificate.public_id) {
+        await cloudinary.uploader.destroy(doc.certificate.public_id, {
+          resource_type: "image",
+        });
+      }
+    } catch (e) {
+      console.error("Error deleting mess certificate from Cloudinary:", e);
+    }
+
     if (doc.reviews.length) {
       await Review.deleteMany({ _id: { $in: doc.reviews } });
     }

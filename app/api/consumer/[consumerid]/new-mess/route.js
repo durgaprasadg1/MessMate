@@ -9,7 +9,8 @@ export const runtime = "nodejs";
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     await connectDB();
     const mod = await import("../../../../../models/mess");
@@ -33,35 +34,42 @@ export async function POST(request) {
 
     if (!name || !file || !certificate) {
       return NextResponse.json(
-        { message: "Make sure you have given name and uploaded banner and certificate" },
+        {
+          message:
+            "Make sure you have given name and uploaded banner and certificate",
+        },
         { status: 400 }
       );
     }
 
     const bannerBuffer = Buffer.from(await file.arrayBuffer());
     const bannerUpload = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { folder: "MessImage" },
-        (err, result) => (err ? reject(err) : resolve(result))
-      ).end(bannerBuffer);
+      cloudinary.uploader
+        .upload_stream({ folder: "MessImage" }, (err, result) =>
+          err ? reject(err) : resolve(result)
+        )
+        .end(bannerBuffer);
     });
 
     const certBuffer = Buffer.from(await certificate.arrayBuffer());
     const certificateUpload = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { folder: "Mess_certificate" },
-        (err, result) => (err ? reject(err) : resolve(result))
-      ).end(certBuffer);
+      cloudinary.uploader
+        .upload_stream({ folder: "Mess_certificate" }, (err, result) =>
+          err ? reject(err) : resolve(result)
+        )
+        .end(certBuffer);
     });
 
     const imageObj = {
       url: bannerUpload.secure_url,
-      filename: file.name
+      filename: file.name,
+      public_id: bannerUpload.public_id,
     };
 
     const certification = {
       url: certificateUpload.secure_url,
-      filename: certificate.name
+      filename: certificate.name,
+      public_id: certificateUpload.public_id,
     };
 
     const messData = {
@@ -81,7 +89,7 @@ export async function POST(request) {
       nonVegMenu: [],
       vegMenuRef: null,
       nonVegMenuRef: null,
-      owner: session?.user?.id
+      owner: session?.user?.id,
     };
 
     const created = await Mess.create(messData);
