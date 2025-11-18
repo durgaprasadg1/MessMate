@@ -92,7 +92,6 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
           </div>
         )}
 
-        {/* Desktop Right Section */}
         {session ? (
           <div className="hidden md:flex items-center gap-3 sm:gap-4 rounded">
             <ProfileComponent />
@@ -194,6 +193,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
             {/* Auth Buttons */}
             {session ? (
               <>
+                <ProfileComponent closeDrawer={() => setDrawerOpen(false)} />
                 <button
                   onClick={() => {
                     handleLogout();
