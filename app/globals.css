@@ -117,7 +117,5 @@
   body {
     @apply bg-background text-foreground;
   }
-  .btn{
-    @apply bg-red-500 text-white hover:bg-red-600;
-  }
+  
 }

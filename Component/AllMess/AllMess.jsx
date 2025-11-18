@@ -10,7 +10,6 @@ export default function AllMesses({
   messes = [],
   filteredMesses: passedFiltered,
 }) {
-  
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin;
   const [searchQuery, setSearchQuery] = useState("");
@@ -38,13 +37,17 @@ export default function AllMesses({
         <Navbar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       )}
       <div
-        className={isAdmin ? "py-10 px-6 bg-purple-200" : "py-10 px-6 mt-10"}
+        className={
+          isAdmin
+            ? "py-8 px-4 sm:px-6 lg:px-8 bg-purple-200"
+            : "py-8 px-4 sm:px-6 lg:px-8 mt-16"
+        }
       >
         <h1 className="text-4xl font-extrabold text-center text-amber-800 mb-10 drop-shadow-md">
           🍱 All Mess Listings
         </h1>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {filteredMesses.map((mess) => {
             if (!mess.isVerified) return null;
 
@@ -63,30 +66,29 @@ export default function AllMesses({
             return (
               <div
                 key={_id}
-                className={
+                className={`flex flex-col overflow-hidden rounded-2xl border ${
                   isAdmin
-                    ? "bg-purple-100"
-                    : "bg-white rounded-3xl mt-3 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition duration-300 border-2 border-gray-200 flex flex-col"
-                }
+                    ? "bg-purple-100 border-transparent"
+                    : "bg-white border-gray-200"
+                } shadow-sm hover:shadow-md transition-transform duration-300 hover:scale-[1.02]`}
               >
                 <img
                   src={image?.url || "https://via.placeholder.com/400x250"}
                   alt={name}
-                  className="h-56 w-full object-cover"
+                  className="w-full object-cover h-40 sm:h-48 md:h-56"
                 />
 
-                
-                <div className="p-2 flex flex-col justify-between flex-1">
+                <div className="p-3 sm:p-4 flex flex-col justify-between flex-1">
                   <div>
                     <h2 className="text-2xl font-semibold text-amber-900">
                       {name}
                     </h2>
-                    
+
                     <p className="text-sm text-gray-600 italic">
                       {formattedCategory(category)}
                     </p>
 
-                    <p className="text-gray-700 text-sm mt-3 line-clamp-2">
+                    <p className="text-gray-700 text-sm mt-2 line-clamp-3">
                       {description}
                     </p>
 
@@ -112,11 +114,11 @@ export default function AllMesses({
                       </span>
                     </div>
                   </div>
-                    
+
                   {session ? (
                     <>
                       {!isAdmin ? (
-                        <div className="flex items-center justify-between mt-4">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mt-4 gap-2 sm:gap-3">
                           <ButtonComponent
                             data="Get More Info"
                             link={`/mess/${_id}`}
@@ -127,43 +129,39 @@ export default function AllMesses({
                               link={`/mess/${_id}/orders`}
                             />
                           )}
-
-                          
                         </div>
                       ) : (
-                        <div className="">
-                          <div className="flex items-center justify-between gap-2">
-                            
-
+                        <div className="w-full">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
                             <ButtonComponent
                               data="Message"
                               link={`/admin/all-messes/${_id}/reviews`}
                             />
-                    
+
                             <ButtonComponent
-                                  data="Block Mess"
-                                  link={`/admin/all-messes/${_id}/reviews`}
-                                />
-                                <ButtonComponent
-                                  data="Delete Mess"
-                                  link={`/admin/all-messes/${_id}/reviews`}
-                                />
-                            
-                            </div>
-                          <div className=" mt-2 flex items-center justify-between gap-2 ">
-                                 <ButtonComponent
+                              data="Block Mess"
+                              link={`/admin/all-messes/${_id}/reviews`}
+                            />
+                            <ButtonComponent
+                              data="Delete Mess"
+                              link={`/admin/all-messes/${_id}/reviews`}
+                            />
+                          </div>
+                          <div className=" mt-2 flex flex-wrap items-center justify-between gap-2 ">
+                            <ButtonComponent
                               data="See Reviews & Ratings"
                               link={`/admin/all-messes/${_id}/reviews`}
                             />
-                            </div>
                           </div>
-                       
+                        </div>
                       )}
                     </>
-                  ) : <ButtonComponent
-                            data="Get More Info"
-                            link={`/mess/${_id}`}
-                          />}
+                  ) : (
+                    <ButtonComponent
+                      data="Get More Info"
+                      link={`/mess/${_id}`}
+                    />
+                  )}
                 </div>
               </div>
             );
