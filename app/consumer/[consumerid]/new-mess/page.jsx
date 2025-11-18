@@ -148,7 +148,8 @@ const NewMessForm = () => {
                 : "bg-red-100 text-red-800"
             }`}
           >
-            {message.text}
+            {message.type === "success" ? "Mess will be added after verification." : "Something went wrong!"}
+            
           </div>
         )}
 
