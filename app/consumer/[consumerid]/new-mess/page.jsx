@@ -345,13 +345,14 @@ const NewMessForm = () => {
 
 
           <div>
+            {!locationDenied && (
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-gray-600 hover:bg-black text-white py-2 rounded font-semibold"
             >
               {loading ? "Submitting..." : "Add Mess"}
-            </button>
+            </button>)}
           </div>
         </form>
       </div>
