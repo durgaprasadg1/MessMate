@@ -7,7 +7,6 @@ import { toast } from "react-toastify";
 
 const NewMessForm = () => {
   const { data: session } = useSession();
-  // console.log("Session ID ", session?.user?.id);
   const router = useRouter();
   const [form, setForm] = useState({
     name: "",
@@ -25,22 +24,28 @@ const NewMessForm = () => {
   const [certificate, setCertificate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [locationDenied, setLocationDenied] = useState(false);
 
-  useEffect(() => {
-    if (!navigator?.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setForm((s) => ({
-          ...s,
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-        }));
-      },
-      (err) => {
-        console.warn("Location denied or unavailable", err);
-      }
-    );
-  }, []);
+ useEffect(() => {
+  if (!navigator?.geolocation) {
+    setLocationDenied(true);
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      setForm((s) => ({
+        ...s,
+        lat: pos.coords.latitude,
+        lon: pos.coords.longitude,
+      }));
+      setLocationDenied(false);
+    },
+    () => {
+      setLocationDenied(true);
+    }
+  );
+}, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -102,6 +107,19 @@ const NewMessForm = () => {
       setLoading(false);
     }
   };
+  const retryLocation = () => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setForm((s) => ({
+          ...s,
+          lat: pos.coords.latitude,
+          lon: pos.coords.longitude,
+        }));
+        setLocationDenied(false);
+      },
+      () => setLocationDenied(true)
+    );
+};
 
   if (loading) {
     return <Loading />;
@@ -139,6 +157,21 @@ const NewMessForm = () => {
           </span>
           .
         </p>
+        <p className="text-center text-gray-500 text-sm mt-3 italic bg-yellow-100 border border-yellow-300 px-4 py-2 rounded-lg shadow-sm">
+          ⚠️ कृपया अपने मेस की जानकारी तभी जोड़ें  {' '}
+          <span className="font-semibold">
+            जब आप वास्तव में मेस की लोकेशन पर मौजूद हों,
+          </span>
+          क्योंकि आपकी 
+          <span className="font-semibold">
+            वर्तमान लोकेशन अपने-आप ट्रैक की जाएगी।
+          </span>
+          <br /><br />
+          <span className="font-semibold">
+            आपकी मेस पहले वेरिफिकेशन प्रक्रिया में जाएगी और सफल वेरिफिकेशन के बाद स्वतः ही सूची में जोड़ दी जाएगी।
+          </span>
+        </p>
+
 
         {message && (
           <div
@@ -304,12 +337,18 @@ const NewMessForm = () => {
               className="mt-1 w-full border-gray-600"
             />
           </div>
+            {locationDenied && (
+            <button className="bg-gray-600 p-2 rounded w-full mb-2 text-white"  onClick={() => retryLocation()}>
+              Give Your Mess Location
+            </button>
+          )}
+
 
           <div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gray-600 hover:bg-black text-white py-2 rounded-full font-semibold"
+              className="w-full bg-gray-600 hover:bg-black text-white py-2 rounded font-semibold"
             >
               {loading ? "Submitting..." : "Add Mess"}
             </button>
