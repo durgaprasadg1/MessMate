@@ -20,15 +20,11 @@ const AdminNavbar = () => {
   const handleClick = (path) => {
     router.push(path);
   };
-  const handleLogout = () => {
-    signOut({ redirect: false })
-      .then(() => {
-        toast.success("Logged Out Successfully.");
-        router.replace("/");
-      })
-      .catch((err) => {
-        console.log("error While Logging out : ", err);
-      });
+  const handleLogout = async() => {
+    await signOut({ redirect: false })
+    toast.success("Logged Out Successfully.");
+    router.push("/");
+    
   };
 
   return (

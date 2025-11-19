@@ -13,10 +13,6 @@ const messageSchema = new Schema({
 }
 );
 
-// messageSchema.index({ consumer: 1 });
-// messageSchema.index({ mess: 1 });
-// messageSchema.index({ razorpaymessageId: 1 }, { unique: true, sparse: true });
-// messageSchema.index({ createdAt: -1 });
 
 const Message = mongoose.models.Message || mongoose.model("Message", messageSchema);
 

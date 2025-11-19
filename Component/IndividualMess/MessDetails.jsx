@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import Panel from "../Owner/Panel";
+import { useEffect, useState } from "react";
 import ReviewSection from "./ReviewComponent";
 import ShowReviewComponent from "@/Component/IndividualMess/showReviewComponent";
 import BookingForm from "./PlateBookingComponent";
@@ -10,6 +11,22 @@ export default function MessDetails({ mess }) {
   if (!mess) return null;
 
   const { data: session } = useSession();
+  const [isOpen, setIsOpen] = useState(!!mess.isOpen);
+
+  useEffect(() => {
+    const handler = (e) => {
+      try {
+        const d = e?.detail || {};
+        if (d?.id === mess._id) {
+          setIsOpen(!!d.isOpen);
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+    window.addEventListener("mess:updated", handler);
+    return () => window.removeEventListener("mess:updated", handler);
+  }, [mess._id]);
 
   return (
     <div className="min-h-screen py-10 px-6 mt-5">
@@ -28,7 +45,7 @@ export default function MessDetails({ mess }) {
               <h1 className="text-3xl font-bold text-gray-800">{mess.name}</h1>
               <p className="text-gray-500 mt-1 text-md">
                 Type :{" "}
-                {mess.category === "both" ? "Veg + Non-Veg" : mess.category}
+                {mess.category === "both" || "Both" ? "Veg + Non-Veg" : mess.category}
               </p>
               <p className="text-gray-500 mt-1 text-md font-medium">
                 {" "}
@@ -37,12 +54,12 @@ export default function MessDetails({ mess }) {
 
               <p
                 className={`mt-2 inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                  mess.isOpen
+                  isOpen
                     ? "bg-green-100 text-green-600"
                     : "bg-red-100 text-red-600"
                 }`}
               >
-                {mess.isOpen ? "Open" : "Closed"}
+                {isOpen ? "Open" : "Closed"}
               </p>
             </div>
 
@@ -167,8 +184,6 @@ export default function MessDetails({ mess }) {
           )}
         </div>
       </div>
-
-      <Panel mess={mess} />
 
       {session && (mess.vegMenu?.length > 0 || mess.nonVegMenu?.length > 0) ? (
         <div className="flex flex-col md:flex-row items-start gap-6 mt-6">

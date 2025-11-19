@@ -13,7 +13,6 @@ export default function MessMenuComponent({
   mess = null,
 }) {
   const { data: session } = useSession();
-  console.log(session);
   const router = useRouter();
   const [dishes, setDishes] = useState(() => initial?.dishes || []);
   const [mealTime, setMealTime] = useState(initial?.mealTime || "lunch");
@@ -163,7 +162,7 @@ export default function MessMenuComponent({
       if (!res.ok) throw new Error(data?.error || data?.message || "Failed");
       toast.success("Menu saved");
       router.refresh();
-      router.push(`/mess/${messId}`);
+      router.push(`/owner/${session?.user?.id}/mess-details`);
     } catch (err) {
       console.error(err);
       toast.error(err.message || "Failed to save menu");

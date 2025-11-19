@@ -58,9 +58,14 @@ const LoginComponent = () => {
   useEffect(() => {
     if (session?.user?.isAdmin) {
       router.push("/admin");
-    } else if (session?.user) {
+    } 
+    else if(session?.user?.isOwner){
+      router.push("/owner");
+    }
+    else if (session?.user) {
       router.push("/mess");
     }
+    
   }, [session]);
 
   if (loading) return <Loading />;
@@ -130,13 +135,23 @@ const LoginComponent = () => {
         </form>
 
         <p className="text-center text-gray-500 text-sm mt-3">
-          Don’t have an account?{" "}
+         Create a consumer account ?{" "}
           <button
             type="button"
             onClick={() => router.push("/signup")}
             className="text-gray-700 font-semibold hover:underline"
           >
             Register
+          </button>
+        </p>
+        <p className="text-center text-gray-500 text-sm mt-1">
+         Create an owner account ?{" "}
+          <button
+            type="button"
+            onClick={() => router.push("/register-owner")}
+            className="text-gray-700 font-semibold hover:underline"
+          >
+            Register Owner
           </button>
         </p>
       </div>

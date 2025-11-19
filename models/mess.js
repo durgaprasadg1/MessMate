@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import Review from "./reviews";
 import Order from "./order";
-import Consumer from "./consumer";
 import cloudinary from "../lib/cloudinary";
 const Schema = mongoose.Schema;
 
@@ -198,10 +197,12 @@ messSchema.post("findOneAndDelete", async function (doc) {
       console.error("Error deleting related Menu docs:", e);
     }
     try {
-      await Consumer.updateMany(
-        { mess: doc._id },
-        { $pull: { mess: doc._id } }
-      );
+      // dynamic import to avoid circular dependency
+      const ConsumerModule = await import("./consumer");
+      const ConsumerModel = ConsumerModule && ConsumerModule.default ? ConsumerModule.default : ConsumerModule;
+      if (ConsumerModel && ConsumerModel.updateMany) {
+        await ConsumerModel.updateMany({ mess: doc._id }, { $pull: { mess: doc._id } });
+      }
     } catch (e) {
       console.error("Error removing mess references from consumers:", e);
     }

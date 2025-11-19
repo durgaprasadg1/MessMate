@@ -1,34 +1,46 @@
 import mongoose from "mongoose";
-import { minLength } from "zod";
-import { required } from "zod/mini";
 
 const { Schema } = mongoose;
 
 const ownerSchema = new Schema(
   {
-    name: { 
-        type : String,
-        required: true
-    }, 
-    email : {
-        type : String, 
-        minLength:3,
-        required : true,
+    name: {
+      type: String,
+      required: true,
     },
-    upi : {
-        type : String, 
-        minLength:4,
-        required : true,
+    email: {
+      type: String,
+      minLength: 3,
+      required: true,
+      unique: true,
     },
-    mess:[
-        {
-            type: Schema.Types.ObjectId,
-            ref : "Mess",
-        }
-    ],
-    owner:{
+    upi: {
+      type: String,
+      minLength: 4,
+      required: true,
+    },
+    phoneNumber: {
+      type: String,
+      required: true,
+      match: /^[0-9]{10}$/,
+    },
+    messes: [
+      {
         type: Schema.Types.ObjectId,
-        ref : "Consumer",
-    }
-  }
-)
+        ref: "Mess",
+      },
+    ],
+    password: {
+      type: String,
+      required: true,
+    },
+    address: {
+      type: String,
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
+
+export default mongoose.models.Owner ||
+  mongoose.model("Owner", ownerSchema);

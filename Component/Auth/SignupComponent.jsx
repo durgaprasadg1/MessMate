@@ -1,5 +1,5 @@
 "use client";
-import  { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useRouter, usePathname } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
@@ -8,27 +8,37 @@ import { useSession } from "next-auth/react";
 import Navbar from "../Others/Navbar";
 import { Input } from "@/components/ui/input";
 import Label from "../Helper/Label";
-import { useEffect } from "react";
 
 const RegisterComponent = () => {
-  const {data : session,status} = useSession();
-  
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const path = usePathname();
+
   useEffect(() => {
+    // Only perform redirects once session is resolved
+    if (status === "loading") return;
+
+    // If there is no session (not logged in), allow access to signup
+    if (!session) return;
+
     if (session?.user?.isAdmin) {
       router.replace("/admin");
-    } else if (session?.user) {
+    } else if (session?.user?.isOwner) {
+      router.replace("/owner");
+    } else {
       router.replace("/mess");
     }
-  }, []);
-  const path = usePathname();
-  const router = useRouter();
+  }, [session, status, router]);
+
   const [form, setForm] = useState({
     username: "",
     email: "",
     phoneNumber: "",
     address: "",
     password: "",
+    upi: "",
   });
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [show, setShow] = useState(false);
@@ -42,23 +52,52 @@ const RegisterComponent = () => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).+$/;
-    if (!passwordRegex.test(form.password)) {
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    if (!emailRegex.test(form.email)) {
       setLoading(false);
-      const msg =
-        "Password must contain at least one uppercase letter, one lowercase letter, and one special character";
+      const msg = "Invalid Email";
       toast.error(msg);
       setMessage(`❌ ${msg}`);
       return;
     }
 
-  
+    const upiRegex = /^[\w.-]{2,}@[a-zA-Z]{2,}$/;
 
+    if (path === "/register-owner" && !upiRegex.test(form.upi)) {
+      setLoading(false);
+      const msg = "Invalid UPI";
+      toast.error(msg);
+      setMessage(`❌ ${msg}`);
+      return;
+    }
+
+    const phoneRegex = /^[0-9]{10}$/;
+
+    if (!phoneRegex.test(form.phoneNumber)) {
+      setLoading(false);
+      const msg = "Phone number must be 10 digits long";
+      toast.error(msg);
+      setMessage(`❌ ${msg}`);
+      return;
+    }
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).+$/;
+
+    if (!passwordRegex.test(form.password)) {
+      setLoading(false);
+      const msg =
+        "Password must contain uppercase, lowercase & special character";
+      toast.error(msg);
+      setMessage(`❌ ${msg}`);
+      return;
+    }
 
     try {
       const endpoint =
-        path === "/secret/register-admin"
-          ? "/api/auth/register-admin"
+        path === "/register-owner"
+          ? "/api/auth/register-owner"
           : "/api/auth/signup";
 
       const res = await fetch(endpoint, {
@@ -71,7 +110,6 @@ const RegisterComponent = () => {
 
       if (!res.ok) {
         const text = data.message || "Registration failed";
-        console.log(text);
         setMessage(`❌ ${text}`);
         toast.error(text);
       } else {
@@ -81,16 +119,15 @@ const RegisterComponent = () => {
         setTimeout(() => router.push("/login"), 1200);
       }
     } catch (err) {
-      console.log("ERROR : ", err);
       setMessage("❌ Server error. Please try again.");
       toast.error("Server error. Please try again.");
     } finally {
       setLoading(false);
     }
   };
+
   if (loading) return <Loading />;
 
-  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
       <Navbar />
@@ -105,7 +142,6 @@ const RegisterComponent = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <Label labelName="First Name : " />
-
             <Input
               type="text"
               name="username"
@@ -113,7 +149,7 @@ const RegisterComponent = () => {
               onChange={handleChange}
               placeholder="Enter your first name"
               required
-              min={3}
+              minLength={3}
               className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
           </div>
@@ -141,11 +177,28 @@ const RegisterComponent = () => {
               onChange={handleChange}
               placeholder="Enter your phone number"
               required
-              min={10}
-              max={10}
+              minLength={10}
+              maxLength={10}
               className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
           </div>
+
+          {path === "/register-owner" && (
+            <div>
+              <Label labelName="UPI or VPA ID : " />
+              <Input
+                type="text"
+                name="upi"
+                value={form.upi}
+                onChange={handleChange}
+                placeholder="Enter your UPI or VPA ID"
+                required
+                minLength={4}
+                maxLength={18}
+                className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
+              />
+            </div>
+          )}
 
           <div>
             <Label labelName="Address" />

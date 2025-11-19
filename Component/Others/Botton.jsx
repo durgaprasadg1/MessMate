@@ -1,21 +1,38 @@
-import Link from 'next/link'
-import { useState } from 'react';
-const Botton = ({text, link, mess, functionAfterClick}) => {
-  let [loading, setLoading ] = useState(false);
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Spinner } from "@/components/ui/spinner";
 
-  const handleClick = () =>{
-    setLoading(true);
-    functionAfterClick();
-    setLoading(false);
+const Botton = ({ text, link, functionAfterClick, className = "" }) => {
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  }
+  const handleClick = async (e) => {
+    try {
+      setLoading(true);
+      if (functionAfterClick) await functionAfterClick(e);
+      if (link) {
+        router.push(link);
+      }
+    } catch (err) {
+      console.error("Button action failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-   <Link href={link} className="mt-6 block">
-      <button className="w-full px-4 py-2 bg-gray-600 text-white rounded hover:bg-black transition" onClick={handleClick} disabled={loading}> 
-        {text}
+    <div className="mt-6 block">
+      <button
+        className={`${className} w-full px-4 py-2 rounded transition ${
+          loading ? "opacity-60 pointer-events-none" : ""
+        }`}
+        onClick={() => handleClick()}
+        disabled={loading}
+      >
+        {loading ? <Spinner /> : text}
       </button>
-    </Link>
-  )
-}
+    </div>
+  );
+};
 
-export default Botton
+export default Botton;

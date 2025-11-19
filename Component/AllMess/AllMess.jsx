@@ -8,6 +8,7 @@ import ButtonComponent from "../Others/Button";
 import DialogBox from "../ShadCnUI/Dialog";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import EmptynessShowBox from "../Others/EmptynessShowBox";
 
 export default function AllMesses({ messes = [], filteredMesses: passedFiltered }) {
   const router = useRouter();
@@ -62,9 +63,19 @@ export default function AllMesses({ messes = [], filteredMesses: passedFiltered 
     }
   };
 
+
+ 
   return (
+    
     <>
+    
       {isAdmin ? <AdminNavbar /> : <Navbar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
+       {messes.length === 0 ?  
+      ( 
+        <EmptynessShowBox heading="No Messes Available Yet!" link={isAdmin ? "/admin" : "/"} linkmsg="Go to Home" />
+      
+    ):("")}
+
       <div className={isAdmin ? "py-8 px-4 sm:px-6 lg:px-8 bg-purple-200" : "py-8 px-4 sm:px-6 lg:px-8 mt-16"}>
         <h1 className="text-4xl font-extrabold text-center text-amber-800 mb-10 drop-shadow-md">
           🍱 All Mess Listings

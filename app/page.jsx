@@ -16,6 +16,9 @@ export default function Home() {
     if (session?.user?.isAdmin) {
       router.replace("/admin");
     }
+    else if(session?.user?.isOwner){
+      router.replace('/owner')
+    }
   }, [session, router]);
   return (
     <main className="min-h-screen text-slate-800  from-white via-slate-50 to-white">

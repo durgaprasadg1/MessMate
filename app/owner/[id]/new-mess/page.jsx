@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 
 const NewMessForm = () => {
   const { data: session } = useSession();
+
   const router = useRouter();
   const [form, setForm] = useState({
     name: "",
@@ -25,6 +26,7 @@ const NewMessForm = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [locationDenied, setLocationDenied] = useState(false);
+
 
  useEffect(() => {
   if (!navigator?.geolocation) {
@@ -70,7 +72,7 @@ const NewMessForm = () => {
       if (image) fd.append("image", image);
       if (certificate) fd.append("certificate", certificate);
 
-      const res = await fetch(`/api/consumer/${session?.user?.id}/new-mess`, {
+      const res = await fetch(`/api/owner/${session?.user?.id}/new-mess`, {
         method: "POST",
         body: fd,
       });
@@ -98,7 +100,7 @@ const NewMessForm = () => {
       alert(
         "Mess aapplication is gone for verification first and after successfull verification, your mess will be added automatically."
       );
-      router.push("/mess");
+      router.push("/owner");
     } catch (err) {
       console.error(err);
       toast.error(err);
@@ -121,9 +123,19 @@ const NewMessForm = () => {
     );
 };
 
+  if (!session || session?.user?.isOwner === false) {
+    return (
+     
+
+      <EmptynessShowBox heading="Un-Authorized Access" link="/register-owner" linkmsg="Register as Owner" />
+    );
+  }
+
   if (loading) {
     return <Loading />;
   }
+
+
   return (
     <div className="min-h-screen bg-[--light-bg] py-12 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6">

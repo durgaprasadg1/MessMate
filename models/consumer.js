@@ -21,30 +21,26 @@ const consumerSchema = new Schema({
     required: true,
     unique: true,
   },
-  mess: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: "Mess",
-    },
-  ],
+  
   reviews: [
     {
       type: Schema.Types.ObjectId,
       ref: "Review",
     },
   ],
+
   orders: [
     {
       type: Schema.Types.ObjectId,
       ref: "Order",
     },
   ],
+
   address: {
     type: String,
     required: true,
     min: 2,
   },
-
   phone: {
     type: String,
     required: true,
@@ -67,9 +63,7 @@ const consumerSchema = new Schema({
   resetTokenExpiry: Date,
 });
 
-// if (passportLocalMongoose) {
-//   consumerSchema.plugin(passportLocalMongoose);
-// }
+
 
 consumerSchema.post("findOneAndDelete", async (consumer) => {
   if (consumer) {

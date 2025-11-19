@@ -114,12 +114,7 @@ export default function PersonalInfo({ consumerid }) {
             </div>
           </div>
 
-          <div>
-            <label className="text-gray-600 font-medium text-sm">User ID</label>
-            <div className="mt-1 p-3 bg-gray-100 rounded-lg border border-gray-200">
-              {user._id}
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>

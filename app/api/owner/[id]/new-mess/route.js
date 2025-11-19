@@ -6,18 +6,26 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export const runtime = "nodejs";
 
-export async function POST(request) {
+export async function POST(request, { params }) {
   try {
+    const { id } = await params; 
+
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    if (session.user.id !== id) {
+      return NextResponse.json(
+        { error: "Permission denied" },
+        { status: 403 }
+      );
+    }
+
     await connectDB();
-    const mod = await import("../../../../../models/mess");
-    const Mess = mod.default || mod;
 
+    const Mess = (await import("../../../../../models/mess")).default;
+    const Owner = (await import("../../../../../models/owner")).default;
     const formData = await request.formData();
-
     const name = formData.get("name")?.toString() || "";
     const description = formData.get("description")?.toString() || "";
     const address = formData.get("address")?.toString() || "";
@@ -42,6 +50,7 @@ export async function POST(request) {
       );
     }
 
+    
     const bannerBuffer = Buffer.from(await file.arrayBuffer());
     const bannerUpload = await new Promise((resolve, reject) => {
       cloudinary.uploader
@@ -89,10 +98,18 @@ export async function POST(request) {
       nonVegMenu: [],
       vegMenuRef: null,
       nonVegMenuRef: null,
-      owner: session?.user?.id,
+      owner: session.user.id,
     };
-
     const created = await Mess.create(messData);
+    let owner = await Owner.findById(id);
+    if (!owner) {
+      return NextResponse.json(
+        { message: "Failed to get Mess Owner" },
+        { status: 500 }
+      );
+    }
+    owner.messes.push(created._id);
+    await owner.save(); 
     return NextResponse.json({ id: created._id }, { status: 201 });
   } catch (error) {
     console.error("Error creating mess:", error);

@@ -15,19 +15,14 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const handleLogout = () => {
-    signOut({ redirect: false })
-      .then(() => {
-        toast.success("Logged Out Successfully.");
-        router.push("/mess");
-      })
-      .catch((err) => console.log("Error Logging out:", err));
+  const handleLogout = async() => {
+    await signOut({ redirect: false });
+      router.replace('/')
   };
 
   const handleHistoryClick = () =>
     router.push(`/consumer/${session?.user?.id}/history`);
-  const handleNewMess = () =>
-    router.push(`/consumer/${session?.user?.id}/new-mess`);
+
   const handleLoginClick = async () => {
     router.push("/login");
     await signIn();
@@ -65,12 +60,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
                 Your Orders
               </button>
 
-              <button
-                className="text-gray-600 hover:text-black"
-                onClick={handleNewMess}
-              >
-                Add New Mess
-              </button>
+              
             </div>
           )}
         </div>
@@ -102,9 +92,14 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
           </div>
         ) : (
           <div className="hidden md:flex gap-3 sm:gap-4 rounded">
+            <Link href="/register-owner">
+              <button className="bg-gray-600 text-white px-2 py-2 rounded shadow-md hover:bg-black transition duration-200">
+               Register Owner 
+              </button>
+            </Link>
             <Link href="/signup">
               <button className="bg-gray-600 text-white px-2 py-2 rounded shadow-md hover:bg-black transition duration-200">
-                Register
+               Register Consumer
               </button>
             </Link>
             <Link href="/login">
@@ -158,15 +153,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
                   Your Orders
                 </p>
 
-                <p
-                  className="py-2 text-gray-700 hover:text-black"
-                  onClick={() => {
-                    setDrawerOpen(false);
-                    handleNewMess();
-                  }}
-                >
-                  Add New Mess
-                </p>
+                
               </>
             )}
 

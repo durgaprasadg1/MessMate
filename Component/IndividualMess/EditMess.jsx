@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Loading from "../Others/Loading";
 import Label from "../Helper/Label";
+import { useSession } from "next-auth/react";
 
 export default function EditUserInfoPage({ messID }) {
+  const { data: session } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [messData, setmessData] = useState({
@@ -58,10 +60,10 @@ export default function EditUserInfoPage({ messID }) {
         body: JSON.stringify(messData),
       });
 
-      if (!res.ok) throw new Error("Failed to update info");
+      if (!res.ok) toast.error("Failed to update information");
 
       toast.success("Information updated successfully!");
-      router.push(`/mess/${messID}`);
+      router.push(`/owner/${session?.user?.id}/mess-details`);
     } catch (err) {
       console.error(err);
       toast.error("Failed to update information");
@@ -73,6 +75,7 @@ export default function EditUserInfoPage({ messID }) {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-6">
+
       <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8">
         <h2 className="text-2xl font-semibold mb-6 text-center">
           Edit Mess Info
