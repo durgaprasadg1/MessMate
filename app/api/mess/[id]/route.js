@@ -11,6 +11,7 @@ export async function GET(request, { params }) {
     const { default: Menu } = await import("../../../../models/menu");
 
     const mess = await Mess.findById(id)
+      .populate("alert")
       .populate("vegMenuRef")
       .populate("nonVegMenuRef")
       .populate({
@@ -26,7 +27,6 @@ export async function GET(request, { params }) {
     //         mess.reviews.length;
     //     }
 
-    // console.log("AVG:", avg);
     if (!mess) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Loading from "../Others/Loading";
 import Link from "next/link";
+import { FaSpinner } from "react-icons/fa6";
+import {Spinner} from "@/components/ui/spinner";
 // import AdminNavbar from "./AdminNavbar";
 
 const VerificationComponent = () => {
@@ -35,11 +37,14 @@ const VerificationComponent = () => {
         method: "POST",
       });
       if (!res.ok) throw new Error("Verification failed");
-
+      setLoading(true);
       toast.success("Mess verified successfully!");
       setPendingMesses((prev) => prev.filter((m) => m._id !== id));
     } catch (error) {
       toast.error(error.message);
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -49,11 +54,14 @@ const VerificationComponent = () => {
         method: "POST",
       });
       if (!res.ok) throw new Error("Denial failed");
-
+      setLoading(true);
       toast.info("Mess request denied.");
       setPendingMesses((prev) => prev.filter((m) => m._id !== id));
     } catch (error) {
       toast.error(error.message);
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -160,18 +168,18 @@ const VerificationComponent = () => {
                   </p>
 
                   <div className="mt-6 flex justify-between gap-3">
-                    <button
+                    <button disabled={loading}
                       onClick={() => handleVerify(mess._id)}
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-xl transition-all shadow-sm"
                     >
-                      Verify
+                      {!loading ? "Verify" : <Spinner/>}
                     </button>
 
-                    <button
+                    <button disabled={loading}
                       onClick={() => handleDeny(mess._id)}
                       className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-xl transition-all shadow-sm"
                     >
-                      Deny
+                     {!loading ? "Deny" : <Spinner/>}
                     </button>
                   </div>
                 </div>

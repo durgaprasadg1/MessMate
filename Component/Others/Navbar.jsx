@@ -19,7 +19,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
     signOut({ redirect: false })
       .then(() => {
         toast.success("Logged Out Successfully.");
-        router.replace("/mess");
+        router.push("/mess");
       })
       .catch((err) => console.log("Error Logging out:", err));
   };
@@ -52,10 +52,9 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
             </Link>
           </motion.div>
 
-          {/* Desktop Menu */}
           {session?.user && !isAdmin && (
             <div className="hidden md:flex gap-4 lg:gap-6 text-gray-700 font-medium">
-              <Link href="/">
+              <Link href="/mess">
                 <button className="text-gray-600 hover:text-black">Home</button>
               </Link>
 
@@ -76,7 +75,6 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
           )}
         </div>
 
-        {/* Search Bar (Only on /mess) */}
         {pathname === "/mess" && (
           <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-1.5 shadow-sm w-56 sm:w-72 md:w-80">
             <input
@@ -120,7 +118,6 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
           </div>
         )}
 
-        {/* Mobile Menu Button */}
         <button
           className="md:hidden text-gray-700"
           onClick={() => setDrawerOpen(true)}
@@ -129,7 +126,6 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
         </button>
       </div>
 
-      {/* Mobile Drawer */}
       {drawerOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-40 z-50 md:hidden"
@@ -146,7 +142,6 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
               </button>
             </div>
 
-            {/* Mobile Links */}
             {session?.user && !isAdmin && (
               <>
                 <Link href="/" onClick={() => setDrawerOpen(false)}>
@@ -190,7 +185,6 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
               </div>
             )}
 
-            {/* Auth Buttons */}
             {session ? (
               <>
                 <ProfileComponent closeDrawer={() => setDrawerOpen(false)} />

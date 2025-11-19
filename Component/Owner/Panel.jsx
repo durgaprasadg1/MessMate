@@ -6,7 +6,6 @@ import { useSession } from "next-auth/react";
 const Panel = ({ mess }) => {
   const { data: session, status } = useSession();
   const router = useRouter();
-  console.log("Mess : ", mess);
 
   const openClose = async () => {
     try {

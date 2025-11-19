@@ -143,9 +143,18 @@ const messSchema = Schema({
     filename: String,
     public_id: String,
   },
-  avgRating: {
-    type: Number,
-  },
+  isBlocked :{
+    type : Boolean ,
+    default: false, 
+  }, 
+  alert : [
+    {
+      type : Schema.Types.ObjectId,
+      ref : "Message",
+    }
+  ]
+
+
 });
 
 // on Delete Cascade

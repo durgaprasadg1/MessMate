@@ -20,10 +20,12 @@ const ownerSchema = new Schema(
         minLength:4,
         required : true,
     },
-    mess:{
-        type: Schema.Types.ObjectId,
-        ref : "Mess",
-    },
+    mess:[
+        {
+            type: Schema.Types.ObjectId,
+            ref : "Mess",
+        }
+    ],
     owner:{
         type: Schema.Types.ObjectId,
         ref : "Consumer",

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import ProfileComponent from "../Others/ProfileComponent";
 import { toast } from "react-toastify";
+import ButtonComponent from "../Others/Button";
 
 const AdminNavbar = () => {
   const router = useRouter();
@@ -31,7 +32,7 @@ const AdminNavbar = () => {
   };
 
   return (
-    <nav className="bg-violet-200 border-b sticky top-0 z-50">
+    <nav className="bg-purple-300 border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
         <div className="flex h-14 items-center justify-between">
           <div className="flex items-center space-x-6 gap-3">
@@ -41,29 +42,18 @@ const AdminNavbar = () => {
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             className="text-2xl font-extrabold text-gray-700"
           >
-            <Link href="/" className="  ">
+            <Link href="/admin" className="  ">
               <button className="text-gray-600 transition-colors duration-300 hover:text-black">
                 MessMate
               </button>
             </Link>
           </motion.div>
 
-            <button
-              className="p-3 hover:bg-[#60D19B] rounded  "
-              onClick={() => handleClick("/admin/pending-verification")}
-            >
-              Verify Pending Mess
-            </button>
-            <button className="p-3 hover:bg-[#60D19B] rounded  " onClick={() => handleClick("/admin/analytics")}>
-              Analytics
-            </button>
-            <button className="p-3 hover:bg-[#60D19B] rounded  " onClick={() => handleClick("/admin/all-users")}>
-              All Users
-            </button>
-            <button className="p-3 hover:bg-[#60D19B] rounded  " onClick={() => handleClick("/admin/all-messes")}>
-              All Messes    
-            </button>
 
+            <ButtonComponent data= "Pending Verification" link='/admin/pending-verification'/>
+            <ButtonComponent data= "Analytics" link='/admin/analytics'/>
+            <ButtonComponent data= "All Users" link='/admin/all-users'/>
+            <ButtonComponent data= "All Messes" link='/admin/all-messes'/>
           </div>
 
           <div className="flex items-center gap-4">
