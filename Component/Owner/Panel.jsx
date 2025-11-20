@@ -59,7 +59,8 @@ const Panel = ({ mess }) => {
   const userId = session?.user?.id?.toString?.() ?? session?.user?.id;
   const ownerId = mess?.owner?.toString?.() ?? mess?.owner;
 
-  if (userId && ownerId && userId === ownerId) {
+  if (userId && ownerId && userId === ownerId && !mess.isBlocked) {
+    
     return (
         <div className="flex gap-1">
          
@@ -102,7 +103,14 @@ const Panel = ({ mess }) => {
 
       
     );
-  } else {
+  } else if(mess.isBlocked){
+    return (
+      <div className="flex gap-1">
+        <h2 className="w-full text-center bg-red-600 text-white py-3 rounded-xl  font-medium">
+          This Mess is Blocked wait for Owner's Action. It Will be Unblocked Soon.
+        </h2>
+      </div>
+    )
   }
 };
 

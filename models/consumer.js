@@ -46,7 +46,7 @@ const consumerSchema = new Schema({
     required: true,
     match: /^[0-9]{10}$/,
   },
-  isVerified: {
+  isBlocked: {
     type: Boolean,
     default: false,
   },

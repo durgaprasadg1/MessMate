@@ -88,7 +88,7 @@ export default function BookingForm({ mess }) {
   const dishes =
     menuType === "vegMenu" ? mess.vegMenu || [] : mess.nonVegMenu || [];
 
-  if (session?.user) {
+    if (session?.user && session.user.id !== mess.owner.toString() && !mess.isBlocked) {
     return (
       <div className="w-full card shadow-sm border-0 rounded mb-4 mt-4">
         <div className="card-body p-4">

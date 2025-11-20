@@ -13,6 +13,7 @@ export async function POST(request, { params }) {
     if (!id) {
       return NextResponse.json({ message: "Mess ID missing" }, { status: 400 });
     }
+  
 
     const session = await getServerSession(authOptions);
     if (!session)
@@ -20,6 +21,13 @@ export async function POST(request, { params }) {
 
     const body = await request.json();
     const { rating, text } = body;
+    
+     if (typeof rating !== "number" || rating < 1 || rating > 5 || !text?.trim()) {
+      return NextResponse.json(
+        { message: "Valid rating (1–5) and non-empty text are required" },
+        { status: 400 }
+      );
+    }
 
     if (!rating || !text) {
       return NextResponse.json(
@@ -27,17 +35,19 @@ export async function POST(request, { params }) {
         { status: 400 }
       );
     }
+     const mess = await Mess.findById(id);
+      if (!mess)
+      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
+
 
     const review = await Review.create({
       rating,
       feedback: text,
       author: session.user.id,
+      mess:id,
     });
 
-    const mess = await Mess.findById(id);
-    if (!mess)
-      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
-
+   
     mess.reviews.push(review._id);
     await mess.save();
 

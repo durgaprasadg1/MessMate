@@ -17,7 +17,7 @@ const ButtonComponent = ({ data, link }) => {
   return (
     <div>
       <Button
-        className={session?.user?.isAdmin  ? "bg-purple-300 text-black font-medium hover:bg-purple-500 transition-colors duration-300 rounded" : " bg-gray-600 text-white font-medium hover:bg-black transition-colors duration-300 rounded"}
+        className={session?.user?.isAdmin  ? "bg-purple-300 text-black font-medium hover:bg-purple-500 transition-colors duration-300 rounded w-full" : " bg-gray-600 text-white font-medium hover:bg-black transition-colors duration-300 rounded"}
         onClick={() => handleClick(link)}
       > 
         {data}

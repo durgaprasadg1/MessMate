@@ -20,6 +20,10 @@ const reviewSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: "Consumer",
   },
+  mess: {
+    type: Schema.Types.ObjectId,
+    ref: "Mess",
+  },
 });
 
 reviewSchema.index({ author: 1 });

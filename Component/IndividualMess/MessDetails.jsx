@@ -1,7 +1,6 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import Panel from "../Owner/Panel";
 import { useEffect, useState } from "react";
 import ReviewSection from "./ReviewComponent";
 import ShowReviewComponent from "@/Component/IndividualMess/showReviewComponent";
@@ -21,11 +20,9 @@ export default function MessDetails({ mess }) {
           setIsOpen(!!d.isOpen);
         }
       } catch (err) {
-        // ignore
+        console.log("ERROR in Fetching Individual Mess",err?.message)  
       }
     };
-    window.addEventListener("mess:updated", handler);
-    return () => window.removeEventListener("mess:updated", handler);
   }, [mess._id]);
 
   return (

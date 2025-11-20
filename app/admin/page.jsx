@@ -9,6 +9,7 @@ import { tableContext } from "@/hooks/tableContext";
 import ULs from "../../Component/HTML_components/uls";
 import { useSession } from "next-auth/react";
 import NotFound from "../not-found";
+import EmptynessShowBox from "@/Component/Others/EmptynessShowBox"
 
 export default function AdminLandingPage() {
   const [stats, setStats] = useState({

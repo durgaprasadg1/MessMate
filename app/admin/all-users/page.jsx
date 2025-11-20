@@ -1,35 +1,189 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import AdminNavbar from "@/Component/Admin/AdminNavbar";
 import NotFound from "../../not-found";
+import { DataTable } from "../../../Component/ShadCnUI/table"; 
+import { toast } from "react-toastify";
+import Loading from '../../../Component/Others/Loading'
+import { data } from "framer-motion/client";
 
 export default function AllUsersPage() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const res = await fetch("/api/admin/users", { cache: "no-store" });
-        const data = await res.json();
+        const res = await fetch("/api/consumer", { cache: "no-store" });
 
-        if (!data.success) {
-          setError(true);
+        if (!res.ok) {
+          setError("Some Error Occured");
           return;
         }
 
-        setUsers(data.users || []);
+        const data = await res.json();
+       
+        setUsers(data || []);
       } catch (err) {
         console.error(err);
         setError(true);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadUsers();
   }, []);
 
+  const handleToggleBlock = async (user) => {
+    try {
+      const res = await fetch(`/api/admin/blockings/users/${user._id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action: "toggleOpen" }),
+      });
+
+      if (!res.ok) {
+        toast.error("Something error occurred while blocking the user");
+        return;
+      }
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u._id === user._id ? { ...u, isBlocked: !u.isBlocked } : u
+        )
+      );
+
+      const newStatus = !user.isBlocked;
+      if (newStatus) {
+        toast.success("User Blocked");
+      } else {
+        toast.success("User Unblocked");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Update failed");
+    }
+  };
+
+  const handleSendWarningMail = async (user) => {
+    try {
+        const res = await fetch(`/api/admin/warn-user/${user._id}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+        if(!res.ok){
+          toast.error("Failed to send warning");
+          return;
+        }
+        const data  =  await res.json();
+        toast.success(data.message);
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to send warning");
+    }
+  };
+
+  const columns = [
+    {
+      accessorKey: "username",
+      header: "Name",
+      cell: ({ row }) => <span className="font-medium">{row.original.username}</span>,
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+      cell: ({ row }) => <span>{row.original.email}</span>,
+    },
+    {
+      accessorKey: "phone",
+      header: "Phone",
+      cell: ({ row }) => <span>{row.original.phone}</span>,
+    },
+    {
+      accessorKey: "orders",
+      header: "Orders",
+      cell: ({ row }) => <span>{row.original.orders?.length || 0}</span>,
+    },
+    {
+      accessorKey: "reviews",
+      header: "Reviews",
+      cell: ({ row }) => (
+        <span>{row.original.reviews?.length || 0}</span>
+      ),
+    },
+    {
+      accessorKey: "isBlocked",
+      header: "Status",
+      cell: ({ row }) => {
+        const blocked = row.original.isBlocked;
+        return (
+          <span
+            className={
+              blocked
+                ? "inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700"
+                : "inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700"
+            }
+          >
+            {blocked ? "Blocked" : "Active"}
+          </span>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          <div className="flex flex-wrap gap-2">
+            {user.reviews?.length === 0 ? null : (
+              <Link
+                href={`/consumer/${user._id}/reviews`}
+                className="text-xs px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
+              >
+                Reviews
+              </Link>
+            )}
+
+            <button
+              className="text-xs px-2 py-1 rounded bg-yellow-300 text-black hover:bg-yellow-400"
+              onClick={() => handleSendWarningMail(user)}
+            >
+              Warn
+            </button>
+
+            <button
+              className={
+                !user.isBlocked
+                  ? "text-xs px-2 py-1 rounded bg-red-300 text-black hover:bg-red-400"
+                  : "text-xs px-2 py-1 rounded bg-green-300 text-black hover:bg-green-400"
+              }
+              onClick={() => handleToggleBlock(user)}
+            >
+              {user.isBlocked ? "Unblock" : "Block"}
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+
   if (error) return <NotFound />;
+  if (loading)
+    return (
+      <div className="min-h-screen bg-purple-50">
+        <AdminNavbar />
+        <Loading/>
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-purple-50">
@@ -40,29 +194,7 @@ export default function AllUsersPage() {
         {users.length === 0 ? (
           <p className="text-gray-600">No users found.</p>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-auto">
-            <table className="min-w-full table-auto">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-4 py-2 text-left">#</th>
-                  <th className="px-4 py-2 text-left">Username</th>
-                  <th className="px-4 py-2 text-left">Email</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u, i) => (
-                  <tr
-                    key={u._id}
-                    className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                  >
-                    <td className="px-4 py-2 align-top">{i + 1}</td>
-                    <td className="px-4 py-2 align-top">{u.username}</td>
-                    <td className="px-4 py-2 align-top">{u.email}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable columns={columns} data={users} />
         )}
       </main>
     </div>
