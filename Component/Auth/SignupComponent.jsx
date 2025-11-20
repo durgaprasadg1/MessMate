@@ -15,10 +15,7 @@ const RegisterComponent = () => {
   const path = usePathname();
 
   useEffect(() => {
-    // Only perform redirects once session is resolved
     if (status === "loading") return;
-
-    // If there is no session (not logged in), allow access to signup
     if (!session) return;
 
     if (session?.user?.isAdmin) {

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Loading from "../../../../Component/Others/Loading";
 import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
+import EmptynessShowBox from "@/Component/Others/EmptynessShowBox";
 
 const NewMessForm = () => {
   const { data: session } = useSession();
@@ -11,6 +12,8 @@ const NewMessForm = () => {
   const router = useRouter();
   const [form, setForm] = useState({
     name: "",
+    upi: "",
+    email : "",
     description: "",
     address: "",
     category: "",
@@ -65,6 +68,39 @@ const NewMessForm = () => {
     e.preventDefault();
     setMessage(null);
     setLoading(true);
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+    if (!emailRegex.test(form.email)) {
+      setLoading(false);
+      const msg = "Invalid Email";
+      toast.error(msg);
+      setMessage(`❌ ${msg}`);
+      return;
+    }
+
+    const upiRegex = /^[\w.-]{2,}@[a-zA-Z]{2,}$/;
+
+    if ( !upiRegex.test(form.upi)) {
+      setLoading(false);
+      const msg = "Invalid UPI";
+      toast.error(msg);
+      setMessage(`❌ ${msg}`);
+      return;
+    }
+
+    const phoneRegex = /^[0-9]{10}$/;
+
+    if (!phoneRegex.test(form.phoneNumber)) {
+      setLoading(false);
+      const msg = "Phone number must be 10 digits long";
+      toast.error(msg);
+      setMessage(`❌ ${msg}`);
+      return;
+    }
+
+
+    
+
     try {
       const fd = new FormData();
       console.log("formData : ", fd);
@@ -85,6 +121,8 @@ const NewMessForm = () => {
       setMessage({ type: "success", text: "Mess added successfully" });
       setForm({
         name: "",
+        email : "",
+        upi: "",
         description: "",
         address: "",
         category: "",
@@ -227,6 +265,33 @@ const NewMessForm = () => {
               placeholder="Short tagline"
             />
           </div>
+          <div>
+            <label className="block font-medium text-gray-700">
+              Owner Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              className="mt-1 w-full border rounded-md px-3 py-2"
+              placeholder="abc@example.com"
+            />
+          </div>
+          <div>
+            <label className="block font-medium text-gray-700">
+              Owner UPI
+            </label>
+            <input
+              type="text"
+              name="upi"
+              value={form.upi}
+              onChange={handleChange}
+              className="mt-1 w-full border rounded-md px-3 py-2"
+              placeholder="abc@bank"
+            />
+          </div>
+
 
           <div>
             <label className="block font-medium text-gray-700">Address</label>

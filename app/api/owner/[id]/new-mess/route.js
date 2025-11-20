@@ -3,13 +3,22 @@ import { connectDB } from "../../../../../lib/mongodb";
 import cloudinary from "@/lib/cloudinary";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import nodemailer from "nodemailer";
 
 export const runtime = "nodejs";
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
+});
 
 export async function POST(request, { params }) {
   try {
     const { id } = await params; 
-
+    console.log("Request Received For ID ",id)
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -21,12 +30,15 @@ export async function POST(request, { params }) {
       );
     }
 
+
     await connectDB();
 
     const Mess = (await import("../../../../../models/mess")).default;
     const Owner = (await import("../../../../../models/owner")).default;
     const formData = await request.formData();
     const name = formData.get("name")?.toString() || "";
+    const upi = formData.get("upi")?.toString() || "";
+    const email = formData.get("email")?.toString() || "";
     const description = formData.get("description")?.toString() || "";
     const address = formData.get("address")?.toString() || "";
     const category = formData.get("category")?.toString() || "";
@@ -40,7 +52,7 @@ export async function POST(request, { params }) {
     const file = formData.get("image");
     const certificate = formData.get("certificate");
 
-    if (!name || !file || !certificate) {
+    if (!name || !upi || !email || !file || !certificate) {
       return NextResponse.json(
         {
           message:
@@ -49,6 +61,7 @@ export async function POST(request, { params }) {
         { status: 400 }
       );
     }
+
 
     
     const bannerBuffer = Buffer.from(await file.arrayBuffer());
@@ -83,6 +96,8 @@ export async function POST(request, { params }) {
 
     const messData = {
       name,
+      email,
+      upi,
       description,
       address,
       category,
@@ -100,6 +115,7 @@ export async function POST(request, { params }) {
       nonVegMenuRef: null,
       owner: session.user.id,
     };
+    
     const created = await Mess.create(messData);
     let owner = await Owner.findById(id);
     if (!owner) {
@@ -108,6 +124,52 @@ export async function POST(request, { params }) {
         { status: 500 }
       );
     }
+    const recipientName = messData?.ownerName || "User";
+
+    await transporter.sendMail({
+      from: `"MessMate Support" <${process.env.MAIL_USER}>`,
+      to: email,
+      subject: "Password Reset Request - MessMate",
+
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 24px; background: #f5f5f5;">
+          <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e5e5e5;">
+            <h2 style="margin-top: 0; margin-bottom: 16px; font-size: 20px;">
+              Mess Verification Request Received
+            </h2>
+
+            <p style="margin: 0 0 12px 0;">Hello <b>${recipientName}</b>,</p>
+
+            <p style="margin: 0 0 12px 0;">
+              We have successfully received your <b>mess verification request</b> on MessMate.
+            </p>
+
+            <p style="margin: 0 0 12px 0;">
+              Our team will now review the details and documents you have submitted. 
+              This verification process may take up to <b>24 hours</b>.
+            </p>
+
+            <p style="margin: 0 0 12px 0;">
+              Once the verification is completed, you will receive a follow-up email informing you whether 
+              your mess has been <b>approved</b> or if any further information is required.
+            </p>
+
+            <p style="margin: 0 0 12px 0;">
+              If you have submitted this request by mistake or need to update your details, 
+              please contact our support team at your earliest convenience.
+            </p>
+
+            <p style="margin: 16px 0 0 0;">
+              Regards,<br/>
+              <b>MessMate Support Team</b>
+            </p>
+          </div>
+        </div>
+      `
+    });
+    console.log("Mail Sent")
+
+    
     owner.messes.push(created._id);
     await owner.save(); 
     return NextResponse.json({ id: created._id }, { status: 201 });

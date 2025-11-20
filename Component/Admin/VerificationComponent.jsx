@@ -6,7 +6,6 @@ import Loading from "../Others/Loading";
 import Link from "next/link";
 import { FaSpinner } from "react-icons/fa6";
 import {Spinner} from "@/components/ui/spinner";
-// import AdminNavbar from "./AdminNavbar";
 
 const VerificationComponent = () => {
   const [pendingMesses, setPendingMesses] = useState([]);

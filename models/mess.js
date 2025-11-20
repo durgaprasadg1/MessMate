@@ -22,7 +22,16 @@ const messSchema = Schema({
     filename: String,
     public_id: String,
   },
-
+  email: {
+    type: String,
+    required: true,
+    minLength: 3,
+  },
+  upi : {
+    type: String,
+    required: true,
+    minLength: 5,
+  },
   address: {
     type: String,
   },
@@ -71,7 +80,7 @@ const messSchema = Schema({
 
   owner: {
     type: Schema.Types.ObjectId,
-    ref: "Consumer",
+    ref: "Owner",
   },
 
   reviews: [
@@ -156,7 +165,6 @@ const messSchema = Schema({
 
 });
 
-// on Delete Cascade
 
 messSchema.post("findOneAndDelete", async function (doc) {
   if (doc) {
