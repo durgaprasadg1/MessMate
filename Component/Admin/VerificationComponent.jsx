@@ -171,14 +171,14 @@ const VerificationComponent = () => {
                       onClick={() => handleVerify(mess._id)}
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-xl transition-all shadow-sm"
                     >
-                      {!loading ? "Verify" : <Spinner/>}
+                      {loading ? <Spinner/> : "Verify"}
                     </button>
 
                     <button disabled={loading}
                       onClick={() => handleDeny(mess._id)}
                       className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-xl transition-all shadow-sm"
                     >
-                     {!loading ? "Deny" : <Spinner/>}
+                     {loading ? <Spinner/> : "Deny"}
                     </button>
                   </div>
                 </div>
