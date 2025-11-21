@@ -6,6 +6,7 @@ export async function POST(request) {
   try {
     await connectDB();
     const body = await request.json();
+
     const { username, email, address, upi, phoneNumber, password } = body;
     if (!username || !email || !password || !phoneNumber || !address || !upi) {
       return NextResponse.json(
@@ -13,6 +14,7 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+
     const emailRegex =
       /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
@@ -21,6 +23,7 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+
     const upiRegex = /^[\w.-]{2,}@[a-zA-Z]{2,}$/;
     if (!upiRegex.test(upi)) {
       return NextResponse.json(
@@ -28,6 +31,7 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+    
     if (!/^[0-9]{10}$/.test(phoneNumber)) {
       return NextResponse.json(
         { message: "Phone number must be 10 digits." },
@@ -58,6 +62,7 @@ export async function POST(request) {
       );
     }
     const hashedPassword = await bcrypt.hash(password, 10);
+    
     const newOwner = await Owner.create({
       name: username,
       email,
@@ -66,6 +71,7 @@ export async function POST(request) {
       address,
       password: hashedPassword,
     });
+
     return NextResponse.json(
       {
         message: "Registration successful!",
