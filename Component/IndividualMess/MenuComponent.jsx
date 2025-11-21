@@ -1,10 +1,11 @@
+import { is } from "zod/locales"
 
 
 const MenuComponent = ({ mess, isOwner }) => {
   return (
-    <div>
+    <div >
         {mess.vegMenu?.length > 0 && (
-            <div className="mt-8">
+            <div className="">
               <h2 className={isOwner? "text-2xl font-semibold text-white mb-3" : "text-2xl font-semibold text-green-300 mb-3"}>
                 🌿 Veg Menu
               </h2>
@@ -12,13 +13,13 @@ const MenuComponent = ({ mess, isOwner }) => {
               {mess.vegMenu.map((menu, i) => (
                 <div
                   key={i}
-                  className="mb-6 border rounded-xl p-4 bg-green-50 border-green-100"
+                  className={isOwner?"mb-6 border rounded-xl p-4 bg-gray-600 border-green-100" : ""}
                 >
-                  <h3 className="text-lg font-medium text-green-800 mb-2">
+                  <h3 className={isOwner?"text-lg font-medium text-white mb-2" : "text-lg font-medium text-green-800 mb-2"}>
                     {menu.name} — ₹{menu.price}
                   </h3>
 
-                  <ul className="space-y-1 text-gray-700">
+                  <ul className={isOwner?"space-y-1  text-white" : "space-y-1 text-gray-700 "} >
                     {menu.items.map((item, j) => (
                       <li
                         key={j}
@@ -42,21 +43,21 @@ const MenuComponent = ({ mess, isOwner }) => {
           )}
 
           {mess.nonVegMenu?.length > 0 && (
-            <div className="mt-10">
-              <h2 className={isOwner? "text-2xl font-semibold text-red-400 mb-3" : "text-2xl font-semibold text-red-300 mb-3"}>
+            <div className="mt-1">
+              <h2 className={isOwner? "text-2xl font-semibold text-white mb-3" : "text-2xl font-semibold text-red-300 mb-3"}>
                 🍗 Non-Veg Menu
               </h2>
 
               {mess.nonVegMenu.map((menu, i) => (
                 <div
                   key={i}
-                  className="mb-6 border rounded-xl p-4 bg-red-50 border-red-100"
+                  className={isOwner?"mb-6 border rounded-xl p-4 bg-gray-600 " : "mb-6 border rounded-xl p-4 bg-red-600 border-red-100"}
                 >
-                  <h3 className="text-lg font-medium text-red-800 mb-2">
+                  <h3 className={isOwner?"text-lg font-medium text-white mb-2" : "text-lg font-medium text-red-600 mb-2"}>
                     {menu.name} — ₹{menu.price}
                   </h3>
 
-                  <ul className="space-y-1 text-gray-700">
+                  <ul className={isOwner?"space-y-1  text-white" : "space-y-1 text-gray-700 "} >
                     {menu.items.map((item, j) => (
                       <li
                         key={j}

@@ -58,7 +58,7 @@ export default function OwnedMessPage() {
     
 
   return (
-    <div className="min-h-screen bg-gray-800 ">
+    <div className="min-h-screen bg-gray-800 pb-10">
       <OwnerNavbar />
 
       {messes.length === 0 ? (  
