@@ -49,7 +49,7 @@ const MenuComponent = ({ mess, isOwner }) => {
                 isOwner ?  " ":  <h2 className= "text-2xl font-semibold text-red-300 mb-3">Non-Veg Menu</h2>
               }
 
-
+ 
               {mess.nonVegMenu.map((menu, i) => (
                 <div
                   key={i}
