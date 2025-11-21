@@ -3,7 +3,7 @@ import OwnerNavbar from "@/Component/Owner/OwnerNavbar";
 const MessInfoEdit = async ({ params }) => {
   const { id } = await params;
   return (
-    <div>
+    <div className="bg-gray-800">
       <OwnerNavbar />
       <EditMess messID={id} />
     </div>

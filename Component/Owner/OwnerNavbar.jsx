@@ -8,6 +8,7 @@ import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
+import ProfileComponent from "../Others/ProfileComponent";
 
 export default function OwnerNavbar() {
   const { data: session } = useSession();
@@ -17,7 +18,7 @@ export default function OwnerNavbar() {
     await signOut({ redirect: false });
     router.push("/");
   };
-  console.log("Current User : ", session?.user?.id);
+  console.log("Current User : ", session?.user?.id + ` isOwner: ` + session?.user?.isOwner + ` isAdmin: ` + session?.user?.isAdmin);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
@@ -40,18 +41,23 @@ export default function OwnerNavbar() {
         </Link>
       </motion.div>
 
-      <div className="hidden md:flex gap-8 items-center text-gray-300 text-lg">
-        <ButtonComponent data="Dashboard" link="/owner/dashboard" />
+      <div className="hidden md:flex gap-3 items-center text-gray-300 text-lg mr-2">
+
+                <ButtonComponent data="Dashboard" link="/owner/dashboard" />
+
+         <ButtonComponent
+          data="Add Your Mess"
+          link={`/owner/${session?.user?.id}/new-mess`}
+        />
         <ButtonComponent
           data="Details"
           link={`/owner/${session?.user?.id}/mess-details`}
         />
-        <ButtonComponent
-          data="Add Your Mess"
-          link={`/owner/${session?.user?.id}/new-mess`}
-        />
       </div>
-
+        
+      <div className="ml-5 text-right">
+          <ProfileComponent  />
+      </div> 
       <div className="flex items-center gap-3">
         <Button
           onClick={() => handleLogout()}

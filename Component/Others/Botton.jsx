@@ -23,7 +23,7 @@ const Botton = ({ text, link, functionAfterClick, className = "" }) => {
   return (
     <div className="mt-6 block">
       <button
-        className={`${className} w-full px-4 py-2 rounded transition ${
+        className={`${className} w-full px-4 py-2 rounded transition duration-300 ${
           loading ? "opacity-60 pointer-events-none" : ""
         }`}
         onClick={() => handleClick()}

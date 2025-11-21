@@ -74,10 +74,10 @@ export default function EditUserInfoPage({ messID }) {
   if (loading) return <Loading />;
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100 p-6">
+    <div className="flex justify-center items-center min-h-screen bg-gray-800 p-6">
 
-      <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8">
-        <h2 className="text-2xl font-semibold mb-6 text-center">
+      <div className="w-full max-w-md bg-gray-200 shadow-lg rounded-2xl p-8">
+        <h2 className="text-2xl  font-semibold mb-6 text-center">
           Edit Mess Info
         </h2>
 
@@ -168,7 +168,7 @@ export default function EditUserInfoPage({ messID }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gray-600 hover:bg-black text-white py-2 rounded-lg font-semibold transition"
+            className="w-full bg-gray-600 hover:bg-black text-white py-2 rounded font-semibold transition duration-300"
           >
             {loading ? "Updating..." : "Update Info"}
           </button>

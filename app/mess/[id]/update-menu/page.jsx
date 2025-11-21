@@ -18,11 +18,11 @@ export default async function UpdateMenuPage({ params }) {
   const mess = await res.json();
 
   return (
-    <div>
+    <div className='bg-gray-800'>
       <OwnerNavbar />
       <main className="min-h-screen py-10 px-4 mt-14">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold mb-4">
+          <h2 className="text-2xl font-bold mb-4 text-white">
             Update Menu for {mess.name}
           </h2>
           <MessMenuComponent

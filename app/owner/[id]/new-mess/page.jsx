@@ -175,10 +175,10 @@ const NewMessForm = () => {
 
 
   return (
-    <div className="">
+    <div className="bg-gray-800 min-h-screen">
       <OwnerNavbar/>
-          <div className="min-h-screen bg-[--light-bg] py-12 px-4">
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6">
+          <div className="min-h-screen  py-12 px-4">
+      <div className="max-w-2xl mx-auto bg-gray-100 rounded-2xl shadow-lg p-6">
         <h3 className="text-2xl font-bold text-orange-600 mb-3 flex items-center gap-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -214,7 +214,7 @@ const NewMessForm = () => {
           <span className="font-semibold">
             जब आप वास्तव में मेस की लोकेशन पर मौजूद हों,
           </span>
-          क्योंकि आपकी 
+          क्योंकि आपकी {' '}
           <span className="font-semibold">
             वर्तमान लोकेशन अपने-आप ट्रैक की जाएगी।
           </span>
@@ -233,7 +233,7 @@ const NewMessForm = () => {
                 : "bg-red-100 text-red-800"
             }`}
           >
-            {message.type === "success" ? "Mess will be added after verification." : "Something went wrong!"}
+            {message.type === "success" ? "वेरिफिकेशन के बाद आपकी मेस जोड़ दिया जाएगा। आपको जल्द ही मेल भेजी जाएगी।" : "कुछ गड़बड़ हो गई है। कृपया बाद में दोबारा कोशिश करें !"}
             
           </div>
         )}

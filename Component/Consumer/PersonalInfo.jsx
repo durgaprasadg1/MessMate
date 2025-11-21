@@ -12,6 +12,13 @@ export default function PersonalInfo({ consumerid }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const isAdmin = session?.user?.isAdmin;
+  const isOwner = session?.user?.isOwner;
+  const adminClass = "min-h-screen bg-violet-100 flex items-center justify-center py-14";
+  const userClass = "min-h-screen bg-gray-50 flex items-center justify-center py-14";
+  const OwnerClass = "min-h-screen bg-gray-800 flex items-center justify-center py-14";
+  const adminSecondaryClass = "bg-purple-50 rounded-2xl shadow-xl p-8 w-full max-w-3xl border border-gray-100";
+  const userSecondaryClass = "bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl border border-gray-100";
+  const ownerSecondaryClass = "bg-gray-700 rounded-2xl shadow-xl p-8 w-full max-w-3xl border border-gray-600";
 
   
   useEffect(() => {
@@ -20,8 +27,8 @@ export default function PersonalInfo({ consumerid }) {
 
     const fetchUser = async () => {
       try {
-        const domain = session?.user?.isAdmin ? "admin" : "consumer";
-
+        const domain = session?.user?.isAdmin ? "admin" : session?.user?.isOwner ? "owner" : "consumer";
+          
         const res = await fetch(`/api/${domain}/${consumerid}`);
         const data = await res.json();
 
@@ -30,9 +37,9 @@ export default function PersonalInfo({ consumerid }) {
           return;
         }
 
-        const pickedUser = data.consumer || data.admin;
+        const pickedUser = data.consumer || data.admin || data.owner;
         setUser(pickedUser);
-        console.log("Fetched user:", user);
+        console.log("Fetched user:", pickedUser);
       } catch (err) {
         console.error("Error fetching user:", err);
         toast.error("Failed to fetch user info");
@@ -52,21 +59,21 @@ export default function PersonalInfo({ consumerid }) {
   if (!user) return null;
 
   return (
-    <div className={isAdmin? "min-h-screen bg-violet-100 flex items-center justify-center py-14" :"min-h-screen bg-gray-50 flex items-center justify-center py-14"}>
-      <div className={isAdmin?"bg-purple-50 rounded-2xl shadow-xl p-8 w-full max-w-3xl border border-gray-100": "bg-white rounded-2xl shadow-xl p-8 w-full max-w-3xl border border-gray-100"}>
+    <div className={isAdmin? adminClass : isOwner ? OwnerClass : userClass}>
+      <div className={isAdmin?adminSecondaryClass : isOwner ? ownerSecondaryClass : userSecondaryClass}>
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <h1 className={isOwner? "text-2xl font-bold text-white flex items-center gap-2":"text-2xl font-bold text-gray-800 flex items-center gap-2"}>
               <span>Personal Information</span>
             </h1>
-            <p className="text-gray-500 text-sm mt-1">
+            {isOwner || isAdmin ? "" : <p className="text-gray-500 text-sm mt-1">
               Update your personal information and manage your account settings.
-            </p>
+            </p>}
           </div>
 
           <div className="flex items-center gap-3">
             
-              {isAdmin? "" :
+              {isAdmin || isOwner? "" :
               (<>
               <button className="text-black" onClick={EditInfo}><div className="flex items-center justify-center"><Pencil size={16} /> </div> </button>
               </>)}
@@ -77,7 +84,7 @@ export default function PersonalInfo({ consumerid }) {
           <div>
             <label className="text-gray-600 font-medium text-sm">Name</label>
             <div className="mt-1 p-3 bg-gray-100 rounded-lg border border-gray-200">
-              {isAdmin ? user.name : user.username}
+              {isAdmin || isOwner ? user.name : user.username}
             </div>
           </div>
 
@@ -91,7 +98,7 @@ export default function PersonalInfo({ consumerid }) {
           <div>
             <label className="text-gray-600 font-medium text-sm">Phone</label>
             <div className="mt-1 p-3 bg-gray-100 rounded-lg border border-gray-200">
-              {isAdmin ? user.phoneNumber : user.phone}
+              {isAdmin || isOwner ? user.phoneNumber : user.phone}
             </div>
           </div>
 
@@ -107,9 +114,9 @@ export default function PersonalInfo({ consumerid }) {
               Account Role
             </label>
             <div className="mt-1 p-3 bg-gray-100 rounded-lg border border-gray-200 flex items-center gap-2">
-              <span>{isAdmin ? "Admin" : "User"}</span>
+              <span>{isAdmin ? "Admin" : isOwner ? "Owner" : "User"}</span>
               <span className="px-2 py-1 bg-gray-200 rounded-full text-xs">
-                {isAdmin ? "Admin" : "User"}
+                {isAdmin ? "Admin" : isOwner ? "Owner" : "User"}
               </span>
             </div>
           </div>

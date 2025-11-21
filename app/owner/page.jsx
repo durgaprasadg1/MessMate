@@ -4,10 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Home, Store, ClipboardList } from "lucide-react";
 import OwnerNavbar from "../../Component/Owner/OwnerNavbar";
+import {useRouter} from "next/navigation";
 import { useSession } from "next-auth/react";
 
 export default function OwnerLandingPage() {
+  const router = useRouter();
   const { data: session } = useSession();
+  const isOwner = session?.user?.isOwner;
+  console.log("Owner Landing Page - Current User : ", isOwner + '  ' + session?.user?.isAdmin);
   if (!session || session?.user?.isOwner === false) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -26,7 +30,7 @@ export default function OwnerLandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gray-800 flex flex-col">
       <OwnerNavbar />
       <section className="bg-gray-800 text-white py-20 px-6 flex flex-col items-center text-center">
         <motion.h1
@@ -47,13 +51,13 @@ export default function OwnerLandingPage() {
           service quality — all in one place.
         </motion.p>
         <>
-          <Button className="bg-gray-600 hover:bg-black text-white  text-lg rounded">
+          <Button onClick={() => { router.push(`/owner/${session?.user?.id}/new-mess`)}} className="bg-gray-600 hover:bg-black text-white  text-lg rounded">
             Get Started
           </Button>
         </>
       </section>
 
-      <section className="py-14 px-6 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+      <section className="py-14  px-6 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
         <Card className="shadow-xl rounded-2xl">
           <CardContent className="p-6 text-center">
             <Store className="mx-auto h-12 w-12 mb-4" />

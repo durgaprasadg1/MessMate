@@ -11,6 +11,7 @@ import {useRouter} from "next/navigation";
 import { useSession } from "next-auth/react";
 import Loading from "@/Component/Others/Loading";
 import EmptynessShowBox from "@/Component/Others/EmptynessShowBox";
+import MenuComponent from "@/Component/IndividualMess/MenuComponent";
 
 export default function OwnedMessPage() {
 
@@ -18,6 +19,8 @@ export default function OwnedMessPage() {
   const router = useRouter();
   const [messes, setMesses] = useState([]);
   const { data: session } = useSession();
+  const isOwner = session?.user?.isOwner;
+  console.log("Is Owner: ", isOwner);
     
   useEffect(() => {
     const fetchMesses = async () => {
@@ -47,47 +50,32 @@ export default function OwnedMessPage() {
     router.push(link);
   }
 
-  if (!session || session?.user?.isOwner === false) {
+  if (!session || isOwner === false) {
       return (
         <Loading/>
       );
     }
-  
-
+    
 
   return (
-    <div className="min-h-screen bg-gray-100 ">
+    <div className="min-h-screen bg-gray-800 ">
       <OwnerNavbar />
 
       {messes.length === 0 ? (  
         <EmptynessShowBox heading="No Mess Registered" link={`/owner/${session?.user?.id}/new-mess`} linkmsg="Click Here to Register a Mess Now." />
       
-    ):("")}
-      <motion.h1
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-4xl font-extrabold text-center mb-10"
-      >
-        Your Registered Mess
-      </motion.h1>
-
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto "
-      >
+    ):(<div className="text-5xl text-amber-400 text-center font-medium">
+        You have registered mess.
+      </div>)}
+      
         {messes.map((mess) => (
-          <motion.div key={mess._id} whileHover={{ scale: 1.03 }}>
+          <div key={mess._id} className="p-6 flex gap-3" >
           {!mess.isVerified ? <div >   <EmptynessShowBox heading="Your Mess Is Currently Under Verication" data="" link=""  /> </div>:
-            <Card className="rounded-2xl shadow-lg bg-white cursor-pointer w-102">
+            <Card className="rounded-2xl shadow-lg bg-zinc-800 cursor-pointer w-102">
               <CardContent className="">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-800">
-                    {mess.name}
-                  </h1>
-                  <p className="text-gray-500 mt-1 text-md">
+                 <h4 className="text-white ">🍱{mess.name}</h4>
+                  <p className="text-white mt-1 text-md">
                     Type :{" "}
                     {mess.category === "both" ? "Veg + Non-Veg" : mess.category}{" "}
                     {" -> "}
@@ -103,29 +91,29 @@ export default function OwnedMessPage() {
                 </div>
                 <div className="text-left sm:mt-0">
                   <div className="flex gap-3">
-                    <p className="text-gray-700">
+                    <p className="text-white ">
                       <span className="font-medium">Owner:</span>{" "}
                       {mess.ownerName}
                     </p>
-                    <p className="text-gray-700">
+                    <p className="text-white ">
                       <span className="font-medium">Phone:</span>{" "}
                       {mess.phoneNumber}
                     </p>
                   </div>
                   <div className="flex gap-3">
-                    <p className="text-gray-700">
+                    <p className="text-white ">
                       <span className="font-medium">Aadhaar:</span>{" "}
                       {mess.adharNumber}
                     </p>
 
                     {mess.lat && mess.lon && (
                       <p className="text-sm  flex items-center gap-2">
-                        <span className="font-medium">Location :</span>
+                        <span className="font-medium text-white">Location :</span>
                         <Link
                           href={`https://www.google.com/maps?q=${mess.lat},${mess.lon}`}
                           target="_blank"
                         >
-                          <button className="py-1 rounded text-black hover:bg-gray-100 p-1">
+                          <button className="py-1 rounded text-white  hover:bg-zinc-700 p-1">
                             On Map
                           </button>
                         </Link>
@@ -138,22 +126,41 @@ export default function OwnedMessPage() {
                     <button className="w-full bg-green-500 p-2 rounded hover:bg-green-600 text-white font-medium" onClick={()=>handleClick(`/mess/${mess._id}/messages`)}>Messages</button>
                     <button className="w-full bg-green-500 p-2 rounded hover:bg-green-600 text-white font-medium"onClick={()=> handleClick(`/mess/${mess._id}/orders`)}>Orders</button>
                 </div>
+                <button className="w-full bg-white p-2 rounded mt-2"onClick={()=>handleClick(`/mess/${mess._id}/analytics`)}>View Analytics</button>
 
             
                </CardContent>
             </Card>
             }
-            <div className="container h-80 w-full ">
-                    
+            <div className="container h-80 w-full " >
+            
+
+                 {mess.vegMenu.length > 0 || mess.nonVegMenu.length >  0 ? (<div>
+                  {mess.vegMenu?.length > 0 && (
+                    <MenuComponent mess={mess} isOwner={isOwner} />
+          )}
+
           </div>
-          </motion.div>
+                 ) : (<>
+                  {mess.vegMenu.length === 0 && (
+                    <EmptynessShowBox heading="No Veg Menu Added Yet" link={`/owner/${session?.user?.id}/mess/${mess._id}/add-menu`} linkmsg="Click Here to Add Veg Menu Now." />
+                  )}
+                  {mess.nonVegMenu.length === 0 && (
+                    <EmptynessShowBox heading="No Non-Veg Menu Added Yet" link={`/owner/${session?.user?.id}/mess/${mess._id}/add-menu`} linkmsg="Click Here to Add Non-Veg Menu Now." />
+                  )}
+
+                 </>)
+}
+                  
+          </div>
+          </div>
 
           
 
 
 
         ))}
-      </motion.div>
+      
     </div>
   );
 }

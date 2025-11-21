@@ -360,26 +360,29 @@ export default function MessMenuComponent({
         </div>
 
         <div className="mt-4 flex gap-3">
-          <button
-            type="button"
-            className="px-4 py-2 bg-gray-100 rounded-md"
-            onClick={() => addDish()}
-          >
-            Add Dish
-          </button>
           <label className="inline-flex items-center gap-2">
             <input
               type="checkbox"
               checked={replaceWholeMenu}
               onChange={(e) => setReplaceWholeMenu(e.target.checked)}
+              className="mt-3"
             />
             <span className="text-sm text-slate-600">Replace entire menu</span>
           </label>
+          <button
+            type="button"
+            className="px-4 py-2  text-gray-800  border-2 border-gray-800 p-1  rounded hover:bg-gray-800 hover:text-white transition duration-300 ml-auto"
+            onClick={() => addDish()}
+          >
+            Add Dish
+          </button>
+          
 
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 bg-orange-600 text-white rounded-md"
+                        className="px-4 py-2 bg-gray-800  text-gray-100 rounded  hover:bg-white transition-all duration-300 hover:text-gray-800 border-2 border-gray-800"
+
           >
             {loading ? "Saving..." : "Save Menu"}
           </button>
