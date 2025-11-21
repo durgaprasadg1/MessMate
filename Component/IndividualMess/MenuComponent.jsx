@@ -6,10 +6,10 @@ const MenuComponent = ({ mess, isOwner }) => {
     <div >
         {mess.vegMenu?.length > 0 && (
             <div className="">
-              <h2 className={isOwner? "text-2xl font-semibold text-white mb-3" : "text-2xl font-semibold text-green-300 mb-3"}>
-                🌿 Veg Menu
-              </h2>
-
+              {!isOwner ? <h2 className= "text-2xl font-semibold text-green-300 mb-3">
+                
+              </h2> : ""
+}
               {mess.vegMenu.map((menu, i) => (
                 <div
                   key={i}
@@ -44,9 +44,11 @@ const MenuComponent = ({ mess, isOwner }) => {
 
           {mess.nonVegMenu?.length > 0 && (
             <div className="mt-1">
-              <h2 className={isOwner? "text-2xl font-semibold text-white mb-3" : "text-2xl font-semibold text-red-300 mb-3"}>
-                🍗 Non-Veg Menu
-              </h2>
+              
+              {
+                isOwner ?  " ":  <h2 className= "text-2xl font-semibold text-red-300 mb-3">Non-Veg Menu</h2>
+              }
+
 
               {mess.nonVegMenu.map((menu, i) => (
                 <div
