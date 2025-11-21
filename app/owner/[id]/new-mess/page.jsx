@@ -177,7 +177,7 @@ const NewMessForm = () => {
   return (
     <div className="">
       <OwnerNavbar/>
-          <div className="min-h-screen bg-[--light-bg] py-12 px-4"></div>
+          <div className="min-h-screen bg-[--light-bg] py-12 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6">
         <h3 className="text-2xl font-bold text-orange-600 mb-3 flex items-center gap-2">
           <svg
@@ -434,6 +434,7 @@ const NewMessForm = () => {
             </button>)}
           </div>
         </form>
+      </div>
       </div>
     </div>
   );

@@ -125,6 +125,7 @@ export async function POST(request, { params }) {
       );
     }
     const recipientName = messData?.ownerName || "User";
+    
     try {
         await transporter.sendMail({
         from: `"MessMate Support" <${process.env.MAIL_USER}>`,
@@ -167,8 +168,6 @@ export async function POST(request, { params }) {
           </div>
         `
       });
-      console.log("Mail Sent")
-
       const created = await Mess.create(messData);
       owner.messes.push(created._id);
       await owner.save(); 
