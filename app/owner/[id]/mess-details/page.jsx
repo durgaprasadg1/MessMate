@@ -80,6 +80,7 @@ export default function OwnedMessPage() {
       >
         {messes.map((mess) => (
           <motion.div key={mess._id} whileHover={{ scale: 1.03 }}>
+          {!mess.isVerified ? <div >   <EmptynessShowBox heading="Your Mess Is Currently Under Verication" data="" link=""  /> </div>:
             <Card className="rounded-2xl shadow-lg bg-white cursor-pointer w-102">
               <CardContent className="">
                 <div>
@@ -141,6 +142,7 @@ export default function OwnedMessPage() {
             
                </CardContent>
             </Card>
+            }
             <div className="container h-80 w-full ">
                     
           </div>

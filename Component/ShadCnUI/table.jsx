@@ -150,7 +150,6 @@ export function DataTable({ columns, data }) {
         </Table>
       </div>
 
-      {/* Pagination controls */}
       <div className="flex items-center justify-between py-4">
         <div className="text-sm text-muted-foreground">
           Showing{" "}

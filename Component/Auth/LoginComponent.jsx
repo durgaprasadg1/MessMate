@@ -40,7 +40,16 @@ const LoginComponent = () => {
 
       if (result?.error) {
         toast.error("Invalid credentials Or Internet Connection Lost");
-      } else {
+      } else if(session?.user?.isAdmin) {
+        
+        toast.success("Login successful");
+        router.push("/admin");
+      }
+      else if(session?.user?.isOwner){
+        toast.success("Login successful");
+        router.push("/owner");
+      }
+      else{
         toast.success("Login successful");
         router.push("/mess");
       }

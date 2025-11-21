@@ -21,7 +21,8 @@ const ProfileComponent = () => {
                 
                 <FaRegUser className="text-gray-700"/>
                 <span className="text-sm font-medium text-gray-700 hover:text-black">
-                  {session?.user?.username }
+                  {session?.user?.isAdmin ? session?.user?.name : session?.user?.username}
+                  
                 </span>
               </div>
 }

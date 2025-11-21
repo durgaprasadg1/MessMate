@@ -5,6 +5,7 @@ import ConsumerHistoryUI from "../../../../Component/Consumer/ConsumerHistory";
 import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
 import Loading from "@/Component/Others/Loading";
+import Navbar from "@/Component/Others/Navbar";
 
 export default function ConsumerHistory({ params }) {
   const { consumerid } = use(params);
@@ -87,6 +88,7 @@ export default function ConsumerHistory({ params }) {
 
   return (
     <div>
+      <Navbar />
       <div className="p-6 max-w-4xl mx-auto mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Your Order History</h1>
         {session && session.user && session.user.id === consumerid && (

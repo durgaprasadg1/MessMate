@@ -182,7 +182,7 @@ export default function MessDetails({ mess }) {
         </div>
       </div>
 
-      {session && (mess.vegMenu?.length > 0 || mess.nonVegMenu?.length > 0) ? (
+      {session && ((mess.vegMenu?.length > 0 || mess.nonVegMenu?.length > 0) && mess.isOpen)? (
         <div className="flex flex-col md:flex-row items-start gap-6 mt-6">
           <div className="w-full md:w-1/2">
             <BookingForm mess={mess} />
@@ -196,7 +196,7 @@ export default function MessDetails({ mess }) {
           <ReviewSection messID={mess._id} />
         </div>
       )}
-
+      <br />
       <ShowReviewComponent reviews={mess.reviews} mess={mess} />
     </div>
   );

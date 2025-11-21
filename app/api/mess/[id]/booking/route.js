@@ -71,7 +71,7 @@ async function computePricePerPlate(mess, menutype, selectedDish) {
     else pricePerPlate = mess.nonVegPrice || 0;
   }
 
- if (!dishName) {
+  if (!dishName) {
     if (
       selectedDish !== undefined &&
       selectedDish !== null &&
@@ -88,7 +88,7 @@ async function computePricePerPlate(mess, menutype, selectedDish) {
 
 export async function POST(request, { params }) {
   try {
-    const { id } = await params;
+    const { id } = await params || {};
     const body = await request.json();
     await connectDB();
     const { default: Mess } = await import("../../../../../models/mess");
@@ -97,6 +97,21 @@ export async function POST(request, { params }) {
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+
+    const { default: Consumer } = await import(
+      "../../../../../models/consumer"
+    );
+    const consumer = await Consumer.findById(session.user.id);
+    if (!consumer)
+      return NextResponse.json(
+        { message: "Consumer not found" },
+        { status: 404 }
+      );
+    if (consumer.isBlocked)
+      return NextResponse.json(
+        { message: "Your account is blocked. You cannot create bookings." },
+        { status: 403 }
+      );
 
     const mess = await Mess.findById(id);
     if (!mess)
@@ -167,7 +182,7 @@ export async function POST(request, { params }) {
 
 export async function PATCH(request, { params }) {
   try {
-    const { id } = await params;
+    const { id } = params || {};
     const body = await request.json();
     const {
       razorpay_order_id,
@@ -184,6 +199,10 @@ export async function PATCH(request, { params }) {
     }
 
     await connectDB();
+
+    const session = await getServerSession(authOptions);
+    if (!session)
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
     const { default: Order } = await import("../../../../../models/order");
     const { default: Mess } = await import("../../../../../models/mess");
@@ -209,6 +228,22 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ message: "Order not found" }, { status: 404 });
     }
 
+    // ensure the session user matches the order consumer
+    if (String(dbOrder.consumer) !== String(session.user.id)) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
+    }
+
+    const consumer = await Consumer.findById(session.user.id);
+    if (!consumer)
+      return NextResponse.json(
+        { message: "Consumer not found" },
+        { status: 404 }
+      );
+    if (consumer.isBlocked)
+      return NextResponse.json(
+        { message: "Your account is blocked. You cannot pay for bookings." },
+        { status: 403 }
+      );
 
     if (expectedSign === razorpay_signature) {
       dbOrder.status = "paid";
