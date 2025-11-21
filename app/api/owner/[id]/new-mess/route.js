@@ -116,7 +116,7 @@ export async function POST(request, { params }) {
       owner: session.user.id,
     };
     
-    const created = await Mess.create(messData);
+  
     let owner = await Owner.findById(id);
     if (!owner) {
       return NextResponse.json(
@@ -125,54 +125,58 @@ export async function POST(request, { params }) {
       );
     }
     const recipientName = messData?.ownerName || "User";
+    try {
+        await transporter.sendMail({
+        from: `"MessMate Support" <${process.env.MAIL_USER}>`,
+        to: email,
+        subject: "Password Reset Request - MessMate",
 
-    await transporter.sendMail({
-      from: `"MessMate Support" <${process.env.MAIL_USER}>`,
-      to: email,
-      subject: "Password Reset Request - MessMate",
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 24px; background: #f5f5f5;">
+            <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e5e5e5;">
+              <h2 style="margin-top: 0; margin-bottom: 16px; font-size: 20px;">
+                Mess Verification Request Received
+              </h2>
 
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 24px; background: #f5f5f5;">
-          <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e5e5e5;">
-            <h2 style="margin-top: 0; margin-bottom: 16px; font-size: 20px;">
-              Mess Verification Request Received
-            </h2>
+              <p style="margin: 0 0 12px 0;">Hello <b>${recipientName}</b>,</p>
 
-            <p style="margin: 0 0 12px 0;">Hello <b>${recipientName}</b>,</p>
+              <p style="margin: 0 0 12px 0;">
+                We have successfully received your <b>mess verification request</b> on MessMate.
+              </p>
 
-            <p style="margin: 0 0 12px 0;">
-              We have successfully received your <b>mess verification request</b> on MessMate.
-            </p>
+              <p style="margin: 0 0 12px 0;">
+                Our team will now review the details and documents you have submitted. 
+                This verification process may take up to <b>24 hours</b>.
+              </p>
 
-            <p style="margin: 0 0 12px 0;">
-              Our team will now review the details and documents you have submitted. 
-              This verification process may take up to <b>24 hours</b>.
-            </p>
+              <p style="margin: 0 0 12px 0;">
+                Once the verification is completed, you will receive a follow-up email informing you whether 
+                your mess has been <b>approved</b> or if any further information is required.
+              </p>
 
-            <p style="margin: 0 0 12px 0;">
-              Once the verification is completed, you will receive a follow-up email informing you whether 
-              your mess has been <b>approved</b> or if any further information is required.
-            </p>
+              <p style="margin: 0 0 12px 0;">
+                If you have submitted this request by mistake or need to update your details, 
+                please contact our support team at your earliest convenience.
+              </p>
 
-            <p style="margin: 0 0 12px 0;">
-              If you have submitted this request by mistake or need to update your details, 
-              please contact our support team at your earliest convenience.
-            </p>
-
-            <p style="margin: 16px 0 0 0;">
-              Regards,<br/>
-              <b>MessMate Support Team</b>
-            </p>
+              <p style="margin: 16px 0 0 0;">
+                Regards,<br/>
+                <b>MessMate Support Team</b>
+              </p>
+            </div>
           </div>
-        </div>
-      `
-    });
-    console.log("Mail Sent")
+        `
+      });
+      console.log("Mail Sent")
 
+      const created = await Mess.create(messData);
+      owner.messes.push(created._id);
+      await owner.save(); 
+      return NextResponse.json({ id: created._id }, { status: 201 });
+    } catch (error) {
+      
+    }
     
-    owner.messes.push(created._id);
-    await owner.save(); 
-    return NextResponse.json({ id: created._id }, { status: 201 });
   } catch (error) {
     console.error("Error creating mess:", error);
     return NextResponse.json(
