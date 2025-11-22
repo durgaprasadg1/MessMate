@@ -10,7 +10,7 @@ const ULs = () => {
     const { pendingMesses} = useContext(tableContext)  || {};
   return (
     <div>
-        <ul className="text-sm text-gray-700 space-y-2">
+        <ul className="text-sm text-white space-y-2">
               {pendingMesses.map((m) => (
                 <li key={m._id} className="flex items-center justify-between">
                   <span>{m.name}</span>
@@ -18,7 +18,7 @@ const ULs = () => {
                     onClick={() =>
                       handleClick()
                     }
-                    className="px-3 py-1 bg-yellow-500 text-white rounded-md"
+                    className="px-3 py-2 bg-amber-400 text-black rounded"
                   >
                     Review
                   </button>

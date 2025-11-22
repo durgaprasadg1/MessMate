@@ -134,10 +134,8 @@ const NewMessForm = () => {
       });
       setImage(null);
       setCertificate(null);
-      alert(
-        "Mess aapplication is gone for verification first and after successfull verification, your mess will be added automatically."
-      );
-      router.push("/owner");
+      
+      
     } catch (err) {
       console.error(err);
       toast.error(err);
@@ -177,7 +175,7 @@ const NewMessForm = () => {
     <div className="bg-gray-800 min-h-screen">
       <OwnerNavbar/>
           <div className="min-h-screen  py-12 px-4">
-      <div className="max-w-2xl mx-auto bg-gray-100 rounded-2xl shadow-lg p-6">
+      <div className="max-w-2xl mx-auto bg-gray-700 rounded-2xl text-white shadow-lg p-6">
         <h3 className="text-2xl font-bold text-orange-600 mb-3 flex items-center gap-2">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -255,7 +253,7 @@ const NewMessForm = () => {
           </div>
 
           <div>
-            <label className="block font-medium text-gray-700">
+            <label className="block font-medium text-white">
               Tagline / Description
             </label>
             <input
@@ -267,7 +265,7 @@ const NewMessForm = () => {
             />
           </div>
           <div>
-            <label className="block font-medium text-gray-700">
+            <label className="block font-medium text-white">
               Owner Email
             </label>
             <input
@@ -280,7 +278,7 @@ const NewMessForm = () => {
             />
           </div>
           <div>
-            <label className="block font-medium text-gray-700">
+            <label className="block font-medium text-white">
               Owner UPI
             </label>
             <input
@@ -295,7 +293,7 @@ const NewMessForm = () => {
 
 
           <div>
-            <label className="block font-medium text-gray-700">Address</label>
+            <label className="block font-medium text-white">Address</label>
             <input
               name="address"
               value={form.address}
@@ -308,7 +306,7 @@ const NewMessForm = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block font-medium text-gray-700">
+              <label className="block font-medium text-white">
                 Category
               </label>
               <select
@@ -326,7 +324,7 @@ const NewMessForm = () => {
             </div>
 
             <div>
-              <label className="block font-medium text-gray-700">Limits</label>
+              <label className="block font-medium text-white">Limits</label>
               <select
                 name="limits"
                 value={form.limits}
@@ -341,7 +339,7 @@ const NewMessForm = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block font-medium text-gray-700">
+              <label className="block font-medium text-white">
                 Owner Name
               </label>
               <input
@@ -356,8 +354,8 @@ const NewMessForm = () => {
             </div>
 
             <div>
-              <label className="block font-medium text-gray-700">
-                Aadhaar Number
+              <label className="block font-medium text-white">
+                Owner's Aadhaar Number
               </label>
               <input
                 name="adharNumber"
@@ -372,7 +370,7 @@ const NewMessForm = () => {
           </div>
 
           <div>
-            <label className="block font-medium text-gray-700">
+            <label className="block font-medium text-white">
               Phone Number
             </label>
             <input
@@ -390,7 +388,7 @@ const NewMessForm = () => {
           <input type="hidden" name="lon" value={form.lon} />
 
           <div>
-            <label className="block font-medium text-gray-700">
+            <label className="block font-medium text-white">
               Mess Banner (jpg, jpeg, png)
             </label>
             <input
@@ -403,7 +401,7 @@ const NewMessForm = () => {
           </div>
 
           <div>
-            <label className="block font-medium text-gray-700">
+            <label className="block font-medium text-white">
               {" "}
               Certificate of Verification (jpg, jpeg, png)
             </label>

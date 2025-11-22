@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState } from "react";
@@ -107,7 +108,7 @@ export default function AllMesses({ messes = [], filteredMesses: passedFiltered 
       accessorKey: "name",
       header: "Name",
       cell: ({ row }) => (
-        <span className="font-semibold text-amber-900">
+        <span className="font-semibold text-white">
           {row.original.name}
         </span>
       ),
@@ -115,20 +116,20 @@ export default function AllMesses({ messes = [], filteredMesses: passedFiltered 
     {
       accessorKey: "ownerName",
       header: "Owner",
-      cell: ({ row }) => <span>{row.original.ownerName || "N/A"}</span>,
+      cell: ({ row }) => <span className="text-white">{row.original.ownerName || "N/A"}</span>,
     },
     {
       accessorKey: "category",
       header: "Category",
       cell: ({ row }) => (
-        <span>{formattedCategory(row.original.category)}</span>
+        <span className="text-white">{formattedCategory(row.original.category)}</span>
       ),
     },
     {
       accessorKey: "address",
       header: "Address",
       cell: ({ row }) => (
-        <span>
+        <span className="text-white">
           {row.original.address
             ? row.original.address.split(",")[0]
             : "Unknown"}
@@ -177,7 +178,7 @@ export default function AllMesses({ messes = [], filteredMesses: passedFiltered 
       cell: ({ row }) => {
         const mess = row.original;
         return (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 text-white" >
             <ButtonComponent
               data="Reviews"
               link={`/admin/all-messes/${mess._id}/reviews`}
@@ -187,7 +188,7 @@ export default function AllMesses({ messes = [], filteredMesses: passedFiltered 
 
           <button
               onClick={() => handleSendWarningMail(mess.owner)}
-              className="px-3 py-1 text-xs rounded bg-yellow-400 font-semibold text-black hover:bg-yellow-600 transition"
+              className="px-3 py-1 text-xs rounded bg-yellow-300 font-semibold text-black hover:bg-yellow-600 transition"
             >
               Send Warning
             </button>
@@ -215,6 +216,7 @@ export default function AllMesses({ messes = [], filteredMesses: passedFiltered 
       },
     },
   ];
+  let classes = "text-4xl font-extrabold  mb-10 drop-shadow-md"
 
   return (
     <>
@@ -235,12 +237,12 @@ export default function AllMesses({ messes = [], filteredMesses: passedFiltered 
       <div
         className={
           isAdmin
-            ? "py-8 px-4 sm:px-6 lg:px-8 bg-purple-200"
+            ? "py-8 px-4 sm:px-6 lg:px-8 bg-zinc-800 min-h-screen"
             : "py-8 px-4 sm:px-6 lg:px-8 mt-16"
         }
       >
-        <h1 className="text-4xl font-extrabold text-center text-amber-800 mb-10 drop-shadow-md">
-          🍱 All Mess Listings
+        <h1 className={isAdmin ? `${classes  } text-white ` : `${classes} text-center`}>
+           All Mess Listings
         </h1>
 
         {isAdmin ? (

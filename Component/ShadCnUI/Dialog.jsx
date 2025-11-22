@@ -58,7 +58,7 @@ const DialogBox = ({ endpt }) => {
     <Dialog>
       <form >
         <DialogTrigger asChild>
-          <Button className="bg-purple-300 text-black hover:bg-purple-500 rounded transition-colors duration-300" variant="outline">Message Owner</Button>
+          <Button className="bg-amber-300 text-black hover:bg-amber-500 rounded transition-colors duration-300" variant="contained">Message Owner</Button>
         </DialogTrigger>
 
         <DialogContent className="sm:max-w-[425px]">

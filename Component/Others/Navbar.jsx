@@ -3,7 +3,6 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Search, Menu, X } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { toast } from "react-toastify";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import ProfileComponent from "./ProfileComponent";
@@ -57,7 +56,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
                 className="text-gray-600 hover:text-black"
                 onClick={handleHistoryClick}
               >
-                Your Orders
+                Your Order History
               </button>
 
               

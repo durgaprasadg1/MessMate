@@ -95,28 +95,28 @@ export default function AllUsersPage() {
     {
       accessorKey: "username",
       header: "Name",
-      cell: ({ row }) => <span className="font-medium">{row.original.username}</span>,
+      cell: ({ row }) => <span className="font-medium text-white">{row.original.username}</span>,
     },
     {
       accessorKey: "email",
       header: "Email",
-      cell: ({ row }) => <span>{row.original.email}</span>,
+      cell: ({ row }) => <span className="font-medium text-white">{row.original.email}</span>,
     },
     {
       accessorKey: "phone",
       header: "Phone",
-      cell: ({ row }) => <span>{row.original.phone}</span>,
+      cell: ({ row }) => <span className="font-medium text-white">{row.original.phone}</span>,
     },
     {
       accessorKey: "orders",
       header: "Orders",
-      cell: ({ row }) => <span>{row.original.orders?.length || 0}</span>,
+      cell: ({ row }) => <span className="font-medium text-white">{row.original.orders?.length || 0}</span>,
     },
     {
       accessorKey: "reviews",
       header: "Reviews",
       cell: ({ row }) => (
-        <span>{row.original.reviews?.length || 0}</span>
+        <span className="font-medium text-white">{row.original.reviews?.length || 0}</span>
       ),
     },
     {
@@ -186,10 +186,10 @@ export default function AllUsersPage() {
     );
 
   return (
-    <div className="min-h-screen bg-purple-50">
+    <div className="min-h-screen bg-zinc-900">
       <AdminNavbar />
       <main className="max-w-6xl mx-auto p-6">
-        <h1 className="text-2xl font-semibold mb-4">All Users</h1>
+        <h1 className="text-2xl font-semibold mb-4 text-white">All Users</h1>
 
         {users.length === 0 ? (
           <p className="text-gray-600">No users found.</p>

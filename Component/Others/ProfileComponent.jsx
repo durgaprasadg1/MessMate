@@ -9,6 +9,7 @@ const ProfileComponent = ()=> {
     const router = useRouter();
     const handleUserProfileClick = () => {
 
+
         let endpt = "";
         if (isAdmin) endpt = `/admin/${session.user.id}`;
         else if (isOwner) {
@@ -25,9 +26,10 @@ const ProfileComponent = ()=> {
                 onClick={handleUserProfileClick}
               >
                 
-                <FaRegUser className={isOwner? "text-white":"text-gray-700"}/>
-                <span className={isOwner? "text-white":"text-sm font-medium text-gray-700 hover:text-black"}>
-                  {session?.user?.isAdmin ? session?.user?.name : session?.user?.username}
+                <FaRegUser className={isOwner? "text-white": isAdmin ? "text-amber-300" :"text-gray-700"}/>
+                <span className={isOwner? "text-white":"text-sm font-medium text-amber-300 hover:text-amber-500"}>
+                  {isAdmin?  session?.user?.username : session?.user?.username}
+                  
                   
                 </span>
               </div>

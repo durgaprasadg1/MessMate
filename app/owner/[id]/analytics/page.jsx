@@ -111,7 +111,6 @@ export default function AnalyticsPage() {
     <div className="min-h-screen bg-gray-800 p-6">
       <OwnerNavbar />
       <div className="max-w-7xl mx-auto ">
-        {/* Header cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-2">
           <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
             <div className="flex items-center justify-between mb-3">
@@ -168,9 +167,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Daily Meals Trend */}
           <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="w-5 h-5 text-blue-400" />
@@ -188,7 +185,6 @@ export default function AnalyticsPage() {
             )}
           </div>
 
-          {/* Peak Time Slots */}
           <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
             <div className="flex items-center gap-2 mb-4">
               <Clock className="w-5 h-5 text-green-400" />
@@ -206,7 +202,6 @@ export default function AnalyticsPage() {
             )}
           </div>
 
-          {/* Plate Performance */}
           <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
             <div className="flex items-center gap-2 mb-4">
               <Utensils className="w-5 h-5 text-amber-400" />
@@ -224,7 +219,6 @@ export default function AnalyticsPage() {
             )}
           </div>
 
-          {/* Food Wastage */}
           <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
             <div className="flex items-center gap-2 mb-4">
               <AlertTriangle className="w-5 h-5 text-red-400" />
@@ -243,7 +237,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Negative Reviews Table */}
         <div className="bg-gray-700 rounded-lg p-6 border border-gray-600 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Star className="w-5 h-5 text-yellow-400" />

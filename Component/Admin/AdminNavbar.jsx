@@ -31,7 +31,7 @@ const AdminNavbar = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
-    <nav className="bg-purple-300 border-b sticky top-0 z-50">
+    <nav className="bg-zinc-900 border-b sticky top-0 z-50 p-2">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
         <div className="flex h-14 items-center justify-between">
           <div className="flex items-center space-x-6 gap-3">
@@ -39,10 +39,10 @@ const AdminNavbar = () => {
               initial={{ rotate: 0 }}
               animate={{ rotate: [0, 5, -5, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="text-2xl font-extrabold text-gray-700"
+              className="text-2xl font-extrabold text-white"
             >
               <Link href="/admin" className="  ">
-                <button className="text-gray-600 transition-colors duration-300 hover:text-black">
+                <button className="text-amber-400 transition-colors duration-300 hover:text-red-400">
                   MessMate
                 </button>
               </Link>
@@ -69,7 +69,7 @@ const AdminNavbar = () => {
             <ProfileComponent />
             <button
               onClick={() => handleLogout()}
-              className="bg-white text-black px-2 py-2 rounded shadow-md hover:bg-[#60D19B] transition duration-300"
+              className="bg-amber-300 text-black px-2 py-2 rounded shadow-md hover:bg-amber-400 transition duration-300"
             >
               Logout
             </button>

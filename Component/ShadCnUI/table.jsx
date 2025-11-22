@@ -45,8 +45,7 @@ export function DataTable({ columns, data }) {
   });
 
   return (
-    <div>
-      {/* Search and controls */}
+    <div className="">
       <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex-1 max-w-sm">
           <Input
@@ -81,7 +80,7 @@ export function DataTable({ columns, data }) {
 
       <div className="overflow-hidden rounded-md border">
         <Table>
-          <TableHeader>
+          <TableHeader> 
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -91,7 +90,7 @@ export function DataTable({ columns, data }) {
                     <TableHead key={header.id}>
                       {header.isPlaceholder ? null : (
                         <button
-                          className="flex items-center gap-2"
+                          className="flex items-center gap-2 text-white"
                           onClick={() =>
                             canSort && header.column.toggleSorting()
                           }
@@ -164,12 +163,13 @@ export function DataTable({ columns, data }) {
           )}{" "}
           of {table.getFilteredRowModel().rows.length}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-white">
           <Button
             variant="outline"
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
+            className="text-black"
           >
             Prev
           </Button>
@@ -182,6 +182,7 @@ export function DataTable({ columns, data }) {
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
+            className="text-black"
           >
             Next
           </Button>

@@ -25,7 +25,7 @@ export default function OwnerNavbar() {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="w-full bg-gray-800 text-white shadow-lg px-6 py-4 flex justify-between items-center"
+      className="w-full bg-gray-900 text-white shadow-lg px-6 py-4 flex justify-between items-center"
     >
       <motion.div
         initial={{ rotate: 0 }}
@@ -107,6 +107,7 @@ export default function OwnerNavbar() {
           </div>
         </div>
       )}
+      
     </motion.nav>
   );
 }
