@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Loading from "../../../../Component/Others/Loading";
 import OwnerNavbar from "../../../../Component/Owner/OwnerNavbar";
+import EmptynessShowBox from "../../../../Component/Others/EmptynessShowBox"; // ✅ added
 import { toast } from "react-toastify";
 
 export default function AnalyticsPage() {
@@ -41,27 +42,34 @@ export default function AnalyticsPage() {
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
-        
-        const api = `/api/owner/${id}/analytics`
-        const res = await fetch(api, {
-          cache: "no-store",
-        });
+        setError(null);
+
+        const api = `/api/owner/${id}/analytics`;
+        const res = await fetch(api, { cache: "no-store" });
 
         const data = await res.json();
 
         if (!res.ok) {
-          toast.error("Failed to fetch analytics");
+          const msg = data?.error || data?.message || "Failed to fetch analytics";
+          toast.error(msg);
+          setError(msg);
+          setAnalytics(null);
+          return;
         }
 
         setAnalytics(data);
       } catch (err) {
-        setError(err.message);
+        console.error("Analytics fetch error:", err);
+        setError(err.message || "Failed to fetch analytics");
+        toast.error("Failed to fetch analytics");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAnalytics();
+    if (id) {
+      fetchAnalytics();
+    }
   }, [id, session, status]);
 
   if (status === "loading" || loading) {
@@ -80,10 +88,12 @@ export default function AnalyticsPage() {
     );
   }
 
-  if (error) {
+  if (error || !analytics) {
     return (
       <div className="min-h-screen bg-gray-800 flex items-center justify-center">
-        <div className="text-red-400 text-xl">Cannot See Analyyics Now</div>
+        <div className="text-red-400 text-xl">
+          Cannot see analytics now
+        </div>
       </div>
     );
   }
@@ -98,11 +108,10 @@ export default function AnalyticsPage() {
   } = analytics || {};
 
   return (
-    <div className="min-h-screen bg-gray-800 ">
+    <div className="min-h-screen bg-gray-800 p-6">
       <OwnerNavbar />
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-
+      <div className="max-w-7xl mx-auto ">
+        {/* Header cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-2">
           <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
             <div className="flex items-center justify-between mb-3">
@@ -235,7 +244,7 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Negative Reviews Table */}
-        <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
+        <div className="bg-gray-700 rounded-lg p-6 border border-gray-600 mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Star className="w-5 h-5 text-yellow-400" />
             <h2 className="text-xl font-semibold text-white">

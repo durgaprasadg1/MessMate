@@ -225,7 +225,7 @@ export async function GET(request, { params }) {
           : 0;
       return { date, wastage: parseFloat(wastagePercent) };
     });
-
+ 
     return NextResponse.json(
       {
         summaryCards: {
