@@ -8,7 +8,6 @@ export async function PUT(request, { params }) {
 
     const { name, address, phoneNumber, category, limits, description } = body;
 
-    console.log("Updating Mess:", id, "with data:", body);
 
     await connectDB();
     const { default: Mess } = await import("@/models/mess");

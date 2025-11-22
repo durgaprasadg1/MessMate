@@ -27,10 +27,8 @@ export async function PATCH(request, { params }) {
       "../../../../../../models/consumer"
     );
 
-    console.log(`PATCH  called by session user:`, session?.user?.id);
 
     const consumer = await Consumer.findById(userid);
-    console.log("Found Consumer:", !!consumer, "for id:", userid);
     if (!consumer)
       return NextResponse.json(
         { consumerage: "consumer not found" },
@@ -86,7 +84,6 @@ export async function PATCH(request, { params }) {
         console.error("Failed to send denial email:", mailErr);
       }
     }
-    console.log("Finally User Blocked : ", updatedUser.isBlocked);
 
     return NextResponse.json(
       {

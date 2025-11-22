@@ -39,7 +39,6 @@ export default function PersonalInfo({ consumerid }) {
 
         const pickedUser = data.consumer || data.admin || data.owner;
         setUser(pickedUser);
-        console.log("Fetched user:", pickedUser);
       } catch (err) {
         console.error("Error fetching user:", err);
         toast.error("Failed to fetch user info");

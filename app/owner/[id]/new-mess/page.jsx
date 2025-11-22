@@ -103,7 +103,6 @@ const NewMessForm = () => {
 
     try {
       const fd = new FormData();
-      console.log("formData : ", fd);
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
       if (image) fd.append("image", image);
       if (certificate) fd.append("certificate", certificate);

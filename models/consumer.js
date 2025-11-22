@@ -1,16 +1,8 @@
 import mongoose from "mongoose";
-const { Schema } = mongoose;
-// let passportLocalMongoose;
-// try {
-//   passportLocalMongoose = require("passport-local-mongoose");
-// } catch (e) {
-//   // optional dependency — if it's not installed, skip plugin registration
-//   passportLocalMongoose = null;
-// }
 import Mess from "./mess";
 import Order from "./order";
 import Review from "./reviews";
-
+const { Schema } = mongoose;
 const consumerSchema = new Schema({
   username: {
     type: String,

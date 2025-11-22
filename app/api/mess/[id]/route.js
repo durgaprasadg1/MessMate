@@ -47,14 +47,9 @@ export async function PATCH(request, { params }) {
     const { default: Mess } = await import("../../../../models/mess");
     const body = await request.json();
 
-    console.log(
-      `PATCH /api/mess/${id} called by session user:`,
-      session?.user?.id
-    );
 
     
       const mess = await Mess.findById(id);
-      console.log("Found mess:", !!mess, "for id:", id);
       if (!mess)
         return NextResponse.json(
           { message: "Mess not found" },

@@ -11,7 +11,6 @@ export default function OwnerLandingPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const isOwner = session?.user?.isOwner;
-  console.log("Owner Landing Page - Current User : ", isOwner + '  ' + session?.user?.isAdmin);
   if (!session || session?.user?.isOwner === false) {
     return (
       <div className="min-h-screen flex items-center justify-center">

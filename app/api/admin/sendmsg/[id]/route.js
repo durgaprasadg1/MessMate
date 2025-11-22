@@ -23,7 +23,6 @@ export async function POST(request, { params }) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
 
-    console.log("Data : ", body);
 
     const msg = await Message.create({
       message: body.message,

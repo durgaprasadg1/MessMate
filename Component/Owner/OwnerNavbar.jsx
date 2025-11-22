@@ -18,7 +18,6 @@ export default function OwnerNavbar() {
     await signOut({ redirect: false });
     router.push("/");
   };
-  console.log("Current User : ", session?.user?.id + ` isOwner: ` + session?.user?.isOwner + ` isAdmin: ` + session?.user?.isAdmin);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (

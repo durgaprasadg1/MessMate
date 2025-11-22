@@ -23,14 +23,10 @@ export async function POST(request, { params }) {
     await connectDB();
     const { default: Owner } = await import("@/models/owner");
 
-    console.log(
-      `PATCH  called by session user:`,
-      session?.user?.id
-    );
+    
 
     
       const owner = await Owner.findById(id);
-      console.log("Found owner:", !!owner, "for id:", id);
       if (!owner)
         return NextResponse.json(
           { message: "owner not found" },

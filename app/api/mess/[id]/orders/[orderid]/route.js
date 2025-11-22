@@ -6,10 +6,8 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 export async function PATCH(request, { params }) {
   try {
     const { id, orderid } = await params;
-    console.log(id + "        -           " + orderid);
     const body = await request.json();
     const action = body.action;
-    console.log("Got the Updation req");
     await connectDB();
     const { default: Order } = await import("@/models/order");
     const { default: Mess } = await import("@/models/mess");
@@ -85,15 +83,12 @@ export async function PATCH(request, { params }) {
       if (!mess.owner || mess.owner.toString() !== session.user.id)
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-      // mark order as cancelled/refund initiated so consumer cannot act further
       order.isCancelled = true;
       order.refundInitiated = true;
-      // if previously paid, mark as refunded; otherwise mark as failed
       order.status = order.status === "paid" ? "refunded" : "failed";
       await order.save();
 
       try {
-        // remove references so it doesn't show as active
         await Mess.findByIdAndUpdate(order.mess, {
           $pull: { orders: order._id },
         });
@@ -121,7 +116,6 @@ export async function PATCH(request, { params }) {
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
       order.done = true;
-      // mark status as completed so client shows final state
       order.status = "completed";
       await order.save();
       return NextResponse.json(
@@ -167,7 +161,6 @@ export async function DELETE(request, { params }) {
         { status: 400 }
       );
 
-    // delete order and pull refs
     await Order.findByIdAndDelete(orderid);
     try {
       await Mess.findByIdAndUpdate(mess._id, { $pull: { orders: orderid } });

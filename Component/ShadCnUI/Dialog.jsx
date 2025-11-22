@@ -33,7 +33,6 @@ const DialogBox = ({ endpt }) => {
     setLoading(true);
 
     try {
-      console.log("Bhej DIya Msg is End Pt Pe : ", endpt)
       const res = await fetch(endpt, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

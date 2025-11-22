@@ -20,7 +20,6 @@ export default function OwnedMessPage() {
   const [messes, setMesses] = useState([]);
   const { data: session } = useSession();
   const isOwner = session?.user?.isOwner;
-  console.log("Is Owner: ", isOwner);
     
   useEffect(() => {
     const fetchMesses = async () => {
@@ -126,7 +125,7 @@ export default function OwnedMessPage() {
                     <button className="w-full bg-green-500 p-2 rounded hover:bg-green-600 text-white font-medium" onClick={()=>handleClick(`/mess/${mess._id}/messages`)}>Messages</button>
                     <button className="w-full bg-green-500 p-2 rounded hover:bg-green-600 text-white font-medium"onClick={()=> handleClick(`/mess/${mess._id}/orders`)}>Orders</button>
                 </div>
-                <button className="w-full bg-white p-2 rounded mt-2"onClick={()=>handleClick(`/mess/${mess._id}/analytics`)}>View Analytics</button>
+                <button className="w-full bg-white p-2 rounded mt-2"onClick={()=>handleClick(`/owner/${mess._id}/analytics`)}>View Analytics</button>
 
             
                </CardContent>

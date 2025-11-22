@@ -28,8 +28,6 @@ const MessageComponent = () => {
         if(session?.user?.id !== data.owner){
             isUnAuth = true;
         }
-
-        console.log("Fetched Mess Data:", data.owner);
         setMessages(data.alert || []);
       } catch (err) {
         setError("Internet connection error");
@@ -46,7 +44,6 @@ const MessageComponent = () => {
 
   const handleDelete = async (msgId) => {
     try {
-      console.log("Deleting Message ID:", msgId);
       const res = await fetch(`/api/admin/sendmsg/${msgId}`, {
         method: "DELETE",
         headers: {

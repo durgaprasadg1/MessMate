@@ -8,7 +8,6 @@ export async function GET(request, { params }) {
   try {
     const { id } = await params;
     let messId = id;
-    console.log("Received mess ID:", messId);
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { message: "Invalid Mess ID format" },
@@ -17,7 +16,6 @@ export async function GET(request, { params }) {
     }
 
     await connectDB();
-    console.log("DbConnected ke Baad \n");
 
     const { default: Order } = await import("@/models/order");
     const { default: Mess } = await import("@/models/mess");
@@ -42,7 +40,6 @@ export async function GET(request, { params }) {
         { status: 200 }
       );
     }
-    console.log("Order[] Doc AAne ke baad " + messId);
 
     const plainOrders = orders.map((o) => ({
       _id: String(o._id),
@@ -63,7 +60,6 @@ export async function GET(request, { params }) {
       isCancelled: !!o.isCancelled,
       createdAt: o.createdAt ? o.createdAt.toISOString() : null,
     }));
-    console.log("Response Bhejte time");
 
     return NextResponse.json(
       { orders: plainOrders, messOwnerId, messId },

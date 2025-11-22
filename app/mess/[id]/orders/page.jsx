@@ -139,7 +139,7 @@ export default function OrdersPage() {
         header: "Amount",
         accessorFn: (row) => (row.totalPrice || 0) / 100,
         cell: ({ getValue }) => (
-          <span className="block text-right">
+          <span className="block text-right ">
             ₹{(getValue() || 0).toFixed(2)}
           </span>
         ),
@@ -218,7 +218,7 @@ export default function OrdersPage() {
   if (loading) return <LoadingComponent />;
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-400 text-black">
       <OwnerNavbar />
 
       <div className="p-5 max-w-5xl mx-auto">
@@ -236,7 +236,7 @@ export default function OrdersPage() {
         </div>
 
         {data.length === 0 ? (
-          <div className="p-6 bg-white rounded shadow-sm text-gray-600">
+          <div className="p-6 bg-gray-300 rounded shadow-sm text-gray-600">
             No orders yet.
           </div>
         ) : (

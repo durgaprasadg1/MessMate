@@ -23,10 +23,7 @@ export async function POST(request, { params }) {
     await connectDB();
     const { default: Consumer } = await import("@/models/consumer");
 
-    console.log(
-      `PATCH  called by session user:`,
-      session?.user?.id
-    );
+   
 
     
       const consumer = await Consumer.findById(id);

@@ -16,7 +16,6 @@ const ReviewSection = ({ messID }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!session?.user?.id) {
-      console.log("Login kro phle");
       toast.error("Please Login");
       router.push("/login");
       return;
@@ -43,7 +42,6 @@ const ReviewSection = ({ messID }) => {
         setReviewText("");
         setRating(0);
       } else {
-        console.log(data)
         const errMsg = "Something went wrong, Review not submitted.";
         toast.error(errMsg);
       }

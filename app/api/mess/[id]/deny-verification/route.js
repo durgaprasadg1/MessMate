@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import nodemailer from "nodemailer";
-import Mess from "@/models/mess"; // or dynamic import, whichever you use
+import Mess from "@/models/mess"; 
 
 const transporter = nodemailer.createTransport({
   service: "gmail",

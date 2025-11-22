@@ -18,7 +18,6 @@ const transporter = nodemailer.createTransport({
 export async function POST(request, { params }) {
   try {
     const { id } = await params; 
-    console.log("Request Received For ID ",id)
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

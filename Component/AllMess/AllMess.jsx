@@ -250,7 +250,6 @@ export default function AllMesses({ messes = [], filteredMesses: passedFiltered 
             <DataTable columns={columns} data={visibleMesses} />
           )
         ) : (
-          // USER → CARD VIEW (same old layout)
         
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {visibleMesses.map((mess) => {

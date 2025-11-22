@@ -11,7 +11,6 @@ const Panel = ({ mess }) => {
       const userId = session?.user?.id?.toString?.() ?? session?.user?.id;
       const ownerId = mess?.owner?.toString?.() ?? mess?.owner;
       if (userId !== ownerId) {
-        console.log(session?.user);
         toast.error("U Are Not the Owner");
         return;
       }

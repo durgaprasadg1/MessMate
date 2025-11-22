@@ -3,7 +3,6 @@ import { connectDB } from "../../../../lib/mongodb";
 import Owner from "../../../../models/owner";
 
 export async function GET(request, { params }) {
-    console.log("Received Get Request for owner ")
   try {
     await connectDB();
     const { id } = await params;

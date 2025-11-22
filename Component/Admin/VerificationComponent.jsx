@@ -17,7 +17,6 @@ const VerificationComponent = () => {
       const res = await fetch("/api/mess/pending", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch pending messes");
       const data = await res.json();
-      console.log("Data : ", data);
       setPendingMesses(data);
     } catch (error) {
       toast.error(error.message);

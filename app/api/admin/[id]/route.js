@@ -3,13 +3,11 @@ import { connectDB } from "../../../../lib/mongodb";
 import Admin from "../../../../models/admin";
 
 export async function GET(request, { params }) {
-    console.log("Received Get Request for Admin ")
   try {
     await connectDB();
     const { id } = await params;
 
     const admin = await Admin.findById(id);
-    console.log("AdMin : ", admin)
 
     if (!admin) {
       return NextResponse.json(

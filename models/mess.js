@@ -205,7 +205,6 @@ messSchema.post("findOneAndDelete", async function (doc) {
       console.error("Error deleting related Menu docs:", e);
     }
     try {
-      // dynamic import to avoid circular dependency
       const ConsumerModule = await import("./consumer");
       const ConsumerModel = ConsumerModule && ConsumerModule.default ? ConsumerModule.default : ConsumerModule;
       if (ConsumerModel && ConsumerModel.updateMany) {
