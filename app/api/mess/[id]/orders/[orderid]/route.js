@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
+import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
@@ -29,29 +30,41 @@ export async function PATCH(request, { params }) {
         );
       if (order.consumer.toString() !== session.user.id)
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-
-      order.isCancelled = true;
-      if (order.status === "paid") {
-        order.refundInitiated = true;
-      } 
-      order.status = order.status === "paid" ? "failed" : order.status;
-      await order.save();
-
+      // Use transaction to update order and remove refs atomically
+      const sessionDb = await mongoose.startSession();
       try {
-        await Mess.findByIdAndUpdate(order.mess, {
-          $pull: { orders: order._id },
-        });
-        await Consumer.findByIdAndUpdate(order.consumer, {
-          $pull: { orders: order._id },
-        });
-      } catch (e) {
-        console.error("Failed to pull order refs:", e);
-      }
+        sessionDb.startTransaction();
 
-      return NextResponse.json(
-        { message: "Order cancelled; refund will be started soon" },
-        { status: 200 }
-      );
+        order.isCancelled = true;
+        if (order.status === "paid") {
+          order.refundInitiated = true;
+        }
+        order.status = order.status === "paid" ? "failed" : order.status;
+        await order.save({ session: sessionDb });
+
+        await Mess.findByIdAndUpdate(
+          order.mess,
+          { $pull: { orders: order._id } },
+          { session: sessionDb }
+        );
+        await Consumer.findByIdAndUpdate(
+          order.consumer,
+          { $pull: { orders: order._id } },
+          { session: sessionDb }
+        );
+
+        await sessionDb.commitTransaction();
+        return NextResponse.json(
+          { message: "Order cancelled; refund will be started soon" },
+          { status: 200 }
+        );
+      } catch (e) {
+        await sessionDb.abortTransaction();
+        console.error("Cancel transaction failed", e);
+        return NextResponse.json({ message: "Server error" }, { status: 500 });
+      } finally {
+        sessionDb.endSession();
+      }
     }
 
     if (action === "take") {
@@ -83,26 +96,39 @@ export async function PATCH(request, { params }) {
       if (!mess.owner || mess.owner.toString() !== session.user.id)
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-      order.isCancelled = true;
-      order.refundInitiated = true;
-      order.status = order.status === "paid" ? "refunded" : "failed";
-      await order.save();
-
+      // Use transaction to update order status and remove refs
+      const sessionDb2 = await mongoose.startSession();
       try {
-        await Mess.findByIdAndUpdate(order.mess, {
-          $pull: { orders: order._id },
-        });
-        await Consumer.findByIdAndUpdate(order.consumer, {
-          $pull: { orders: order._id },
-        });
-      } catch (e) {
-        console.error("Failed to pull order refs on refund:", e);
-      }
+        sessionDb2.startTransaction();
 
-      return NextResponse.json(
-        { message: "Refund initiated and order marked cancelled" },
-        { status: 200 }
-      );
+        order.isCancelled = true;
+        order.refundInitiated = true;
+        order.status = order.status === "paid" ? "refunded" : "failed";
+        await order.save({ session: sessionDb2 });
+
+        await Mess.findByIdAndUpdate(
+          order.mess,
+          { $pull: { orders: order._id } },
+          { session: sessionDb2 }
+        );
+        await Consumer.findByIdAndUpdate(
+          order.consumer,
+          { $pull: { orders: order._id } },
+          { session: sessionDb2 }
+        );
+
+        await sessionDb2.commitTransaction();
+        return NextResponse.json(
+          { message: "Refund initiated and order marked cancelled" },
+          { status: 200 }
+        );
+      } catch (e) {
+        await sessionDb2.abortTransaction();
+        console.error("Refund transaction failed", e);
+        return NextResponse.json({ message: "Server error" }, { status: 500 });
+      } finally {
+        sessionDb2.endSession();
+      }
     }
 
     if (action === "markDone") {
@@ -161,17 +187,33 @@ export async function DELETE(request, { params }) {
         { status: 400 }
       );
 
-    await Order.findByIdAndDelete(orderid);
+    // delete order and clean up refs in a transaction
+    const sessionDel = await mongoose.startSession();
     try {
-      await Mess.findByIdAndUpdate(mess._id, { $pull: { orders: orderid } });
-      await Consumer.findByIdAndUpdate(order.consumer, {
-        $pull: { orders: orderid },
-      });
-    } catch (e) {
-      console.error("Failed to remove order refs after delete:", e);
-    }
+      sessionDel.startTransaction();
 
-    return NextResponse.json({ message: "Order deleted" }, { status: 200 });
+      await Order.findByIdAndDelete(orderid, { session: sessionDel });
+
+      await Mess.findByIdAndUpdate(
+        mess._id,
+        { $pull: { orders: orderid } },
+        { session: sessionDel }
+      );
+      await Consumer.findByIdAndUpdate(
+        order.consumer,
+        { $pull: { orders: orderid } },
+        { session: sessionDel }
+      );
+
+      await sessionDel.commitTransaction();
+      return NextResponse.json({ message: "Order deleted" }, { status: 200 });
+    } catch (e) {
+      await sessionDel.abortTransaction();
+      console.error("Delete order transaction failed", e);
+      return NextResponse.json({ message: "Server error" }, { status: 500 });
+    } finally {
+      sessionDel.endSession();
+    }
   } catch (err) {
     console.error("Order DELETE error:", err);
     return NextResponse.json(

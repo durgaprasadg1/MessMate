@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../../../../lib/mongodb";
+import mongoose from "mongoose";
+import { validateAgainst } from "../../../../../lib/validateRequest";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import crypto from "crypto";
@@ -88,11 +90,14 @@ async function computePricePerPlate(mess, menutype, selectedDish) {
 
 export async function POST(request, { params }) {
   try {
-    const { id } = await params || {};
+    const { id } = (await params) || {};
     const body = await request.json();
     await connectDB();
     const { default: Mess } = await import("../../../../../models/mess");
     const { default: Order } = await import("../../../../../models/order");
+    const { bookingCreateSchema, bookingPaymentSchema } = await import(
+      "../../../../../validators/booking.validator.js"
+    );
 
     const session = await getServerSession(authOptions);
     if (!session)
@@ -117,9 +122,23 @@ export async function POST(request, { params }) {
     if (!mess)
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
 
-    const noOfPlate = Number(body.noOfPlate || 1);
-    const menutype = body.menutype || "vegMenu";
-    const selectedDish = body.selectedDish;
+    // validate request body
+    const validateResult = validateAgainst(bookingCreateSchema, body || {});
+    if (!validateResult.ok) {
+      return NextResponse.json(
+        { message: "Validation failed", errors: validateResult.errors },
+        { status: 400 }
+      );
+    }
+
+    const {
+      noOfPlate: validatedNoOfPlate,
+      menutype: validatedMenuType,
+      selectedDish: validatedSelectedDish,
+    } = validateResult.data;
+    const noOfPlate = Number(validatedNoOfPlate || 1);
+    const menutype = validatedMenuType || body.menutype || "vegMenu";
+    const selectedDish = validatedSelectedDish ?? body.selectedDish;
 
     const dishInfo = await computePricePerPlate(mess, menutype, selectedDish);
     const pricePerPlate = dishInfo.pricePerPlate;
@@ -160,7 +179,19 @@ export async function POST(request, { params }) {
       selectedDishPrice: pricePerPlate,
       messName: mess && mess.name ? String(mess.name) : undefined,
     });
-    await dbOrder.save();
+
+    const sessionDb = await mongoose.startSession();
+    try {
+      sessionDb.startTransaction();
+      await dbOrder.save({ session: sessionDb });
+      await sessionDb.commitTransaction();
+    } catch (e) {
+      await sessionDb.abortTransaction();
+      console.error("Booking POST transaction failed", e);
+      return NextResponse.json({ message: "Server error" }, { status: 500 });
+    } finally {
+      sessionDb.endSession();
+    }
 
     return NextResponse.json(
       {
@@ -191,9 +222,11 @@ export async function PATCH(request, { params }) {
       dbOrderId,
     } = body;
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    // validate payment payload
+    const paymentValidation = validateAgainst(bookingPaymentSchema, body || {});
+    if (!paymentValidation.ok) {
       return NextResponse.json(
-        { message: "Missing payment verification fields" },
+        { message: "Validation failed", errors: paymentValidation.errors },
         { status: 400 }
       );
     }
@@ -228,7 +261,6 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ message: "Order not found" }, { status: 404 });
     }
 
-    // ensure the session user matches the order consumer
     if (String(dbOrder.consumer) !== String(session.user.id)) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
@@ -246,23 +278,45 @@ export async function PATCH(request, { params }) {
       );
 
     if (expectedSign === razorpay_signature) {
-      dbOrder.status = "paid";
-      dbOrder.razorpayPaymentId = razorpay_payment_id;
-      dbOrder.razorpaySignature = razorpay_signature;
-      dbOrder.paymentVerified = true;
-      await dbOrder.save();
+      const session = await mongoose.startSession();
+      try {
+        session.startTransaction();
 
-      await Consumer.findByIdAndUpdate(dbOrder.consumer, {
-        $push: { orders: dbOrder._id },
-      });
-      await Mess.findByIdAndUpdate(dbOrder.mess, {
-        $push: { orders: dbOrder._id },
-      });
+        dbOrder.status = "paid";
+        dbOrder.razorpayPaymentId = razorpay_payment_id;
+        dbOrder.razorpaySignature = razorpay_signature;
+        dbOrder.paymentVerified = true;
+        await dbOrder.save({ session });
 
-      return NextResponse.json(
-        { message: "Payment verified", order: dbOrder },
-        { status: 200 }
-      );
+        await Consumer.findByIdAndUpdate(
+          dbOrder.consumer,
+          { $push: { orders: dbOrder._id } },
+          { session }
+        );
+
+        await Mess.findByIdAndUpdate(
+          dbOrder.mess,
+          { $push: { orders: dbOrder._id } },
+          { session }
+        );
+
+        await session.commitTransaction();
+        return NextResponse.json(
+          { message: "Payment verified", order: dbOrder },
+          { status: 200 }
+        );
+      } catch (e) {
+        await session.abortTransaction();
+        console.error("Payment verification transaction failed", e);
+        // attempt to mark order failed
+        try {
+          dbOrder.status = "failed";
+          await dbOrder.save();
+        } catch (_) {}
+        return NextResponse.json({ message: "Server error" }, { status: 500 });
+      } finally {
+        session.endSession();
+      }
     } else {
       dbOrder.status = "failed";
       await dbOrder.save();

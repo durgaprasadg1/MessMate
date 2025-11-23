@@ -107,22 +107,39 @@ export async function DELETE(request, { params }) {
 
     const ids = completed.map((d) => d._id);
 
-    await Order.deleteMany({ _id: { $in: ids } });
-
+    // perform delete and cleanup in a transaction to avoid partial state
+    const sessionDb = await mongoose.startSession();
     try {
-      await Mess.findByIdAndUpdate(id, { $pull: { orders: { $in: ids } } });
+      sessionDb.startTransaction();
+
+      await Order.deleteMany({ _id: { $in: ids } }, { session: sessionDb });
+
+      await Mess.findByIdAndUpdate(
+        id,
+        { $pull: { orders: { $in: ids } } },
+        { session: sessionDb }
+      );
       await Consumer.updateMany(
         { orders: { $in: ids } },
-        { $pull: { orders: { $in: ids } } }
+        { $pull: { orders: { $in: ids } } },
+        { session: sessionDb }
+      );
+
+      await sessionDb.commitTransaction();
+      return NextResponse.json(
+        { message: "Deleted completed or failed orders", deleted: ids.length },
+        { status: 200 }
       );
     } catch (e) {
-      console.error("Failed to clean up order refs:", e);
+      await sessionDb.abortTransaction();
+      console.error("Batch delete transaction failed", e);
+      return NextResponse.json(
+        { message: "Server error", error: e.message },
+        { status: 500 }
+      );
+    } finally {
+      sessionDb.endSession();
     }
-
-    return NextResponse.json(
-      { message: "Deleted completed or failed orders", deleted: ids.length },
-      { status: 200 }
-    );
   } catch (err) {
     console.error("DELETE /api/mess/[id]/orders error:", err);
     return NextResponse.json(
@@ -131,4 +148,3 @@ export async function DELETE(request, { params }) {
     );
   }
 }
-

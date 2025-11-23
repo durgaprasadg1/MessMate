@@ -108,9 +108,9 @@ export default function AnalyticsPage() {
   } = analytics || {};
 
   return (
-    <div className="min-h-screen bg-gray-800 p-6">
+    <div className="min-h-screen bg-gray-800 ">
       <OwnerNavbar />
-      <div className="max-w-7xl mx-auto ">
+      <div className="max-w-7xl mx-auto mt-4 p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-2">
           <div className="bg-gray-700 rounded-lg p-6 border border-gray-600">
             <div className="flex items-center justify-between mb-3">
