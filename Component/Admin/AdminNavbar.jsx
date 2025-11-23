@@ -53,7 +53,6 @@ const AdminNavbar = () => {
                 data="Pending Verification"
                 link="/admin/pending-verification"
               />
-              <ButtonComponent data="Analytics" link="/admin/analytics" />
               <ButtonComponent data="All Users" link="/admin/all-users" />
               <ButtonComponent data="All Messes" link="/admin/all-messes" />
             </div>
