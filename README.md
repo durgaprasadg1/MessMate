@@ -9,7 +9,7 @@ A modern Next.js (App Router) platform for managing mess/food services, bookings
 ![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.4-38bdf8?style=for-the-badge\&logo=tailwindcss)
 ![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-brightgreen?style=for-the-badge\&logo=mongodb)
 ![Zod](https://img.shields.io/badge/Zod-Schema_Validation-3066BE?style=for-the-badge)
-![License](https://img.shields.io/badge/License-None-lightgrey?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge)
 
 ## Overview
 
