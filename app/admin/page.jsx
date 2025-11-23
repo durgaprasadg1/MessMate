@@ -6,14 +6,13 @@ import SectionStats from "@/Component/Section/SectionStats";
 import { useEffect, useState } from "react";
 import TableBody from "@/Component/HTML_components/table_body";
 import { tableContext } from "@/hooks/tableContext";
-import ULs from "../../Component/HTML_components/uls";
 import { useSession } from "next-auth/react";
-import NotFound from "../not-found";
 import EmptynessShowBox from "@/Component/Others/EmptynessShowBox";
 import { Loader2, Users, Utensils, Clock } from "lucide-react";
 import { motion } from "framer-motion";
-
+import { useRouter } from "next/navigation";
 export default function AdminLandingPage() {
+  const router = useRouter();
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalMesses: 0,
@@ -62,7 +61,8 @@ export default function AdminLandingPage() {
   }
 
   if (!session?.user?.isAdmin) {
-    return <NotFound />;
+    router.replace("/");
+    return null;
   }
 
   return (
