@@ -98,7 +98,6 @@ export default function AllMesses({ messes = [], filteredMesses: passedFiltered 
     }
   };
 
-  // Table columns for admin
   const columns = [
     {
       accessorKey: "name",
@@ -203,12 +202,10 @@ export default function AllMesses({ messes = [], filteredMesses: passedFiltered 
 
   const headingClasses = "text-3xl sm:text-4xl font-extrabold mb-8 drop-shadow-md";
 
-  // whether there are any visible messes to show in the list/table
   const hasVisibleMesses = visibleMesses.length > 0;
 
   return (
     <>
-      {/* Navbar */}
       {isAdmin ? (
         <AdminNavbar />
       ) : (
