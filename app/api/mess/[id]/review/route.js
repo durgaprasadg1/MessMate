@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "../../../../../lib/mongodb";
 import Mess from "../../../../../models/mess";
 import Review from "../../../../../models/reviews";
+import Consumer from "../../../../../models/consumer";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
@@ -28,6 +29,18 @@ export async function POST(request, { params }) {
         { status: 400 }
       );
     }
+    const consumer = Consumer.findById(session?.user?.id);
+    if (!consumer)
+      return NextResponse.json({ message: "Author not found" }, { status: 404 });
+
+
+
+    if (consumer.isBlocked)
+          return NextResponse.json(
+            { message: "Your account is blocked by admin due to your activities. You cannot post reviews" },
+            { status: 403 }
+          );
+    
 
     if (!rating || !text) {
       return NextResponse.json(

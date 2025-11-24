@@ -68,7 +68,7 @@ const VerificationComponent = () => {
   return (
     <div className="p-6 bg-zinc-900 min-h-screen">
       
-      <h1 className="text-3xl font-bold mb-8 text-center text-gray-800 tracking-wide">
+      <h1 className="text-3xl font-bold mb-8 text-center text-white tracking-wide">
         Mess Verification Panel
       </h1>
 

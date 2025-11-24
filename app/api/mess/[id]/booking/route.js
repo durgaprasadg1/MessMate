@@ -114,7 +114,7 @@ export async function POST(request, { params }) {
       );
     if (consumer.isBlocked)
       return NextResponse.json(
-        { message: "Your account is blocked. You cannot create bookings." },
+        { message: "Your account is blocked by admin due to your activities. You cannot create bookings." },
         { status: 403 }
       );
 
@@ -273,7 +273,7 @@ export async function PATCH(request, { params }) {
       );
     if (consumer.isBlocked)
       return NextResponse.json(
-        { message: "Your account is blocked. You cannot pay for bookings." },
+        { message: "Your account is blocked by admin due to your activities. You cannot pay for bookings." },
         { status: 403 }
       );
 

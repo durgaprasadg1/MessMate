@@ -10,11 +10,20 @@ import { Eye, EyeOff } from "lucide-react";
 import Label from "../Helper/Label";
 
 const LoginComponent = () => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
+
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (status === "loading") return; // wait for session load
+
+    if (session?.user?.isAdmin) router.replace("/admin");
+    else if (session?.user?.isOwner) router.replace("/owner");
+    else if (session?.user) router.replace("/mess");
+  }, [session, status, router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -39,130 +48,116 @@ const LoginComponent = () => {
       });
 
       if (result?.error) {
-        toast.error("Invalid credentials Or Internet Connection Lost");
-      } else if(session?.user?.isAdmin) {
-        
-        toast.success("Login successful");
-        router.push("/admin");
+        toast.error("Invalid credentials or internet issue");
+      } else {
+          toast.success("Login successful");
+          if (session?.user?.isAdmin) {
+            router.push("/admin");
+          } else if (session?.user?.isOwner) {
+            router.push("/owner");
+          } else {
+            router.push("/mess");
+          }
       }
-      else if(session?.user?.isOwner){
-        toast.success("Login successful");
-        router.push("/owner");
-      }
-      else{
-        toast.success("Login successful");
-        router.push("/mess");
-      }
-    } catch (err) {
-      toast.error("Server error. Try again later.");
+    } catch {
+      toast.error("Server issue. Try again later.");
     } finally {
       setLoading(false);
     }
   };
 
-  const showForgetPassWordPage = () => {
-    router.push("/forgot-password");
-  };
-
-  useEffect(() => {
-    if (session?.user?.isAdmin) {
-      router.push("/admin");
-    } 
-    else if(session?.user?.isOwner){
-      router.push("/owner");
-    }
-    else if (session?.user) {
-      router.push("/mess");
-    }
-    
-  }, [session]);
-
   if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 mt-6">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       <Navbar />
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-          Welcome Back 👋
-        </h1>
-        <p className="text-gray-600 text-center mb-8">
-          Please login to your MessMate account
-        </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <Label labelName="Email" />
+      <div className="flex flex-col items-center justify-center grow  mt-20">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-6 sm:p-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-4">
+            Welcome Back 👋
+          </h1>
 
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-              className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
-            />
-          </div>
+          <p className="text-gray-600 text-center mb-6 sm:mb-8 text-sm sm:text-base">
+            Login to your MessMate account
+          </p>
 
-          <div className="relative">
-            <Label labelName="Password" />
-            <input
-              type={show ? "text" : "password"}
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="Create a strong password"
-              minLength={8}
-              required
-              className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
-            />
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <Label labelName="Email" />
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                placeholder="Enter your email"
+                required
+                className="w-full px-4 py-3 border rounded-xl text-sm sm:text-base 
+                focus:outline-none focus:ring-2 focus:ring-gray-400"
+              />
+            </div>
+
+            <div className="relative">
+              <Label labelName="Password" />
+              <input
+                type={show ? "text" : "password"}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                minLength={8}
+                required
+                className="w-full px-4 py-3 border rounded-xl text-sm sm:text-base
+                focus:outline-none focus:ring-2 focus:ring-gray-400"
+              />
+              <button
+                type="button"
+                onClick={() => setShow(!show)}
+                className="absolute right-3 top-8 text-gray-500"
+              >
+                {show ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
             <button
               type="button"
-              onClick={() => setShow(!show)}
-              className="absolute right-3 top-2 text-gray-500"
+              onClick={() => router.push("/forgot-password")}
+              className="text-gray-600 hover:underline text-sm mb-1"
             >
-              {show ? <EyeOff size={18} /> : <Eye size={18} />}
+              Forgot password?
             </button>
-          </div>
 
-          <button
-            type="button"
-            onClick={showForgetPassWordPage}
-            className="text-gray-600 mb-3 hover:underline"
-          >
-            Forgot password ?
-          </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gray-600 hover:bg-black text-white py-3 rounded
+              font-semibold transition-all duration-200"
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
+          </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gray-600 hover:bg-black text-white py-2 rounded-xl font-semibold transition-all duration-200"
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
+          <p className="text-center text-gray-500 text-sm mt-4">
+            
+            <button
+              type="button"
+              onClick={() => router.push("/signup")}
+              className="ml-1 text-gray-800 font-semibold hover:underline"
+            >
+              Create a <b>consumer</b> account
+            </button>
+          </p>
 
-        <p className="text-center text-gray-500 text-sm mt-3">
-         Create a consumer account ?{" "}
-          <button
-            type="button"
-            onClick={() => router.push("/signup")}
-            className="text-gray-700 font-semibold hover:underline"
-          >
-            Register
-          </button>
-        </p>
-        <p className="text-center text-gray-500 text-sm mt-1">
-         Create an owner account ?{" "}
-          <button
-            type="button"
-            onClick={() => router.push("/register-owner")}
-            className="text-gray-700 font-semibold hover:underline"
-          >
-            Register Owner
-          </button>
-        </p>
+          <p className="text-center text-gray-500 text-sm mt-2">
+            <button
+              type="button"
+              onClick={() => router.push("/register-owner")}
+              className="ml-1 text-gray-800 font-semibold hover:underline"
+            >
+              Create an <b>owner</b> account 
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );

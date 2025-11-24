@@ -62,7 +62,6 @@ export default function AdminLandingPage() {
 
   if (!session?.user?.isAdmin) {
     router.replace("/");
-    return null;
   }
 
   return (

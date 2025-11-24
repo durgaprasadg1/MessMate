@@ -7,7 +7,6 @@ import NotFound from "../../not-found";
 import { DataTable } from "../../../Component/ShadCnUI/table"; 
 import { toast } from "react-toastify";
 import Loading from '../../../Component/Others/Loading'
-import { data } from "framer-motion/client";
 
 export default function AllUsersPage() {
   const [users, setUsers] = useState([]);
@@ -179,7 +178,7 @@ export default function AllUsersPage() {
   if (error) return <NotFound />;
   if (loading)
     return (
-      <div className="min-h-screen bg-purple-50">
+      <div className="min-h-screen bg-zinc-50">
         <AdminNavbar />
         <Loading/>
       </div>

@@ -85,7 +85,7 @@ const DialogBox = ({ endpt }) => {
           </DialogClose>
           <DialogClose asChild>
             <Button  onClick={(e)=> sendTheMessage(e)} type="submit" disabled={loading}>
-              {loading ? "Sending..." : "Save changes"}
+              {loading ? "Sending..." : "Send"}
             </Button>
           </DialogClose>
           </DialogFooter>
