@@ -128,7 +128,7 @@ const RegisterComponent = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
       <Navbar />
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 mt-5">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 mt-17">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
           Create Your Account
         </h1>
@@ -240,6 +240,16 @@ const RegisterComponent = () => {
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
+
+        <p className="text-center text-gray-500 text-sm mt-3">
+         {" "}
+          <button
+            onClick={() => router.push("/terms-and-conditions")}
+            className="text-gray-500  hover:underline"
+          >
+            Read Terms And Conditions
+          </button>
+        </p>
 
         <p className="text-center text-gray-500 text-sm mt-3">
           Already have an account?{" "}
