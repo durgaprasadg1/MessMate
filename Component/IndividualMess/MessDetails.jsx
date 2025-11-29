@@ -68,9 +68,7 @@ export default function MessDetails({ mess }) {
               <p className="text-gray-700">
                 <span className="font-medium">Phone:</span> {mess.phoneNumber}
               </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Aadhaar:</span> {mess.adharNumber}
-              </p>
+              
             </div>
           </div>
 
