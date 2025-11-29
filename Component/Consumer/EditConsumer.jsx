@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Loading from "../Others/Loading";
+
 export default function EditUserInfoPage({ consumerid }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -20,14 +21,14 @@ export default function EditUserInfoPage({ consumerid }) {
         const res = await fetch(`/api/consumer/${consumerid}`, {
           cache: "no-store",
         });
+
         if (!res.ok) throw new Error("Failed to fetch user info");
 
         const data = await res.json();
-
         setConsumerData({
-          username: data.username || "",
-          address: data.address || "",
-          phone: data.phone || "",
+          username: data.consumer.username?? "",
+          address: data.consumer.address ?? "",
+          phone: data.consumer.phone ?? "",
         });
       } catch (err) {
         console.error(err);
@@ -37,6 +38,10 @@ export default function EditUserInfoPage({ consumerid }) {
 
     if (consumerid) fetchUser();
   }, [consumerid]);
+
+  useEffect(() => {
+    console.log("Updated Consumer Data:");
+  }, [ConsumerData]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -76,9 +81,10 @@ export default function EditUserInfoPage({ consumerid }) {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Username */}
+
           <div>
-            <label className="block mb-1 font-medium">Name</label>
+
+            <label className="block mb-1 font-medium">Name </label>
             <input
               type="text"
               name="username"
@@ -89,7 +95,6 @@ export default function EditUserInfoPage({ consumerid }) {
             />
           </div>
 
-          {/* Address */}
           <div>
             <label className="block mb-1 font-medium">Address</label>
             <textarea
@@ -102,7 +107,6 @@ export default function EditUserInfoPage({ consumerid }) {
             />
           </div>
 
-          {/* Phone */}
           <div>
             <label className="block mb-1 font-medium">Phone</label>
             <input
@@ -115,7 +119,6 @@ export default function EditUserInfoPage({ consumerid }) {
             />
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -123,6 +126,7 @@ export default function EditUserInfoPage({ consumerid }) {
           >
             {loading ? "Updating..." : "Update Info"}
           </button>
+
         </form>
       </div>
     </div>
