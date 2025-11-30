@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Search, Menu, X } from "lucide-react";
@@ -6,18 +7,17 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import ProfileComponent from "./ProfileComponent";
-import { div } from "framer-motion/client";
 
-const Navbar = ({ searchQuery, setSearchQuery }) => {
+const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin;
   const pathname = usePathname();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const handleLogout = async() => {
+  const handleLogout = async () => {
     await signOut({ redirect: false });
-      router.replace('/')
+    router.replace("/");
   };
 
   const handleHistoryClick = () =>
@@ -29,11 +29,35 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
     router.refresh();
   };
 
+ const handleRadiusChange = (event) => {
+  const value = event.target.value;
+  const parsed = value ? parseInt(value, 10) : null;
+
+  if (parsed) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        window.userHasLocation = true;
+        setRadius(parsed);
+      },
+      (err) => {
+        window.userHasLocation = false;
+        alert("Please allow location access to use this feature.");
+      },
+      { enableHighAccuracy: true }
+    );
+    return;
+  }
+
+  setRadius(parsed);
+};
+
+
   return (
     <nav className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
+
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
-        {/* Left Section */}
-        <div className="flex items-center gap-4 sm:gap-8">
+
+        <div className="flex items-center gap-4 sm:gap-6">
           <motion.div
             initial={{ rotate: 0 }}
             animate={{ rotate: [0, 5, -5, 0] }}
@@ -41,7 +65,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
             className="text-xl sm:text-2xl font-extrabold text-gray-700"
           >
             <Link href="/">
-              <button className="text-gray-600 transition-colors duration-300 hover:text-black">
+              <button className="text-gray-600 hover:text-black transition">
                 MessMate
               </button>
             </Link>
@@ -59,55 +83,67 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
               >
                 Your Order History
               </button>
-
-              
             </div>
           )}
         </div>
 
-        {pathname === "/mess" && (
-          <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-1.5 shadow-sm w-56 sm:w-72 md:w-80">
-            <input
-              type="text"
-              value={searchQuery ?? ""}
-              onChange={(e) => setSearchQuery && setSearchQuery(e.target.value)}
-              placeholder="Search Mess..."
-              className="bg-transparent outline-none flex text-sm text-gray-700 placeholder-gray-500"
-            />
-            <button className="bg-gray-600 hover:bg-black text-white px-3 py-1 rounded text-sm flex items-center gap-1">
-              <Search size={16} /> Search
-            </button>
-          </div>
-        )}
+        <div className="hidden md:flex items-center gap-3">
 
-        
+          {pathname === "/mess" && (
+            <>
+              <div className="flex items-center bg-gray-100 rounded-lg px-3 py-1.5 shadow-sm w-56 sm:w-72 lg:w-80">
+                <input
+                  type="text"
+                  value={searchQuery || ""}
+                  onChange={(e) => setSearchQuery?.(e.target.value)}
+                  placeholder="Search Mess..."
+                  className="bg-transparent outline-none flex-1 text-sm text-gray-700"
+                />
+                <Search size={18} className="text-gray-600" />
+              </div>
+
+              <select
+                className="border bg-white px-2 py-1 rounded text-sm"
+                value={radius ? String(radius) : ""}
+                onChange={handleRadiusChange}
+              >
+                <option value="">Mess Within</option>
+                <option value="50">50mtrs</option>
+                <option value="100">100mtrs</option>
+                <option value="200">200mtrs</option>
+              </select>
+            </>
+          )}
+        </div>
 
         {session ? (
-          <div className="hidden md:flex items-center gap-3 sm:gap-4 rounded">
+          <div className="hidden md:flex items-center gap-3">
             <ProfileComponent />
             <button
               onClick={handleLogout}
-              className="bg-gray-600 text-white px-2 py-2 rounded shadow-md hover:bg-black transition duration-300"
+              className="bg-gray-600 text-white px-3 py-2 rounded shadow hover:bg-black"
             >
               Logout
             </button>
           </div>
         ) : (
-          <div className="hidden md:flex gap-3 sm:gap-4 rounded">
+          <div className="hidden md:flex items-center gap-3">
             <Link href="/register-owner">
-              <button className="bg-gray-600 text-white px-2 py-2 rounded shadow-md hover:bg-black transition duration-200">
-               Register Owner 
+              <button className="bg-gray-600 text-white px-3 py-2 rounded shadow hover:bg-black">
+                Register Owner
               </button>
             </Link>
+
             <Link href="/signup">
-              <button className="bg-gray-600 text-white px-2 py-2 rounded shadow-md hover:bg-black transition duration-200">
-               Register Consumer
+              <button className="bg-gray-600 text-white px-3 py-2 rounded shadow hover:bg-black">
+                Register Consumer
               </button>
             </Link>
+
             <Link href="/login">
               <button
-                className="bg-gray-600 text-white px-2 py-2 rounded shadow-md hover:bg-black transition duration-200"
                 onClick={handleLoginClick}
+                className="bg-gray-600 text-white px-3 py-2 rounded shadow hover:bg-black"
               >
                 Login
               </button>
@@ -115,10 +151,8 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
           </div>
         )}
 
-        <button
-          className="md:hidden text-gray-700"
-          onClick={() => setDrawerOpen(true)}
-        >
+        {/* Mobile Menu Button */}
+        <button className="md:hidden text-gray-700" onClick={() => setDrawerOpen(true)}>
           <Menu size={28} />
         </button>
       </div>
@@ -132,7 +166,8 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
             className="absolute right-0 top-0 h-full w-64 bg-white shadow-lg p-5 flex flex-col gap-5"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-4">
+            {/* Drawer Header */}
+            <div className="flex justify-between items-center mb-3">
               <h2 className="text-lg font-semibold text-gray-700">Menu</h2>
               <button onClick={() => setDrawerOpen(false)}>
                 <X size={24} />
@@ -154,8 +189,6 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
                 >
                   Your Orders
                 </p>
-
-                
               </>
             )}
 
@@ -163,15 +196,26 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
               <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2 shadow-sm w-full">
                 <input
                   type="text"
-                  value={searchQuery ?? ""}
-                  onChange={(e) =>
-                    setSearchQuery && setSearchQuery(e.target.value)
-                  }
+                  value={searchQuery || ""}
+                  onChange={(e) => setSearchQuery?.(e.target.value)}
                   placeholder="Search Mess..."
                   className="bg-transparent outline-none flex-1 text-sm text-gray-700"
                 />
                 <Search size={18} />
               </div>
+            )}
+
+            {pathname === "/mess" && (
+              <select
+                className="border bg-white px-2 py-2 rounded text-sm"
+                value={radius ? String(radius) : ""}
+                onChange={handleRadiusChange}
+              >
+                <option value="">Filter Radius</option>
+                <option value="50">50m</option>
+                <option value="100">100m</option>
+                <option value="200">200m</option>
+              </select>
             )}
 
             {session ? (
@@ -182,7 +226,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
                     handleLogout();
                     setDrawerOpen(false);
                   }}
-                  className="bg-gray-600 text-white px-3 py-2 rounded shadow-md hover:bg-black"
+                  className="bg-gray-600 text-white px-3 py-2 rounded shadow hover:bg-black"
                 >
                   Logout
                 </button>
@@ -194,6 +238,7 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
                     Register
                   </p>
                 </Link>
+
                 <Link
                   href="/login"
                   onClick={() => {
