@@ -1,0 +1,162 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import AdminNavbar from "../Admin/AdminNavbar";
+import { toast } from "react-toastify";
+import { DataTable } from "../ShadCnUI/table";
+import DialogBox from "../ShadCnUI/Dialog";
+import ButtonComponent from "../Others/Button";
+
+export default function AdminAllMesses({ messes = [], filteredMesses: passedFiltered }) {
+  const [searchQuery] = useState("");
+  const [messesState, setMessesState] = useState(messes);
+
+  const filteredMesses = useMemo(() => {
+    if (passedFiltered) return passedFiltered;
+    return messesState;
+  }, [messesState, passedFiltered]);
+
+  const visibleMesses = useMemo(
+    () => filteredMesses.filter((m) => m.isVerified),
+    [filteredMesses]
+  );
+
+  const formattedCategory = (c) =>
+    c === "Both" || c === "both" ? "Veg + Non-Veg" : c;
+
+  const handleBlockingOfMess = async (id) => {
+    try {
+      const res = await fetch(`/api/admin/sendmsg/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) return toast.error("Failed to update mess status");
+
+      setMessesState((prev) =>
+        prev.map((m) => (m._id === id ? { ...m, isBlocked: !m.isBlocked } : m))
+      );
+
+      toast.success("Mess status updated");
+    } catch {
+      toast.error("Failed to update mess status");
+    }
+  };
+
+  const handleDeletingOfMess = async (id) => {
+    try {
+      const res = await fetch(`/api/mess/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) return toast.error("Failed to delete mess");
+
+      setMessesState((prev) => prev.filter((m) => m._id !== id));
+      toast.success("Deleted successfully");
+    } catch {
+      toast.error("Failed to delete mess");
+    }
+  };
+
+  const handleSendWarningMail = async (owner) => {
+    try {
+      const res = await fetch(`/api/admin/warn-mess-owner/${owner}`, {
+        method: "POST",
+      });
+
+      if (!res.ok) return toast.error("Failed to send warning");
+
+      const data = await res.json();
+      toast.success(data.message || "Warning sent");
+    } catch {
+      toast.error("Failed to send warning");
+    }
+  };
+
+  const columns = [
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: ({ row }) => <span className="font-semibold text-white">{row.original.name}</span>,
+    },
+    {
+      accessorKey: "ownerName",
+      header: "Owner",
+      cell: ({ row }) => <span className="text-white">{row.original.ownerName}</span>,
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => (
+        <span className="text-white">{formattedCategory(row.original.category)}</span>
+      ),
+    },
+    {
+      accessorKey: "isOpen",
+      header: "Status",
+      cell: ({ row }) => {
+        const isOpen = row.original.isOpen;
+        return (
+          <span
+            className={
+              isOpen
+                ? "bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs"
+                : "bg-red-100 text-red-700 px-2 py-0.5 rounded-full text-xs"
+            }
+          >
+            {isOpen ? "Open" : "Closed"}
+          </span>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const mess = row.original;
+        return (
+          <div className="flex flex-wrap gap-2 text-white">
+            <ButtonComponent data="Reviews" link={`/admin/all-messes/${mess._id}/reviews`} />
+
+            <DialogBox endpt={`/api/admin/sendmsg/${mess._id}`} />
+
+            <button
+              onClick={() => handleSendWarningMail(mess.owner)}
+              className="px-3 py-1 text-xs rounded bg-yellow-300 font-semibold text-black"
+            >
+              Send Warning
+            </button>
+
+            <button
+              onClick={() => handleBlockingOfMess(mess._id)}
+              className={mess.isBlocked ? "bg-green-400 px-3 py-1 rounded" : "bg-red-600 px-3 py-1 rounded"}
+            >
+              {mess.isBlocked ? "Unblock" : "Block"}
+            </button>
+
+            <button
+              onClick={() => handleDeletingOfMess(mess._id)}
+              className="px-3 py-1 text-xs rounded bg-red-600 font-semibold text-black"
+            >
+              Delete
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+
+  return (
+    <>
+      <AdminNavbar />
+
+      <main className="py-8 px-4 bg-zinc-800 min-h-screen">
+        <h1 className="text-3xl font-extrabold text-white mb-8">All Mess Listings (Admin)</h1>
+
+        <div className="overflow-auto rounded-lg">
+          <DataTable columns={columns} data={visibleMesses} />
+        </div>
+      </main>
+    </>
+  );
+}

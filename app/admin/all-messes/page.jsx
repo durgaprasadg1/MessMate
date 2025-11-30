@@ -1,4 +1,4 @@
-import AllMess from "@/Component/AllMess/AllMess";
+import AllMess from "@/Component/AllMess/AdminAllMess";
 import MessNotFound from "@/Component/Others/MessNotFound";
 
 export const dynamic = "force-dynamic";

@@ -6,6 +6,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import ProfileComponent from "./ProfileComponent";
+import { div } from "framer-motion/client";
 
 const Navbar = ({ searchQuery, setSearchQuery }) => {
   const { data: session } = useSession();
@@ -78,6 +79,8 @@ const Navbar = ({ searchQuery, setSearchQuery }) => {
             </button>
           </div>
         )}
+
+        
 
         {session ? (
           <div className="hidden md:flex items-center gap-3 sm:gap-4 rounded">
