@@ -1,9 +1,8 @@
-import dbConnect from "@/lib/mongodb";
+import { connectDB } from "../../../../lib/mongodb";
 import Mess from "../../../../models/mess";
 
 export default async function handler(req, res) {
-  await dbConnect();
-
+    await connectDB();
   const { lat, lon, radius } = req.query;
   if (!lat || !lon || !radius) {
     return res.status(400).json({ error: "lat, lon, radius required" });
