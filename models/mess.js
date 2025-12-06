@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Review from "./reviews";
 import Order from "./order";
 import cloudinary from "../lib/cloudinary";
+import NewMessCustomer from "./newMessCustomer";
 const Schema = mongoose.Schema;
 
 const messSchema = Schema({
@@ -162,18 +163,32 @@ const messSchema = Schema({
     }
   ],
   location: {
-  type: {
-    type: String,
-    enum: ["Point"],
-    default: "Point"
+    type: {
+      type: String,
+      enum: ["Point"],
+      default: "Point"
+    },
+    coordinates: {
+      type: [Number], 
+      index: "2dsphere" 
+    }
   },
-  coordinates: {
-    type: [Number], 
-    index: "2dsphere" 
-  }
-}
-
-
+  monthlyMessDuration : {
+    type: Number,
+    min : 15,
+    max : 31,
+    
+    required : true,
+  },
+  monthlyMessFee : {
+    type: Number,
+    required : true,
+       
+  },
+  newMessCustomer:[{
+    type : Schema.Types.ObjectId,
+    ref : "NewMessCustomer",
+  }]
 });
 
 

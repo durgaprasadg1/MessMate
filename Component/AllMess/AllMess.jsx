@@ -10,17 +10,18 @@ export default function ConsumerAllMesses({
   filteredMesses: passedFiltered,
 }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [messesState] = useState(messes);
   const [radius, setRadius] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [locationDenied, setLocationDenied] = useState(false);
   const [locationLoading, setLocationLoading] = useState(true);
 
+  // ---------------------------
+  // 1️⃣  GEOLOCATION FETCH
+  // ---------------------------
   useEffect(() => {
     if (!navigator?.geolocation) {
       setLocationDenied(true);
       setLocationLoading(false);
-      window.userHasLocation = false;
       return;
     }
 
@@ -30,59 +31,76 @@ export default function ConsumerAllMesses({
           lat: pos.coords.latitude,
           lon: pos.coords.longitude,
         });
-        window.userHasLocation = true;
         setLocationDenied(false);
         setLocationLoading(false);
       },
       () => {
-        setUserLocation(null);
         setLocationDenied(true);
-        window.userHasLocation = false;
         setLocationLoading(false);
+        setUserLocation(null);
       },
-      { enableHighAccuracy: true, maximumAge: 30000, timeout: 10000 }
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 12000 }
     );
   }, []);
 
+  // ----------------------------------------
+  // 2️⃣  SAFE DISTANCE FUNCTION
+  // ----------------------------------------
   const distanceInMeters = (lat1, lon1, lat2, lon2) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null; // prevent crash
+
     const R = 6371000;
     const toRad = (v) => (v * Math.PI) / 180;
+
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
+
     const a =
       Math.sin(dLat / 2) ** 2 +
       Math.cos(toRad(lat1)) *
         Math.cos(toRad(lat2)) *
         Math.sin(dLon / 2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
+
+    return R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
-  const filteredMesses = useMemo(() => {
+  // ----------------------------------------
+  // 3️⃣  SEARCH FILTER
+  // ----------------------------------------
+  const filteredBySearch = useMemo(() => {
     if (passedFiltered) return passedFiltered;
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return messesState;
-    return messesState.filter((m) =>
+
+    if (!searchQuery.trim()) return messes;
+
+    const q = searchQuery.toLowerCase();
+
+    return messes.filter((m) =>
       [m.name, m.description, m.address, m.ownerName, m.category]
         .filter(Boolean)
-        .some((v) => v.toLowerCase().includes(q))
+        .some((item) => item.toLowerCase().includes(q))
     );
-  }, [messesState, searchQuery, passedFiltered]);
+  }, [messes, searchQuery, passedFiltered]);
 
+  // ----------------------------------------
+  // 4️⃣  RADIUS FILTER
+  // ----------------------------------------
   const visibleMesses = useMemo(() => {
-    const base = filteredMesses.filter((m) => m.isVerified && !m.isBlocked);
-    if (!radius || !userLocation) return base;
+    const baseList = filteredBySearch.filter(
+      (m) => m.isVerified && !m.isBlocked
+    );
 
-    return base.filter((m) => {
+    if (!radius || !userLocation) return baseList;
+
+    return baseList.filter((m) => {
       const d = distanceInMeters(
         userLocation.lat,
         userLocation.lon,
         m.lat,
         m.lon
       );
-      return d <= radius;
+      return d !== null && d <= radius;
     });
-  }, [filteredMesses, radius, userLocation]);
+  }, [filteredBySearch, radius, userLocation]);
 
   return (
     <>
@@ -97,12 +115,14 @@ export default function ConsumerAllMesses({
         <h2 className="text-center mb-3">
           Find the best messes around you!
         </h2>
+
         {locationLoading && (
           <div className="flex justify-center mt-10">
             <Loading />
           </div>
         )}
 
+        {/* LOCATION DENIED */}
         {!locationLoading && locationDenied && (
           <div className="flex justify-center mb-4 text-center">
             <div className="p-2 rounded w-full sm:w-96 text-red-600 bg-red-50">
@@ -113,82 +133,82 @@ export default function ConsumerAllMesses({
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 ">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {visibleMesses.map((mess) => {
-            const {
-              _id,
-              name,
-              description,
-              address,
-              image,
-              category,
-              isOpen,
-            } = mess;
-
-            const categoryLabel =
-              category?.toLowerCase() === "both"
-                ? "Veg + Non-Veg"
-                : category;
-
             const dist =
               userLocation && radius
-                ? Math.round(
-                    distanceInMeters(
-                      userLocation.lat,
-                      userLocation.lon,
-                      mess.lat,
-                      mess.lon
-                    )
+                ? distanceInMeters(
+                    userLocation.lat,
+                    userLocation.lon,
+                    mess.lat,
+                    mess.lon
                   )
                 : null;
 
             return (
               <article
-                key={_id}
+                key={mess._id}
                 className="rounded border bg-white shadow hover:scale-105 transition"
               >
                 <img
-                  src={image?.url || "https://via.placeholder.com/800x500"}
+                  src={mess.image?.url || "https://via.placeholder.com/800x500"}
                   className="w-full h-48 object-cover"
                 />
 
                 <div className="p-4">
-                  <h2 className="text-xl font-bold text-amber-900">{name}</h2>
+                  <h2 className="text-xl font-bold text-amber-900">
+                    {mess.name}
+                  </h2>
 
                   <p className="text-sm italic text-gray-600">
-                    {categoryLabel}
+                    {mess.category === "both"
+                      ? "Veg + Non-Veg"
+                      : mess.category}
                   </p>
 
                   <p className="text-gray-700 text-sm mt-2 line-clamp-3">
-                    {description}
+                    {mess.description}
                   </p>
 
                   <p className="text-sm mt-2 text-gray-600">
-                    {address?.split(",")[0]}
+                    {mess.address?.split(",")[0]}
                   </p>
 
                   <span
                     className={`px-3 py-1 mt-2 inline-block rounded-full text-xs ${
-                      isOpen
+                      mess.isOpen
                         ? "bg-green-100 text-green-700"
                         : "bg-red-100 text-red-700"
                     }`}
                   >
-                    {isOpen ? "Open" : "Closed"}
+                    {mess.isOpen ? "Open" : "Closed"}
                   </span>
 
                   {dist !== null && (
                     <p className="text-xs mt-2 text-blue-600">
-                      {dist} meters away
+                      {Math.round(dist)} meters away
                     </p>
                   )}
 
-                  <div className="mt-4">
+                  <div className="mt-4 flex justify-between items-center">
                     <ButtonComponent
                       data="Get More Info"
-                      link={`/mess/${_id}`}
+                      link={`/mess/${mess._id}`}
                     />
+                    <button
+                  className="bg-gray-600  text-white font-medium hover:bg-black p-2 transition-colors duration-300 rounded"
+                  onClick={() =>
+                    window.open(
+                      `https://www.google.com/maps?q=${mess.lat},${mess.lon}`,
+                      "_blank"
+                    )
+                  }
+                >
+                  Get Location on Map
+                </button>
                   </div>
+                  
+
                 </div>
               </article>
             );

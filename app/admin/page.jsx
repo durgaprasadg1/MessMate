@@ -27,9 +27,9 @@ export default function AdminLandingPage() {
   useEffect(() => {
     if (status === "loading") return;
     if (!session?.user?.isAdmin) {
-      setLoading(false);
-      return;
+      router.replace("/");
     }
+    
 
     setLoading(true);
     fetch("/api/admin/get-all-data")
@@ -45,24 +45,21 @@ export default function AdminLandingPage() {
       .finally(() => {
         setLoading(false);
       });
-  }, [session, status]);
+
+    
+  }, [session, status, router]);
 
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
         </motion.div>
       </div>
     );
   }
 
-  if (!session?.user?.isAdmin) {
-    router.replace("/");
-  }
+
 
   return (
     <motion.div
@@ -160,10 +157,7 @@ export default function AdminLandingPage() {
                     />
                   </motion.div>
                 ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                     <EmptynessShowBox
                       heading="No New Signups Found"
                       linkmsg="Go to User Management"

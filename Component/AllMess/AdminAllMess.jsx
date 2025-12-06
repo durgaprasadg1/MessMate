@@ -6,10 +6,13 @@ import { toast } from "react-toastify";
 import { DataTable } from "../ShadCnUI/table";
 import DialogBox from "../ShadCnUI/Dialog";
 import ButtonComponent from "../Others/Button";
+import Loading from "../Others/Loading";
 
 export default function AdminAllMesses({ messes = [], filteredMesses: passedFiltered }) {
   const [searchQuery] = useState("");
   const [messesState, setMessesState] = useState(messes);
+
+  const [actionLoading, setActionLoading] = useState(false);
 
   const filteredMesses = useMemo(() => {
     if (passedFiltered) return passedFiltered;
@@ -25,6 +28,7 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
     c === "Both" || c === "both" ? "Veg + Non-Veg" : c;
 
   const handleBlockingOfMess = async (id) => {
+    setActionLoading(true);
     try {
       const res = await fetch(`/api/admin/sendmsg/${id}`, {
         method: "PATCH",
@@ -40,10 +44,13 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
       toast.success("Mess status updated");
     } catch {
       toast.error("Failed to update mess status");
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleDeletingOfMess = async (id) => {
+    setActionLoading(true);
     try {
       const res = await fetch(`/api/mess/${id}`, {
         method: "DELETE",
@@ -55,10 +62,13 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
       toast.success("Deleted successfully");
     } catch {
       toast.error("Failed to delete mess");
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleSendWarningMail = async (owner) => {
+    setActionLoading(true);
     try {
       const res = await fetch(`/api/admin/warn-mess-owner/${owner}`, {
         method: "POST",
@@ -70,6 +80,8 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
       toast.success(data.message || "Warning sent");
     } catch {
       toast.error("Failed to send warning");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -77,12 +89,16 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
     {
       accessorKey: "name",
       header: "Name",
-      cell: ({ row }) => <span className="font-semibold text-white">{row.original.name}</span>,
+      cell: ({ row }) => (
+        <span className="font-semibold text-white">{row.original.name}</span>
+      ),
     },
     {
       accessorKey: "ownerName",
       header: "Owner",
-      cell: ({ row }) => <span className="text-white">{row.original.ownerName}</span>,
+      cell: ({ row }) => (
+        <span className="text-white">{row.original.ownerName}</span>
+      ),
     },
     {
       accessorKey: "category",
@@ -114,9 +130,13 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
       header: "Actions",
       cell: ({ row }) => {
         const mess = row.original;
+
         return (
           <div className="flex flex-wrap gap-2 text-white">
-            <ButtonComponent data="Reviews" link={`/admin/all-messes/${mess._id}/reviews`} />
+            <ButtonComponent
+              data="Reviews"
+              link={`/admin/all-messes/${mess._id}/reviews`}
+            />
 
             <DialogBox endpt={`/api/admin/sendmsg/${mess._id}`} />
 
@@ -129,7 +149,11 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
 
             <button
               onClick={() => handleBlockingOfMess(mess._id)}
-              className={mess.isBlocked ? "bg-green-400 px-3 py-1 rounded" : "bg-red-600 px-3 py-1 rounded"}
+              className={
+                mess.isBlocked
+                  ? "bg-green-400 px-3 py-1 rounded"
+                  : "bg-red-600 px-3 py-1 rounded"
+              }
             >
               {mess.isBlocked ? "Unblock" : "Block"}
             </button>
@@ -147,16 +171,24 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
   ];
 
   return (
-    <>
+    <div className="relative">
       <AdminNavbar />
 
+      {actionLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
+          <Loading />
+        </div>
+      )}
+
       <main className="py-8 px-4 bg-zinc-800 min-h-screen">
-        <h1 className="text-3xl font-extrabold text-white mb-8">All Mess Listings (Admin)</h1>
+        <h1 className="text-3xl font-extrabold text-white mb-8">
+          All Mess Listings (Admin)
+        </h1>
 
         <div className="overflow-auto rounded-lg">
           <DataTable columns={columns} data={visibleMesses} />
         </div>
       </main>
-    </>
+    </div>
   );
 }

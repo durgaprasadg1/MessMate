@@ -122,7 +122,6 @@ export async function POST(request, { params }) {
     if (!mess)
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
 
-    // validate request body
     const validateResult = validateAgainst(bookingCreateSchema, body || {});
     if (!validateResult.ok) {
       return NextResponse.json(

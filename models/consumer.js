@@ -53,6 +53,7 @@ const consumerSchema = new Schema({
   resetToken: String,
 
   resetTokenExpiry: Date,
+  
 });
 
 

@@ -191,7 +191,7 @@ const RegisterComponent = () => {
                 placeholder="Enter your UPI or VPA ID"
                 required
                 minLength={4}
-                maxLength={18}
+                maxLength={50}
                 className="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-400"
               />
             </div>

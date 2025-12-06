@@ -221,7 +221,7 @@ export default function OwnedMessPage() {
                             target="_blank"
                             className="text-xs font-medium text-indigo-300 hover:text-indigo-400 transition duration-150"
                           >
-                            <button className="flex items-center px-3 py-1 rounded-full bg-indigo-700/50 hover:bg-indigo-700 text-white text-xs transition duration-200">
+                            <button className="flex items-center px-3 py-1 rounded bg-indigo-700/50 hover:bg-indigo-700 text-white text-xs transition duration-200">
                               <MapPin className="w-3 h-3 mr-1.5" /> Open in Maps
                             </button>
                           </Link>
@@ -261,6 +261,16 @@ export default function OwnedMessPage() {
                         <BarChart className="w-4 h-4 mr-2" />
                         View Performance Analytics
                       </button>
+                      <button
+                        className="flex items-center justify-center mt-2 w-full py-2.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-medium text-sm transition duration-200 shadow-md"
+                        onClick={() =>
+                          handleClick(`/owner/${mess._id}/all-registered-customers`)
+                        }
+                      >
+                        <Users className="w-4 h-4 mr-2" />
+                        View All Registered Customers
+                      </button>
+                     
                     </div>
                   </div>
 

@@ -47,7 +47,7 @@ const Panel = ({ mess }) => {
         toast.error("Error: " + err.message);
       } else {
         toast.success("Mess deleted successfully");
-        router.push("/owner/" + session?.user?.id + "/mess-details");
+        router.push(`/owner/${session?.user?.id}/mess-details`);
       }
       router.refresh();
     } catch (error) {

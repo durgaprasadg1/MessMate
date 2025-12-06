@@ -4,12 +4,12 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Loading from "../Others/Loading";
 import Link from "next/link";
-import { FaSpinner } from "react-icons/fa6";
-import {Spinner} from "@/components/ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
 
 const VerificationComponent = () => {
   const [pendingMesses, setPendingMesses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchPendingMesses = async () => {
     setLoading(true);
@@ -30,49 +30,54 @@ const VerificationComponent = () => {
   }, []);
 
   const handleVerify = async (id) => {
+    setActionLoading(true);
     try {
       const res = await fetch(`/api/mess/${id}/make-verified`, {
         method: "POST",
       });
       if (!res.ok) throw new Error("Verification failed");
-      setLoading(true);
-      toast.success("Mess verified successfully!");
       setPendingMesses((prev) => prev.filter((m) => m._id !== id));
+      toast.success("Mess verified successfully!");
     } catch (error) {
       toast.error(error.message);
-    }
-    finally {
-      setLoading(false);
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleDeny = async (id) => {
+    setActionLoading(true);
     try {
       const res = await fetch(`/api/mess/${id}/deny-verification`, {
         method: "POST",
       });
       if (!res.ok) throw new Error("Denial failed");
-      setLoading(true);
-      toast.info("Mess request denied.");
       setPendingMesses((prev) => prev.filter((m) => m._id !== id));
+      toast.info("Mess request denied.");
     } catch (error) {
       toast.error(error.message);
-    }
-    finally {
-      setLoading(false);
+    } finally {
+      setActionLoading(false);
     }
   };
 
-  if (loading) return <Spinner />;
-
   return (
-    <div className="p-6 bg-zinc-900 min-h-screen">
-      
+    <div className="relative p-6 bg-zinc-900 min-h-screen">
+      {actionLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <Loading />
+        </div>
+      )}
+
       <h1 className="text-3xl font-bold mb-8 text-center text-white tracking-wide">
         Mess Verification Panel
       </h1>
 
-      {pendingMesses.length === 0 ? (
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <Spinner />
+        </div>
+      ) : pendingMesses.length === 0 ? (
         <p className="text-center text-gray-600 text-lg">
           No pending messes for verification.
         </p>
@@ -85,7 +90,6 @@ const VerificationComponent = () => {
                   key={mess._id}
                   className="bg-amber-300 rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 flex flex-col justify-between border border-gray-200"
                 >
-                  {/* Header */}
                   <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
                     {mess.name}
                   </h2>
@@ -158,24 +162,24 @@ const VerificationComponent = () => {
                     </div>
                   </div>
 
-                  <p className="text-white text-sm mt-4 bg-black p-3 rounded-xl  ">
+                  <p className="text-white text-sm mt-4 bg-black p-3 rounded-xl">
                     <span className="font-semibold">Description:</span>{" "}
                     {mess.description}
                   </p>
 
                   <div className="mt-6 flex justify-between gap-3">
-                    <button disabled={loading}
+                    <button
                       onClick={() => handleVerify(mess._id)}
                       className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded transition-all shadow-sm"
                     >
-                      {loading ? <Spinner/> : "Verify"}
+                      Verify
                     </button>
 
-                    <button disabled={loading}
+                    <button
                       onClick={() => handleDeny(mess._id)}
                       className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded transition-all shadow-sm"
                     >
-                     {loading ? <Spinner/> : "Deny"}
+                      Deny
                     </button>
                   </div>
                 </div>

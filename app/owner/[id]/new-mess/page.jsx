@@ -21,6 +21,8 @@ const NewMessForm = () => {
     ownerName: "",
     adharNumber: "",
     phoneNumber: "",
+    monthlyMessFee: "",
+    monthlyMessDuration : "",
     lat: "",
     lon: "",
   });
@@ -129,6 +131,8 @@ const NewMessForm = () => {
         ownerName: "",
         adharNumber: "",
         phoneNumber: "",
+        monthlyMessFee: "",
+        monthlyMessDuration : "",
         lat: form.lat,
         lon: form.lon,
       });
@@ -290,6 +294,33 @@ const NewMessForm = () => {
               placeholder="abc@bank"
             />
           </div>
+          <div>
+            <label className="block font-medium text-white">
+              Monthly Mess Fee
+            </label>
+            <input
+              type="text"
+              name="monthlyMessFee"
+              value={form.monthlyMessFee}
+              onChange={handleChange}
+              className="mt-1 w-full border rounded-md px-3 py-2"
+              placeholder="1800"
+            />
+          </div>
+          
+          <div>
+            <label className="block font-medium text-white">
+              Monthly Mess Duration
+            </label>
+            <select name="monthlyMessDuration" id="" 
+             type="number"
+              value={form.monthlyMessDuration}
+              onChange={handleChange}   className="mt-1 w-full border rounded-md px-3 py-2 ">
+              <option className="text-black" value={0}>Select Duration</option>
+              <option value={15}  className="text-black">15 Days</option>
+              <option value={30} className="text-black">30 Days</option>
+            </select>
+          </div>
 
 
           <div>
@@ -314,12 +345,12 @@ const NewMessForm = () => {
                 value={form.category}
                 onChange={handleChange}
                 required
-                className="mt-1 w-full border rounded-md px-3 py-2"
+                className="mt-1 w-full border rounded-md px-3 py-2 "
               >
-                <option value="">Select Category</option>
-                <option value="veg">Veg</option>
-                <option value="nonveg">Non-Veg</option>
-                <option value="both">Both (Veg + Non-Veg)</option>
+                <option className="text-black" value="">Select Category</option>
+                <option className="text-black" value="Veg">Veg</option>
+                <option className="text-black" value="Non Veg">Non-Veg</option>
+                <option className="text-black" value="both">Both (Veg + Non-Veg)</option>
               </select>
             </div>
 
@@ -331,8 +362,8 @@ const NewMessForm = () => {
                 onChange={handleChange}
                 className="mt-1 w-full border rounded-md px-3 py-2"
               >
-                <option value="true">Limited</option>
-                <option value="false">Unlimited</option>
+                <option className="text-black" value="true">Limited</option>
+                <option className="text-black" value="false">Unlimited</option>
               </select>
             </div>
           </div>

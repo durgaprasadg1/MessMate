@@ -7,6 +7,7 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import ProfileComponent from "./ProfileComponent";
+import Button from "../../Component/Others/Button";
 
 const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
   const { data: session } = useSession();
@@ -118,6 +119,9 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
 
         {session ? (
           <div className="hidden md:flex items-center gap-3">
+            <div>
+              <Button data="Your Daily Mess" classes="bg-pink-300 rounded p-1.5 hover:bg-pink-400 transition-colors text-white duration-300" link={`/consumer/${session?.user?.id}/daily-mess`}/>
+            </div>
             <ProfileComponent />
             <button
               onClick={handleLogout}
@@ -151,7 +155,6 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
           </div>
         )}
 
-        {/* Mobile Menu Button */}
         <button className="md:hidden text-gray-700" onClick={() => setDrawerOpen(true)}>
           <Menu size={28} />
         </button>
@@ -166,7 +169,6 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
             className="absolute right-0 top-0 h-full w-64 bg-white shadow-lg p-5 flex flex-col gap-5"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Drawer Header */}
             <div className="flex justify-between items-center mb-3">
               <h2 className="text-lg font-semibold text-gray-700">Menu</h2>
               <button onClick={() => setDrawerOpen(false)}>

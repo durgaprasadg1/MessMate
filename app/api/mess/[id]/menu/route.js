@@ -54,7 +54,6 @@ export async function POST(request, { params }) {
       }))
       .filter((d) => d.name || d.items.length > 0);
 
-    // Update mess metadata
     mess.mealTime = mealTime || "";
     if (menutype === "vegMenu") {
       if (price) mess.vegPrice = Number(price);
@@ -67,19 +66,16 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Find existing menu doc (if any)
     let menuDoc = await Menu.findOne({ mess: id, menutype });
 
     if (!menuDoc || replace) {
-      // Replace entire menu (or create new)
       menuDoc = await Menu.findOneAndUpdate(
         { mess: id, menutype },
         { mess: id, menutype, mealTime: mealTime || "", dishes: cleanedDishes },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
     } else {
-      // Merge/update existing menu doc instead of replacing
-      // Remove any dishes explicitly deleted
+      
       if (Array.isArray(deletedDishIds) && deletedDishIds.length) {
         menuDoc.dishes = menuDoc.dishes.filter(
           (d) =>
@@ -87,24 +83,19 @@ export async function POST(request, { params }) {
         );
       }
 
-      // Update or add incoming dishes
       for (const incoming of cleanedDishes) {
-        // if incoming has an _id (client should send existing dish _id when editing)
         if (incoming._id) {
           const idx = menuDoc.dishes.findIndex(
             (d) => d._id.toString() === incoming._id.toString()
           );
           if (idx > -1) {
-            // replace fields for that dish
             menuDoc.dishes[idx].name = incoming.name;
             menuDoc.dishes[idx].price = incoming.price;
             menuDoc.dishes[idx].items = incoming.items;
           } else {
-            // fallback: push as new
             menuDoc.dishes.push(incoming);
           }
         } else {
-          // try match by name (case-insensitive)
           const match = menuDoc.dishes.find(
             (d) =>
               d.name &&
@@ -124,7 +115,6 @@ export async function POST(request, { params }) {
       await menuDoc.save();
     }
 
-    // Store reference on Mess and keep a lightweight copy for quick access
     if (menuDoc) {
       if (menutype === "vegMenu") {
         mess.vegMenuRef = menuDoc._id;

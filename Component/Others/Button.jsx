@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
 
-const ButtonComponent = ({ data, link }) => {
+const ButtonComponent = ({ data, link, classes }) => {
   const { data: session } = useSession();
 
   const router = useRouter();
@@ -17,7 +17,7 @@ const ButtonComponent = ({ data, link }) => {
   return (
     <div>
       <Button
-        className={session?.user?.isAdmin  ? "bg-amber-300 text-black font-medium hover:bg-amber-500 transition-colors duration-300 rounded w-full" : " bg-gray-600 text-white font-medium hover:bg-black transition-colors duration-300 rounded"}
+        className={session?.user?.isAdmin  ? "bg-amber-300 text-black font-medium hover:bg-amber-500 transition-colors duration-300 rounded w-full" : classes ? classes : " bg-gray-600 text-white font-medium hover:bg-black transition-colors duration-300 rounded"}
         onClick={() => handleClick(link)}
       > 
         {data}

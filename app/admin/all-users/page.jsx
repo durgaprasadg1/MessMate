@@ -4,14 +4,16 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminNavbar from "@/Component/Admin/AdminNavbar";
 import NotFound from "../../not-found";
-import { DataTable } from "../../../Component/ShadCnUI/table"; 
+import { DataTable } from "../../../Component/ShadCnUI/table";
 import { toast } from "react-toastify";
-import Loading from '../../../Component/Others/Loading'
+import Loading from "../../../Component/Others/Loading";
 
 export default function AllUsersPage() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -24,7 +26,6 @@ export default function AllUsersPage() {
         }
 
         const data = await res.json();
-       
         setUsers(data || []);
       } catch (err) {
         console.error(err);
@@ -38,12 +39,11 @@ export default function AllUsersPage() {
   }, []);
 
   const handleToggleBlock = async (user) => {
+    setActionLoading(true);
     try {
       const res = await fetch(`/api/admin/blockings/users/${user._id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "toggleOpen" }),
       });
 
@@ -58,35 +58,36 @@ export default function AllUsersPage() {
         )
       );
 
-      const newStatus = !user.isBlocked;
-      if (newStatus) {
-        toast.success("User Blocked");
-      } else {
-        toast.success("User Unblocked");
-      }
+      toast.success(!user.isBlocked ? "User Blocked" : "User Unblocked");
     } catch (err) {
       console.error(err);
       toast.error("Update failed");
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleSendWarningMail = async (user) => {
+    setActionLoading(true);
+
     try {
-        const res = await fetch(`/api/admin/warn-user/${user._id}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-        if(!res.ok){
-          toast.error("Failed to send warning");
-          return;
-        }
-        const data  =  await res.json();
-        toast.success(data.message);
+      const res = await fetch(`/api/admin/warn-user/${user._id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        toast.error("Failed to send warning");
+        return;
+      }
+
+      const data = await res.json();
+      toast.success(data.message);
     } catch (error) {
       console.error(error);
       toast.error("Failed to send warning");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -94,28 +95,40 @@ export default function AllUsersPage() {
     {
       accessorKey: "username",
       header: "Name",
-      cell: ({ row }) => <span className="font-medium text-white">{row.original.username}</span>,
+      cell: ({ row }) => (
+        <span className="font-medium text-white">{row.original.username}</span>
+      ),
     },
     {
       accessorKey: "email",
       header: "Email",
-      cell: ({ row }) => <span className="font-medium text-white">{row.original.email}</span>,
+      cell: ({ row }) => (
+        <span className="font-medium text-white">{row.original.email}</span>
+      ),
     },
     {
       accessorKey: "phone",
       header: "Phone",
-      cell: ({ row }) => <span className="font-medium text-white">{row.original.phone}</span>,
+      cell: ({ row }) => (
+        <span className="font-medium text-white">{row.original.phone}</span>
+      ),
     },
     {
       accessorKey: "orders",
       header: "Orders",
-      cell: ({ row }) => <span className="font-medium text-white">{row.original.orders?.length || 0}</span>,
+      cell: ({ row }) => (
+        <span className="font-medium text-white">
+          {row.original.orders?.length || 0}
+        </span>
+      ),
     },
     {
       accessorKey: "reviews",
       header: "Reviews",
       cell: ({ row }) => (
-        <span className="font-medium text-white">{row.original.reviews?.length || 0}</span>
+        <span className="font-medium text-white">
+          {row.original.reviews?.length || 0}
+        </span>
       ),
     },
     {
@@ -136,14 +149,16 @@ export default function AllUsersPage() {
         );
       },
     },
+
     {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => {
         const user = row.original;
+
         return (
           <div className="flex flex-wrap gap-2">
-            {user.reviews?.length === 0 ? null : (
+            {user.reviews?.length > 0 && (
               <Link
                 href={`/consumer/${user._id}/reviews`}
                 className="text-xs px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
@@ -176,17 +191,25 @@ export default function AllUsersPage() {
   ];
 
   if (error) return <NotFound />;
+
   if (loading)
     return (
       <div className="min-h-screen bg-zinc-50">
         <AdminNavbar />
-        <Loading/>
+        <Loading />
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-zinc-900">
+    <div className="relative min-h-screen bg-zinc-900">
       <AdminNavbar />
+
+      {actionLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
+          <Loading />
+        </div>
+      )}
+
       <main className="max-w-6xl mx-auto p-6">
         <h1 className="text-2xl font-semibold mb-4 text-white">All Users</h1>
 

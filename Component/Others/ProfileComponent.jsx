@@ -11,12 +11,12 @@ const ProfileComponent = ()=> {
 
 
         let endpt = "";
-        if (isAdmin) endpt = `/admin/${session.user.id}`;
+        if (isAdmin) endpt = `/admin/${session?.user?.id}`;
         else if (isOwner) {
-          endpt = `/owner/${session.user.id}`;
+          endpt = `/owner/${session?.user?.id}`;
         }
         else {
-          endpt = `/consumer/${session.user.id}`;
+          endpt = `/consumer/${session?.user?.id}`;
         }
         router.push(endpt);
       };
@@ -28,7 +28,7 @@ const ProfileComponent = ()=> {
                 
                 <FaRegUser className={isOwner? "text-white": isAdmin ? "text-amber-300" :"text-gray-700"}/>
                 <span className={isOwner? "text-white":"text-sm font-medium text-amber-300 hover:text-amber-500"}>
-                  {isAdmin?  session?.user?.username : session?.user?.username}
+                  {session?.user?.username}
                   
                   
                 </span>

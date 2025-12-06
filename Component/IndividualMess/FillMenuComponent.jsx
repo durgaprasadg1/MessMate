@@ -159,7 +159,7 @@ export default function MessMenuComponent({
       });
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data?.error || data?.message || "Failed");
+      if (!res.ok) toast.error( "Failed");
       toast.success("Menu saved");
       router.refresh();
       router.push(`/owner/${session?.user?.id}/mess-details`);

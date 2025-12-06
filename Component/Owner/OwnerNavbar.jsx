@@ -42,7 +42,7 @@ export default function OwnerNavbar() {
 
       <div className="hidden md:flex gap-3 items-center text-gray-300 text-lg mr-2">
 
-                <ButtonComponent data="Dashboard" link="/owner/dashboard" />
+                <ButtonComponent data="About" link="/owner/dashboard" />
 
          <ButtonComponent
           data="Add Your Mess"
@@ -84,7 +84,7 @@ export default function OwnerNavbar() {
                 <X size={20} />
               </button>
             </div>
-            <ButtonComponent data="Dashboard" link="/owner/dashboard" />
+            <ButtonComponent data="About" link="/owner/dashboard" />
             <ButtonComponent
               data="Details"
               link={`/owner/${session?.user?.id}/mess-details`}
