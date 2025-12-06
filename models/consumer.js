@@ -54,6 +54,11 @@ const consumerSchema = new Schema({
 
   resetTokenExpiry: Date,
   
+  haveMonthlyMess: {
+    type : Boolean,
+    default: false,
+  }
+  
 });
 
 

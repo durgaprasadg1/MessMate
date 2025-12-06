@@ -151,8 +151,8 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
               onClick={() => handleBlockingOfMess(mess._id)}
               className={
                 mess.isBlocked
-                  ? "bg-green-400 px-3 py-1 rounded"
-                  : "bg-red-600 px-3 py-1 rounded"
+                  ? "bg-green-400 px-3 py-1 rounded text-black"
+                  : "bg-red-600 px-3 py-1 rounded text-black"
               }
             >
               {mess.isBlocked ? "Unblock" : "Block"}
@@ -160,7 +160,7 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
 
             <button
               onClick={() => handleDeletingOfMess(mess._id)}
-              className="px-3 py-1 text-xs rounded bg-red-600 font-semibold text-black"
+              className="px-3 py-1 text-xs rounded bg-red-600 font-semibold text-white"
             >
               Delete
             </button>

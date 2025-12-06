@@ -32,6 +32,7 @@ export async function POST(request) {
       phone: phoneNumber,
       address,
       password: hashedPassword,
+      haveMonthlyMess: false,
     });
 
     await newUser.save();

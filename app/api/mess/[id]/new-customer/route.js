@@ -85,7 +85,7 @@ export async function POST(request, { params }) {
     } = body || {};
 
     const phoneRe = /^[6-9]\d{9}$/;
-    const durationEnum = ["Day", "Night", "Day + Night"]; 
+    const durationEnum = ["Day", "Night", "Day + Night"];
     const genderEnum = ["Male", "Female", "Other"];
 
     if (!name || !phone || !duration) {
@@ -162,7 +162,16 @@ export async function POST(request, { params }) {
     };
 
     const recipientName = consumer.username || "User";
-    const recipientEmail = consumer.email ;
+    const recipientEmail = consumer.email;
+
+    const messCustomer = await NewMessCustomer.create(newCustomerPayload);
+
+    mess.newMessCustomer.push(messCustomer._id);
+    await mess.save();
+
+    await Consumer.findByIdAndUpdate(consumer._id, {
+      haveMonthlyMess: true,
+    });
 
     try {
       await transporter.sendMail({
@@ -192,11 +201,6 @@ export async function POST(request, { params }) {
     } catch (mailErr) {
       console.error("Failed to send mail:", mailErr);
     }
-
-    const messCustomer = await NewMessCustomer.create(newCustomerPayload);
-
-    mess.newMessCustomer.push(messCustomer._id);
-    await mess.save();
 
     return NextResponse.json(
       {

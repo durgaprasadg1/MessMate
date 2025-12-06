@@ -119,9 +119,11 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
 
         {session ? (
           <div className="hidden md:flex items-center gap-3">
+           {session?.user?.haveMonthlyMess && ( 
             <div>
               <Button data="Your Daily Mess" classes="bg-pink-300 rounded p-1.5 hover:bg-pink-400 transition-colors text-white duration-300" link={`/consumer/${session?.user?.id}/daily-mess`}/>
             </div>
+            )}
             <ProfileComponent />
             <button
               onClick={handleLogout}
