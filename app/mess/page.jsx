@@ -1,10 +1,12 @@
-// 'use client';
+export const dynamic = "force-dynamic";
+
 "use client";
 
 import { useEffect, useState } from "react";
 import AllMesses from "@/Component/AllMess/AllMess";
 import MessNotFound from "@/Component/Others/MessNotFound";
 import Loader from "@/Component/Others/Loading";
+
 export default function AllMessPage() {
   const [messes, setMesses] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,15 +38,9 @@ export default function AllMessPage() {
     fetchMesses();
   }, []);
 
-  if (loading) {
-    return (
-      <Loader/>
-    );
-  }
+  if (loading) return <Loader />;
 
-  if (error || !messes) {
-    return <MessNotFound />;
-  }
+  if (error || !messes) return <MessNotFound />;
 
   return <AllMesses messes={messes} />;
 }
