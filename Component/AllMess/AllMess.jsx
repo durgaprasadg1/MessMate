@@ -3,7 +3,6 @@
 import { useMemo, useState, useEffect } from "react";
 import Navbar from "../Others/Navbar";
 import ButtonComponent from "../Others/Button";
-import Loading from "@/Component/Others/Loading";
 
 export default function ConsumerAllMesses({
   messes = [],
@@ -15,9 +14,6 @@ export default function ConsumerAllMesses({
   const [locationDenied, setLocationDenied] = useState(false);
   const [locationLoading, setLocationLoading] = useState(true);
 
-  // ---------------------------
-  // 1️⃣  GEOLOCATION FETCH
-  // ---------------------------
   useEffect(() => {
     if (!navigator?.geolocation) {
       setLocationDenied(true);
@@ -43,12 +39,9 @@ export default function ConsumerAllMesses({
     );
   }, []);
 
-  // ----------------------------------------
-  // 2️⃣  SAFE DISTANCE FUNCTION
-  // ----------------------------------------
-  const distanceInMeters = (lat1, lon1, lat2, lon2) => {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return null; // prevent crash
 
+  const distanceInMeters = (lat1, lon1, lat2, lon2) => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null; 
     const R = 6371000;
     const toRad = (v) => (v * Math.PI) / 180;
 
@@ -64,9 +57,7 @@ export default function ConsumerAllMesses({
     return R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
-  // ----------------------------------------
-  // 3️⃣  SEARCH FILTER
-  // ----------------------------------------
+
   const filteredBySearch = useMemo(() => {
     if (passedFiltered) return passedFiltered;
 
@@ -81,9 +72,7 @@ export default function ConsumerAllMesses({
     );
   }, [messes, searchQuery, passedFiltered]);
 
-  // ----------------------------------------
-  // 4️⃣  RADIUS FILTER
-  // ----------------------------------------
+  
   const visibleMesses = useMemo(() => {
     const baseList = filteredBySearch.filter(
       (m) => m.isVerified && !m.isBlocked
@@ -116,13 +105,8 @@ export default function ConsumerAllMesses({
           Find the best messes around you!
         </h2>
 
-        {locationLoading && (
-          <div className="flex justify-center mt-10">
-            <Loading />
-          </div>
-        )}
+        
 
-        {/* LOCATION DENIED */}
         {!locationLoading && locationDenied && (
           <div className="flex justify-center mb-4 text-center">
             <div className="p-2 rounded w-full sm:w-96 text-red-600 bg-red-50">
