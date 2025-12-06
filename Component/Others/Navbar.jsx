@@ -5,17 +5,20 @@ import { motion } from "framer-motion";
 import { Search, Menu, X } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ProfileComponent from "./ProfileComponent";
 import Button from "../../Component/Others/Button";
 
 const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin;
+  const isOwner = session?.user?.isOwner;
   const pathname = usePathname();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
-
+  const [consumerData, setConsumerData] = useState({});
+  const consumerid = session?.user?.id;
+  console.log(session);
   const handleLogout = async () => {
     await signOut({ redirect: false });
     router.replace("/");
@@ -30,34 +33,51 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
     router.refresh();
   };
 
- const handleRadiusChange = (event) => {
-  const value = event.target.value;
-  const parsed = value ? parseInt(value, 10) : null;
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch(`/api/consumer/${consumerid}`, {
+          cache: "no-store",
+        });
 
-  if (parsed) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        window.userHasLocation = true;
-        setRadius(parsed);
-      },
-      (err) => {
-        window.userHasLocation = false;
-        alert("Please allow location access to use this feature.");
-      },
-      { enableHighAccuracy: true }
-    );
-    return;
-  }
+        if (!res.ok) throw new Error("Failed to fetch user info");
 
-  setRadius(parsed);
-};
+        const data = await res.json();
+        console.log("Consumer Data in Navbar: ", data);
+        setConsumerData({haveMonthlyMess: data.consumer.haveMonthlyMess ?? false});
+      } catch (err) {
+        console.error(err);
+        toast.error("Error fetching user data");
+      }
+    }
 
+    if (consumerid && !isOwner && !isAdmin) fetchUser();
+  }, [consumerid]);
+  const handleRadiusChange = (event) => {
+    const value = event.target.value;
+    const parsed = value ? parseInt(value, 10) : null;
+
+    if (parsed) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          window.userHasLocation = true;
+          setRadius(parsed);
+        },
+        (err) => {
+          window.userHasLocation = false;
+          alert("Please allow location access to use this feature.");
+        },
+        { enableHighAccuracy: true }
+      );
+      return;
+    }
+
+    setRadius(parsed);
+  };
 
   return (
     <nav className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
-
       <div className="max-w-7xl mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3">
-
         <div className="flex items-center gap-4 sm:gap-6">
           <motion.div
             initial={{ rotate: 0 }}
@@ -89,7 +109,6 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-
           {pathname === "/mess" && (
             <>
               <div className="flex items-center bg-gray-100 rounded-lg px-3 py-1.5 shadow-sm w-56 sm:w-72 lg:w-80">
@@ -119,10 +138,14 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
 
         {session ? (
           <div className="hidden md:flex items-center gap-3">
-           {session?.user?.haveMonthlyMess && ( 
-            <div>
-              <Button data="Your Daily Mess" classes="bg-pink-300 rounded p-1.5 hover:bg-pink-400 transition-colors text-white duration-300" link={`/consumer/${session?.user?.id}/daily-mess`}/>
-            </div>
+            {consumerData.haveMonthlyMess && (
+              <div>
+                <Button
+                  data="Your Daily Mess"
+                  classes="bg-pink-300 rounded p-1.5 hover:bg-pink-400 transition-colors text-white duration-300"
+                  link={`/consumer/${session?.user?.id}/daily-mess`}
+                />
+              </div>
             )}
             <ProfileComponent />
             <button
@@ -157,7 +180,10 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
           </div>
         )}
 
-        <button className="md:hidden text-gray-700" onClick={() => setDrawerOpen(true)}>
+        <button
+          className="md:hidden text-gray-700"
+          onClick={() => setDrawerOpen(true)}
+        >
           <Menu size={28} />
         </button>
       </div>

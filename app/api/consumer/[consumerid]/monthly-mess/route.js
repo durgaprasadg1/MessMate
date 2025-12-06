@@ -7,14 +7,12 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 export async function GET(request, { params }) {
   try {
     await connectDB();
-    // console.log("Params : " ,params)
     const { consumerid } = await params || {};
     console.log("UserId ", consumerid)
 
     if (!consumerid || !consumerid.match(/^[0-9a-fA-F]{24}$/)) {
       return NextResponse.json({ message: "Invalid or missing userId" }, { status: 400 });
     }
-    console.log("Got User")
 
 
     const session = await getServerSession(authOptions);
@@ -25,7 +23,6 @@ export async function GET(request, { params }) {
     if (session.user.id !== consumerid) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
-console.log("record Fetching")
     const records = await NewMessCustomer.find({ customer: consumerid })
       .populate("mess")
       .populate("customer");
