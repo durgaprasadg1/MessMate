@@ -245,7 +245,7 @@ const NewMessForm = () => {
           className="space-y-4"
         >
           <div>
-            <label className="block font-medium text-gray-700">Mess Name</label>
+            <label className="block font-medium text-white">Mess Name</label>
             <input
               name="name"
               value={form.name}
