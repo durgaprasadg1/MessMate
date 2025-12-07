@@ -36,7 +36,7 @@ export default function BookingForm({ mess }) {
 
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.message || "Booking failed");
+        toast.error("Booking failed");
         return;
       }
 
