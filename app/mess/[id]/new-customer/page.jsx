@@ -13,6 +13,7 @@ const NewCustomerToMess = () => {
   const router = useRouter();
 
   const [mess, setMess] = useState(null);
+  const [existingRegistrations, setExistingRegistrations] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -29,18 +30,27 @@ const NewCustomerToMess = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchMess = async () => {
+    const fetchMessAndRegistrations = async () => {
       try {
-        const res = await fetch(`/api/mess/${messId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setMess(data.mess);
+        const messRes = await fetch(`/api/mess/${messId}`);
+        if (messRes.ok) {
+          const messData = await messRes.json();
+          setMess(messData.mess);
+        }
+
+        // Fetch existing registrations for this user
+        const regRes = await fetch(
+          `/api/consumer/${messId}/check-registrations`
+        );
+        if (regRes.ok) {
+          const regData = await regRes.json();
+          setExistingRegistrations(regData.registrations || []);
         }
       } catch (err) {
-        console.error("Failed to fetch mess details:", err);
+        console.error("Failed to fetch data:", err);
       }
     };
-    if (messId) fetchMess();
+    if (messId) fetchMessAndRegistrations();
   }, [messId]);
 
   const validators = {
@@ -92,6 +102,45 @@ const NewCustomerToMess = () => {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      return;
+    }
+
+    // Check meal time restrictions
+    const hasDay = existingRegistrations.some(
+      (reg) => reg.duration === "Day" || reg.duration === "Day + Night"
+    );
+    const hasNight = existingRegistrations.some(
+      (reg) => reg.duration === "Night" || reg.duration === "Day + Night"
+    );
+
+    if (formData.duration === "Day" && hasDay) {
+      toast.error(
+        "You are already registered for Day meal in another mess. Please choose Night or cancel your existing Day registration."
+      );
+      return;
+    }
+
+    if (formData.duration === "Night" && hasNight) {
+      toast.error(
+        "You are already registered for Night meal in another mess. Please choose Day or cancel your existing Night registration."
+      );
+      return;
+    }
+
+    if (formData.duration === "Day + Night" && (hasDay || hasNight)) {
+      toast.error(
+        "You are already registered for a meal time. You cannot register for Day + Night."
+      );
+      return;
+    }
+
+    if (
+      (hasDay && hasNight) ||
+      existingRegistrations.some((reg) => reg.duration === "Day + Night")
+    ) {
+      toast.error(
+        "You are already registered for both meal times. Please cancel an existing registration first."
+      );
       return;
     }
 
@@ -241,6 +290,22 @@ const NewCustomerToMess = () => {
             </div>
           )}
 
+          {existingRegistrations.length > 0 && (
+            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm font-semibold text-amber-900 mb-2">
+                ⚠️ Your Current Registrations:
+              </p>
+              {existingRegistrations.map((reg, idx) => (
+                <p key={idx} className="text-xs text-amber-800">
+                  • {reg.messName} - {reg.duration} meal
+                </p>
+              ))}
+              <p className="text-xs text-amber-700 mt-2">
+                You can only register for meal times you haven't already booked.
+              </p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <FormInput
               label="Full Name"
@@ -305,12 +370,42 @@ const NewCustomerToMess = () => {
               name="duration"
               value={formData.duration}
               onChange={handleChange}
-              options={[
-                { value: "", label: "Select" },
-                { value: "Day", label: "Day Only" },
-                { value: "Night", label: "Night Only" },
-                { value: "Day + Night", label: "Day + Night" },
-              ]}
+              options={(() => {
+                const hasDay = existingRegistrations.some(
+                  (reg) =>
+                    reg.duration === "Day" || reg.duration === "Day + Night"
+                );
+                const hasNight = existingRegistrations.some(
+                  (reg) =>
+                    reg.duration === "Night" || reg.duration === "Day + Night"
+                );
+
+                return [
+                  { value: "", label: "Select" },
+                  {
+                    value: "Day",
+                    label: hasDay
+                      ? "Day Only (Already Registered)"
+                      : "Day Only",
+                    disabled: hasDay,
+                  },
+                  {
+                    value: "Night",
+                    label: hasNight
+                      ? "Night Only (Already Registered)"
+                      : "Night Only",
+                    disabled: hasNight,
+                  },
+                  {
+                    value: "Day + Night",
+                    label:
+                      hasDay || hasNight
+                        ? "Day + Night (Not Available)"
+                        : "Day + Night",
+                    disabled: hasDay || hasNight,
+                  },
+                ];
+              })()}
             />
 
             <FormInput
@@ -327,12 +422,25 @@ const NewCustomerToMess = () => {
               name="foodPreference"
               value={formData.foodPreference}
               onChange={handleChange}
-              options={[
-                { value: "", label: "Select" },
-                { value: "veg", label: "Veg" },
-                { value: "both", label: "Veg + Non-Veg" },
-              ]}
+              options={
+                mess?.category === "veg"
+                  ? [
+                      { value: "", label: "Select" },
+                      { value: "veg", label: "Veg" },
+                    ]
+                  : [
+                      { value: "", label: "Select" },
+                      { value: "veg", label: "Veg" },
+                      { value: "both", label: "Veg + Non-Veg" },
+                    ]
+              }
             />
+
+            {mess?.category === "veg" && (
+              <p className="text-xs sm:text-sm text-amber-600 -mt-2">
+                ℹ️ This is a vegetarian mess. Only veg food is available.
+              </p>
+            )}
 
             <FormInput
               label="Emergency Contact"

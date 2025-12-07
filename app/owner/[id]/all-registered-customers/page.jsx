@@ -345,7 +345,7 @@ export default function YourMessRegisteredUser() {
       <OwnerNavbar />
 
       {actionLoading && (
-        <div className=" backdrop-blur-sm  z-50">
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50">
           <Loading />
         </div>
       )}

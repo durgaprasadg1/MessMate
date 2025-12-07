@@ -20,7 +20,7 @@ export async function POST(request, { params }) {
   try {
     await connectDB();
 
-    const { id } = await params|| {};
+    const { id } = (await params) || {};
 
     if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
       return NextResponse.json(
@@ -49,13 +49,25 @@ export async function POST(request, { params }) {
       );
     }
 
+    const allUserRegistrations = await NewMessCustomer.find({
+      customer: session.user.id,
+    });
+
+    const today = new Date();
+    const activeRegistrations = allUserRegistrations.filter((reg) => {
+      const joining = new Date(reg.joiningDate);
+      const diffDays = Math.floor((today - joining) / (1000 * 60 * 60 * 24));
+      const totalDuration = reg.messDuration || 30;
+      const remaining = Math.max(totalDuration - diffDays, 0);
+      return remaining > 0;
+    });
+
     const existingCustomer = await NewMessCustomer.findOne({
       customer: session.user.id,
       mess: id,
     });
 
     if (existingCustomer) {
-      const today = new Date();
       const joining = new Date(existingCustomer.joiningDate);
       const diffDays = Math.floor((today - joining) / (1000 * 60 * 60 * 24));
 
@@ -65,7 +77,7 @@ export async function POST(request, { params }) {
       if (remaining > 0) {
         return NextResponse.json(
           {
-            message: `You are already registered. Your current mess service still has ${remaining} day(s) remaining.`,
+            message: `You are already registered in this mess. Your current service still has ${remaining} day(s) remaining.`,
           },
           { status: 403 }
         );
@@ -93,6 +105,57 @@ export async function POST(request, { params }) {
       return NextResponse.json(
         { message: "Missing required fields: name, phone, or duration" },
         { status: 400 }
+      );
+    }
+
+    // Validate meal time restrictions
+    const hasDay = activeRegistrations.some(
+      (reg) => reg.duration === "Day" || reg.duration === "Day + Night"
+    );
+    const hasNight = activeRegistrations.some(
+      (reg) => reg.duration === "Night" || reg.duration === "Day + Night"
+    );
+
+    if (duration === "Day" && hasDay) {
+      return NextResponse.json(
+        {
+          message:
+            "You are already registered for Day meal in another mess. Please choose Night meal or cancel your existing Day registration.",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (duration === "Night" && hasNight) {
+      return NextResponse.json(
+        {
+          message:
+            "You are already registered for Night meal in another mess. Please choose Day meal or cancel your existing Night registration.",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (duration === "Day + Night" && (hasDay || hasNight)) {
+      return NextResponse.json(
+        {
+          message:
+            "You are already registered for a meal time. You cannot register for both Day + Night.",
+        },
+        { status: 403 }
+      );
+    }
+
+    if (
+      (hasDay && hasNight) ||
+      activeRegistrations.some((reg) => reg.duration === "Day + Night")
+    ) {
+      return NextResponse.json(
+        {
+          message:
+            "You are already registered for both meal times. Please cancel an existing registration first.",
+        },
+        { status: 403 }
       );
     }
 
@@ -144,6 +207,34 @@ export async function POST(request, { params }) {
     const mess = await Mess.findById(id);
     if (!mess) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
+    }
+
+    // Validate food preference based on mess category
+    if (foodPreference) {
+      const messCategory = mess.category?.toLowerCase();
+      const userPref = foodPreference.toLowerCase();
+
+      if (messCategory === "veg" && userPref !== "veg") {
+        return NextResponse.json(
+          {
+            message:
+              "This is a vegetarian mess. You can only select 'Veg' as your food preference.",
+          },
+          { status: 400 }
+        );
+      }
+
+      if (messCategory === "non-veg" && userPref === "veg") {
+        return NextResponse.json(
+          {
+            message:
+              "This is a non-vegetarian mess. Vegetarian options may not be available.",
+          },
+          { status: 400 }
+        );
+      }
+
+      // For "both" category mess, all preferences are allowed
     }
 
     let calculatedAmount = mess.monthlyMessFee || 0;
@@ -212,7 +303,7 @@ export async function POST(request, { params }) {
       emergencyContact,
       messDuration: mess.monthlyMessDuration || 30,
       joiningDate: new Date(),
-      paymentStatus: "paid", 
+      paymentStatus: "paid",
       paymentVerified: true,
     };
 

@@ -29,7 +29,7 @@ export default function ConsumerMonthlyMess() {
 
       if (res.ok) {
         // Check if monthlyMess exists and has data
-        if (data.monthlyMess && data.monthlymess?.length > 0) {
+        if (data.monthlyMess && data.monthlyMess.length > 0) {
           const messData = data.monthlyMess[0]; // Use first item (index 0)
           console.log("Setting customer data:", messData);
           setCustomerData(messData);
@@ -72,7 +72,9 @@ export default function ConsumerMonthlyMess() {
 
   const joiningDate = new Date(customerData?.joiningDate);
   const expiryDate = new Date(joiningDate);
-  expiryDate.setDate(joiningDate.getDate() + (customerData?.messDuration || 30));
+  expiryDate.setDate(
+    joiningDate.getDate() + (customerData?.messDuration || 30)
+  );
 
   return (
     <>
@@ -192,6 +194,160 @@ export default function ConsumerMonthlyMess() {
                 />
               </div>
             </section>
+
+            {/* Today's Menu Section */}
+            {customerData?.mess && customerData?.isAllowed && (
+              <section>
+                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+                  🍽️ Today's Menu
+                </h3>
+
+                <div className="mt-3 space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm text-blue-900 font-medium mb-1">
+                      ⏰ Meal Time:{" "}
+                      <span className="font-bold">
+                        {customerData.mess.mealTime || "Not specified"}
+                      </span>
+                    </p>
+                    <p className="text-xs text-blue-700">
+                      Your subscription: {customerData.duration}
+                    </p>
+                  </div>
+
+                  {/* Veg Menu */}
+                  {customerData.mess.vegMenu &&
+                    customerData.mess.vegMenu.length > 0 && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h4 className="text-md font-semibold text-green-800 mb-3 flex items-center gap-2">
+                          🥗 Vegetarian Menu
+                        </h4>
+                        <div className="space-y-3">
+                          {customerData.mess.vegMenu.map((dish, idx) => (
+                            <div
+                              key={idx}
+                              className="bg-white rounded-md p-3 shadow-sm"
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <h5 className="font-semibold text-gray-900">
+                                  {dish.name}
+                                </h5>
+                                {dish.price && (
+                                  <span className="text-green-600 font-bold">
+                                    ₹{dish.price}
+                                  </span>
+                                )}
+                              </div>
+                              {dish.items && dish.items.length > 0 && (
+                                <ul className="space-y-1">
+                                  {dish.items.map((item, itemIdx) => (
+                                    <li
+                                      key={itemIdx}
+                                      className="flex justify-between items-center text-sm text-gray-700"
+                                    >
+                                      <span className="flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                        {item.name}
+                                        {item.isLimited && (
+                                          <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">
+                                            Limited ({item.limitCount})
+                                          </span>
+                                        )}
+                                      </span>
+                                      {item.price && (
+                                        <span className="text-gray-600">
+                                          ₹{item.price}
+                                        </span>
+                                      )}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Non-Veg Menu */}
+                  {customerData.mess.nonVegMenu &&
+                    customerData.mess.nonVegMenu.length > 0 && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <h4 className="text-md font-semibold text-red-800 mb-3 flex items-center gap-2">
+                          🍗 Non-Vegetarian Menu
+                        </h4>
+                        <div className="space-y-3">
+                          {customerData.mess.nonVegMenu.map((dish, idx) => (
+                            <div
+                              key={idx}
+                              className="bg-white rounded-md p-3 shadow-sm"
+                            >
+                              <div className="flex justify-between items-start mb-2">
+                                <h5 className="font-semibold text-gray-900">
+                                  {dish.name}
+                                </h5>
+                                {dish.price && (
+                                  <span className="text-red-600 font-bold">
+                                    ₹{dish.price}
+                                  </span>
+                                )}
+                              </div>
+                              {dish.items && dish.items.length > 0 && (
+                                <ul className="space-y-1">
+                                  {dish.items.map((item, itemIdx) => (
+                                    <li
+                                      key={itemIdx}
+                                      className="flex justify-between items-center text-sm text-gray-700"
+                                    >
+                                      <span className="flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                        {item.name}
+                                        {item.isLimited && (
+                                          <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded">
+                                            Limited ({item.limitCount})
+                                          </span>
+                                        )}
+                                      </span>
+                                      {item.price && (
+                                        <span className="text-gray-600">
+                                          ₹{item.price}
+                                        </span>
+                                      )}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {(!customerData.mess.vegMenu ||
+                    customerData.mess.vegMenu.length === 0) &&
+                    (!customerData.mess.nonVegMenu ||
+                      customerData.mess.nonVegMenu.length === 0) && (
+                      <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                        <p className="text-gray-600">
+                          📋 Menu not available yet
+                        </p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          The mess owner hasn't uploaded today's menu.
+                        </p>
+                      </div>
+                    )}
+                </div>
+              </section>
+            )}
+
+            {!customerData?.isAllowed && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm text-amber-900 text-center">
+                  ℹ️ Menu will be visible once your registration is approved by
+                  the mess owner.
+                </p>
+              </div>
+            )}
 
             {customerData?.paymentMode === "upi" &&
               customerData?.paymentVerified && (

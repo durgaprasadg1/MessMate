@@ -9,7 +9,7 @@ const SelectBox = ({ label, name, value, onChange, options }) => (
       required
     >
       {options.map((opt, i) => (
-        <option key={i} value={opt.value}>
+        <option key={i} value={opt.value} disabled={opt.disabled || false}>
           {opt.label}
         </option>
       ))}
