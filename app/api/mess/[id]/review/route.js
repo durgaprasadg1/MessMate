@@ -14,8 +14,6 @@ export async function POST(request, { params }) {
     if (!id) {
       return NextResponse.json({ message: "Mess ID missing" }, { status: 400 });
     }
-  
-
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,7 +23,7 @@ export async function POST(request, { params }) {
     
      if (typeof rating !== "number" || rating < 1 || rating > 5 || !text?.trim()) {
       return NextResponse.json(
-        { message: "Valid rating (1–5) and non-empty text are required" },
+        { message: "Valid rating (1-5) and non-empty text are required" },
         { status: 400 }
       );
     }

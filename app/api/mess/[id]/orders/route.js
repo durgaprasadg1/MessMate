@@ -107,7 +107,6 @@ export async function DELETE(request, { params }) {
 
     const ids = completed.map((d) => d._id);
 
-    // perform delete and cleanup in a transaction to avoid partial state
     const sessionDb = await mongoose.startSession();
     try {
       sessionDb.startTransaction();

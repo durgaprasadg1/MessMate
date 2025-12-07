@@ -30,7 +30,7 @@ export async function PATCH(request, { params }) {
         );
       if (order.consumer.toString() !== session.user.id)
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-      // Use transaction to update order and remove refs atomically
+
       const sessionDb = await mongoose.startSession();
       try {
         sessionDb.startTransaction();
@@ -85,7 +85,6 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    // Owner decides to return payment and not take the order
     if (action === "refund" || action === "returnPayment") {
       const mess = await Mess.findById(order.mess);
       if (!mess)
@@ -96,7 +95,6 @@ export async function PATCH(request, { params }) {
       if (!mess.owner || mess.owner.toString() !== session.user.id)
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-      // Use transaction to update order status and remove refs
       const sessionDb2 = await mongoose.startSession();
       try {
         sessionDb2.startTransaction();

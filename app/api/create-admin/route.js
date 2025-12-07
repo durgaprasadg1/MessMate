@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "../../../lib/mongodb.js";
+import Owner from "../../../models/owner.js";
+import Consumer from "../../../models/consumer.js";
+
 export async function POST(request) {
+
   try {
     await connectDB();
     const body = await request.json();
@@ -13,19 +17,35 @@ export async function POST(request) {
       );
     }
 
-    const mod = await import("../../../models/admin.js");
-    const Consumer = mod.default || mod;
-
     const existed = await Consumer.findOne({ email });
     if (existed) {
       return NextResponse.json(
-        { message: "A user with this email already exists." },
+        { message: "A Consumer with this email already exists." },
         { status: 409 }
       );
     }
+    
+    const existedOwner = await Owner.findOne({ email });
+    if (existedOwner) {
+      return NextResponse.json(
+        { message: "A Owner with this email already exists." },
+        { status: 409 }
+      );
+    }
+
+    const modadmin = await import("../../../models/admin.js");
+    const Admin = modadmin.default || mod;
+    const Existadmin = await Admin.findOne({ email });
+    if (Existadmin) {
+      return NextResponse.json(
+        { message: "A Admin with this email already exists." },
+        { status: 409 }
+      );
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new Consumer({
+    const newUser = new Admin({
       name,
       email,
       phoneNumber,

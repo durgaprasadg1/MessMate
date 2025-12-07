@@ -16,7 +16,6 @@ export async function POST(req) {
   try {
     await connectDB();
 
-    // Read email from request body
     const { email } = await req.json();
 
     if (!email) {
@@ -25,8 +24,6 @@ export async function POST(req) {
         { status: 400 }
       );
     }
-
-    // Find user by email
     let user = await Consumer.findOne({ email });
 
     if (!user) {
@@ -36,9 +33,8 @@ export async function POST(req) {
       );
     }
 
-    // Generate reset token
     user.resetToken = crypto.randomBytes(32).toString("hex");
-    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
+    user.resetTokenExpiry = Date.now() + 3600000; 
 
     await user.save();
 

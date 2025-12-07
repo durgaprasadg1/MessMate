@@ -149,7 +149,6 @@ export async function POST(request, { params }) {
         { status: 500 }
       );
 
-    // Send verification received email
     const recipientName = messData.ownerName || "User";
 
     await transporter.sendMail({

@@ -6,8 +6,6 @@ export async function GET() {
   try {
     await connectDB();
     const messes = await Mess.find();
-    
-    
     return NextResponse.json(messes);
   } catch (error) {
     console.error(error);

@@ -31,7 +31,6 @@ export const authOptions = {
             email: admin.email,
             isAdmin: true,
             isOwner: false,
-
           };
         }
 

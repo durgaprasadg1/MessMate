@@ -352,7 +352,6 @@ export async function PATCH(request, { params }) {
       const recipientName = consumer.username || "User";
       const recipientEmail = consumer.email;
 
-      // Send email with payment invoice
       try {
         await transporter.sendMail({
           from: `"MessMate Support" <${process.env.MAIL_USER}>`,
@@ -416,7 +415,6 @@ export async function PATCH(request, { params }) {
         console.error("Failed to send payment confirmation mail:", mailErr);
       }
 
-      // Populate the customer object with mess details
       const populatedCustomer = await NewMessCustomer.findById(messCustomer._id)
         .populate("mess")
         .populate("customer");

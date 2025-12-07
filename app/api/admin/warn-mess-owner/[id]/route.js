@@ -22,17 +22,13 @@ export async function POST(request, { params }) {
 
     await connectDB();
     const { default: Owner } = await import("@/models/owner");
-
-    
-
-    
       const owner = await Owner.findById(id);
       if (!owner)
         return NextResponse.json(
           { message: "owner not found" },
           { status: 404 }
         );
-        const recipientEmail = owner.email;
+      const recipientEmail = owner.email;
       const recipientName = owner.name || "User";
 
     try {

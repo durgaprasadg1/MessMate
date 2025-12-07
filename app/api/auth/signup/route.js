@@ -39,7 +39,7 @@ export async function POST(request) {
 
     return NextResponse.json(
       {
-        message: "✅ Registration successful!",
+        message: " Registration successful!",
         id: newUser._id,
         username: newUser.username,
       },
