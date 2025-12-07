@@ -73,20 +73,21 @@ export default function MessDetails({ mess }) {
               </p>
             </div>
           </div>
-          <div className="flex items-center justify-between">
-            <div className="mt-4 text-gray-600">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="mt-4 text-gray-600 flex-1">
               <p>
                 <span className="font-medium">📍 Address:</span> {mess.address}
               </p>
 
               {mess.lat && mess.lon && (
-                <p className="text-sm mt-1 flex items-center gap-2">
+                <p className="text-sm mt-2 flex items-center gap-2">
                   <span className="font-medium">🌐 Location:</span>
+
                   <Link
                     href={`https://www.google.com/maps?q=${mess.lat},${mess.lon}`}
                     target="_blank"
                   >
-                    <button className="py-1 rounded text-black">
+                    <button className="py-1 px-3 rounded bg-gray-200 hover:bg-gray-300 text-black transition">
                       See On Map
                     </button>
                   </Link>
@@ -94,35 +95,31 @@ export default function MessDetails({ mess }) {
               )}
 
               {mess.mealTime && (
-                <p className="mt-2 text-gray-600 ">
+                <p className="mt-3 text-gray-600">
                   🍽️ <span className="font-medium">Meal Time:</span>{" "}
                   {mess.mealTime}
                 </p>
               )}
+
               <p className="mt-6 text-gray-700 leading-relaxed border-l-4 border-blue-500 pl-4">
                 {mess.description}
               </p>
             </div>
 
-            <div className="p-6">
+            <div className="w-full md:w-auto md:min-w-[300px]">
               {mess.monthlyMessDuration > 0 && mess.monthlyMessFee > 0 && (
-                <div className=" bg-white p-4 rounded-lg shadow-md text-center">
-                  <div className="flex items-center justify-around">
-                    <p className="text-gray-500 text-md">
-                      Get delicious taste and satisfaction for{" "}
-                      {mess.monthlyMessDuration} days — starting at only ₹
-                      {mess.monthlyMessFee}!{" "}
-                    </p>
-                    <br />
-                  </div>
+                <div className="bg-white p-5 rounded-lg shadow-md text-center">
+                  <p className="text-gray-500 text-md mb-3">
+                    Get delicious taste and satisfaction for{" "}
+                    {mess.monthlyMessDuration} days — starting at only ₹
+                    {mess.monthlyMessFee}!
+                  </p>
 
-                  <div>
-                    <ButtonComponent
-                      data="Join Monthly Mess Now!"
-                      link={`/mess/${mess._id}/new-customer`}
-                      classes="bg-pink-500 text-white rounded px-4 py-2 hover:bg-pink-600 transition"
-                    />
-                  </div>
+                  <ButtonComponent
+                    data="Join Monthly Mess Now!"
+                    link={`/mess/${mess._id}/new-customer`}
+                    classes="bg-pink-500 text-white rounded px-4 py-2 hover:bg-pink-600 transition w-full"
+                  />
                 </div>
               )}
             </div>
