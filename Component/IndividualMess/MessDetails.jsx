@@ -105,26 +105,26 @@ export default function MessDetails({ mess }) {
             </div>
 
             <div className="p-6">
-             
-              {mess.monthlyMessDuration > 0 && mess.monthlyMessFee > 0 && (<div className=" bg-white p-4 rounded-lg shadow-md text-center">
-                <div className="flex items-center justify-around">
-                 
-                  <p className="text-gray-500 text-md">
-Get unlimited taste and satisfaction for {mess.monthlyMessDuration} days — starting at only ₹{mess.monthlyMessFee}!                  </p>
-                  <br />
-                   
-                </div>
-                
+              {mess.monthlyMessDuration > 0 && mess.monthlyMessFee > 0 && (
+                <div className=" bg-white p-4 rounded-lg shadow-md text-center">
+                  <div className="flex items-center justify-around">
+                    <p className="text-gray-500 text-md">
+                      Get delicious taste and satisfaction for{" "}
+                      {mess.monthlyMessDuration} days — starting at only ₹
+                      {mess.monthlyMessFee}!{" "}
+                    </p>
+                    <br />
+                  </div>
 
-                <div>
-                  <ButtonComponent
-                    data="Join Monthly Mess Now!"
-                    link={`/mess/${mess._id}/new-customer`}
-                    classes="bg-pink-500 text-white rounded px-4 py-2 hover:bg-pink-600 transition"
-                  />
+                  <div>
+                    <ButtonComponent
+                      data="Join Monthly Mess Now!"
+                      link={`/mess/${mess._id}/new-customer`}
+                      classes="bg-pink-500 text-white rounded px-4 py-2 hover:bg-pink-600 transition"
+                    />
+                  </div>
                 </div>
-              </div>)}
-              
+              )}
             </div>
           </div>
 

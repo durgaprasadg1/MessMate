@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/Component/Others/Navbar";
 import Loading from "@/Component/Others/Loading";
+import FormInput from "@/Component/Others/FormInput";
+import SelectBox from "@/Component/Others/SelectBox";
 import { toast } from "react-toastify";
 
 const NewCustomerToMess = () => {
@@ -73,13 +75,7 @@ const NewCustomerToMess = () => {
       document.body.appendChild(script);
     });
 
-  const calculateAmount = () => {
-    if (!mess?.monthlyMessFee) return 0;
-    if (formData.duration === "Day + Night") {
-      return mess.monthlyMessFee * 2;
-    }
-    return mess.monthlyMessFee;
-  };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -118,7 +114,6 @@ const NewCustomerToMess = () => {
         return;
       }
 
-      // If payment mode is online and we got an order, proceed with Razorpay
       if (formData.paymentMode === "upi" && data.order) {
         await loadScript("https://checkout.razorpay.com/v1/checkout.js");
         const { order, key, dbOrderId, amount } = data;
@@ -227,7 +222,6 @@ const NewCustomerToMess = () => {
     );
   }
 
-  const displayAmount = calculateAmount();
 
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 border rounded-lg shadow">
@@ -362,7 +356,7 @@ const NewCustomerToMess = () => {
           {loading
             ? "Processing..."
             : formData.paymentMode === "upi"
-            ? `Pay ₹${displayAmount} Online and Register`
+            ? `Pay  Online and Register`
             : "Register with Cash Payment"}
         </button>
       </form>
@@ -372,51 +366,3 @@ const NewCustomerToMess = () => {
 
 export default NewCustomerToMess;
 
-//
-// Form Input
-//
-const FormInput = ({
-  label,
-  name,
-  type,
-  placeholder,
-  value,
-  onChange,
-  error,
-}) => (
-  <div>
-    <label className="block font-medium">{label}</label>
-    <input
-      type={type}
-      name={name}
-      placeholder={placeholder}
-      className="w-full border p-2 rounded"
-      value={value}
-      onChange={onChange}
-      required
-    />
-    {error && <p className="text-red-600 text-sm">{error}</p>}
-  </div>
-);
-
-//
-// Select Box
-//
-const SelectBox = ({ label, name, value, onChange, options }) => (
-  <div>
-    <label className="block font-medium">{label}</label>
-    <select
-      name={name}
-      className="w-full border p-2 rounded"
-      value={value}
-      onChange={onChange}
-      required
-    >
-      {options.map((opt, i) => (
-        <option key={i} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
-  </div>
-);

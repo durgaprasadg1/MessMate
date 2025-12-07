@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import Navbar from "../Others/Navbar";
 import ButtonComponent from "../Others/Button";
+import Loading from "@/Component/Others/Loading";
 
 export default function ConsumerAllMesses({
   messes = [],
@@ -39,9 +40,8 @@ export default function ConsumerAllMesses({
     );
   }, []);
 
-
   const distanceInMeters = (lat1, lon1, lat2, lon2) => {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return null; 
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
     const R = 6371000;
     const toRad = (v) => (v * Math.PI) / 180;
 
@@ -50,13 +50,10 @@ export default function ConsumerAllMesses({
 
     const a =
       Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) *
-        Math.cos(toRad(lat2)) *
-        Math.sin(dLon / 2) ** 2;
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
 
     return R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
-
 
   const filteredBySearch = useMemo(() => {
     if (passedFiltered) return passedFiltered;
@@ -72,7 +69,6 @@ export default function ConsumerAllMesses({
     );
   }, [messes, searchQuery, passedFiltered]);
 
-  
   const visibleMesses = useMemo(() => {
     const baseList = filteredBySearch.filter(
       (m) => m.isVerified && !m.isBlocked
@@ -101,11 +97,13 @@ export default function ConsumerAllMesses({
       />
 
       <main className="py-8 px-4 mt-15">
-        <h2 className="text-center mb-3">
-          Find the best messes around you!
-        </h2>
+        <h2 className="text-center mb-3">Find the best messes around you!</h2>
 
-        
+        {locationLoading && (
+          <div className="flex justify-center mb-4">
+            <Loading />
+          </div>
+        )}
 
         {!locationLoading && locationDenied && (
           <div className="flex justify-center mb-4 text-center">
@@ -117,10 +115,10 @@ export default function ConsumerAllMesses({
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {visibleMesses.map((mess) => {
-            const dist =
-              userLocation && radius
+        {!locationLoading && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {visibleMesses.map((mess) => {
+              const dist = userLocation
                 ? distanceInMeters(
                     userLocation.lat,
                     userLocation.lon,
@@ -129,77 +127,78 @@ export default function ConsumerAllMesses({
                   )
                 : null;
 
-            return (
-              <article
-                key={mess._id}
-                className="rounded border bg-white shadow hover:scale-105 transition"
-              >
-                <img
-                  src={mess.image?.url || "https://via.placeholder.com/800x500"}
-                  className="w-full h-48 object-cover"
-                />
-
-                <div className="p-4">
-                  <h2 className="text-xl font-bold text-amber-900">
-                    {mess.name}
-                  </h2>
-
-                  <p className="text-sm italic text-gray-600">
-                    {mess.category === "both"
-                      ? "Veg + Non-Veg"
-                      : mess.category}
-                  </p>
-
-                  <p className="text-gray-700 text-sm mt-2 line-clamp-3">
-                    {mess.description}
-                  </p>
-
-                  <p className="text-sm mt-2 text-gray-600">
-                    {mess.address?.split(",")[0]}
-                  </p>
-
-                  <span
-                    className={`px-3 py-1 mt-2 inline-block rounded-full text-xs ${
-                      mess.isOpen
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {mess.isOpen ? "Open" : "Closed"}
-                  </span>
-
-                  {dist !== null && (
-                    <p className="text-xs mt-2 text-blue-600">
-                      {Math.round(dist)} meters away
-                    </p>
-                  )}
-
-                  <div className="mt-4 flex justify-between items-center">
-                    <ButtonComponent
-                      data="Get More Info"
-                      link={`/mess/${mess._id}`}
-                    />
-                    <button
-                  className="bg-gray-600  text-white font-medium hover:bg-black p-2 transition-colors duration-300 rounded"
-                  onClick={() =>
-                    window.open(
-                      `https://www.google.com/maps?q=${mess.lat},${mess.lon}`,
-                      "_blank"
-                    )
-                  }
+              return (
+                <article
+                  key={mess._id}
+                  className="rounded border bg-white shadow hover:scale-105 transition"
                 >
-                  Get Location on Map
-                </button>
+                  <img
+                    src={
+                      mess.image?.url || "https://via.placeholder.com/800x500"
+                    }
+                    className="w-full h-48 object-cover"
+                  />
+
+                  <div className="p-4">
+                    <h2 className="text-xl font-bold text-amber-900">
+                      {mess.name}
+                    </h2>
+
+                    <p className="text-sm italic text-gray-600">
+                      {mess.category === "both"
+                        ? "Veg + Non-Veg"
+                        : mess.category}
+                    </p>
+
+                    <p className="text-gray-700 text-sm mt-2 line-clamp-3">
+                      {mess.description}
+                    </p>
+
+                    <p className="text-sm mt-2 text-gray-600">
+                      {mess.address?.split(",")[0]}
+                    </p>
+
+                    <span
+                      className={`px-3 py-1 mt-2 inline-block rounded-full text-xs ${
+                        mess.isOpen
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {mess.isOpen ? "Open" : "Closed"}
+                    </span>
+
+                    {dist !== null && (
+                      <p className="text-sm mt-2 text-green-600">
+                        {Math.round(dist)} meters away
+                      </p>
+                    )}
+
+                    <div className="mt-4 flex justify-between items-center">
+                      <ButtonComponent
+                        data="Get More Info"
+                        link={`/mess/${mess._id}`}
+                      />
+                      <button
+                        className="bg-gray-600  text-white font-medium hover:bg-black p-2 transition-colors duration-300 rounded"
+                        onClick={() =>
+                          window.open(
+                            `https://www.google.com/maps?q=${mess.lat},${mess.lon}`,
+                            "_blank"
+                          )
+                        }
+                      >
+                        Get Location on Map
+                      </button>
+                    </div>
                   </div>
-                  
+                </article>
+              );
+            })}
+          </div>
+        )}
 
-                </div>
-              </article>
-            );
-          })}
-        </div>
-
-        {visibleMesses.length === 0 && (
+        {!locationLoading && visibleMesses.length === 0 && (
           <p className="text-center text-gray-600 mt-10 text-xl">
             No messes found for your filters.
           </p>

@@ -5,11 +5,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(request, { params }) {
   try {
-    const { id } = await params || {};
+    const { id } = (await params) || {};
     await connectDB();
     const { default: Mess } = await import("../../../../models/mess");
-    // const { default: Menu } = await import("../../../../models/menu");
-    // const { default: Message } = await import("../../../../models/message");
+    const { default: Message } = await import("../../../../models/message");
 
     const mess = await Mess.findById(id)
       .populate("alert")
@@ -37,7 +36,7 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request, { params }) {
   try {
-    const { id } = await  params || {};
+    const { id } = (await params) || {};
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -46,32 +45,30 @@ export async function PATCH(request, { params }) {
     const { default: Mess } = await import("../../../../models/mess");
     const body = await request.json();
 
+    const mess = await Mess.findById(id);
+    if (!mess)
+      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
 
-    
-      const mess = await Mess.findById(id);
-      if (!mess)
-        return NextResponse.json(
-          { message: "Mess not found" },
-          { status: 404 }
-        );
-
-      const ownerId = mess.owner ? mess.owner.toString() : null;
-      if (!ownerId || ownerId !== session.user.id) {
-        return NextResponse.json(
-          { message: "Forbidden: not the owner" },
-          { status: 403 }
-        );
-      }
-      const updatedMess = await Mess.findByIdAndUpdate(id,
-        { $set: { isOpen: !mess.isOpen } },
-        { new: true }
-      );
-      
+    const ownerId = mess.owner ? mess.owner.toString() : null;
+    if (!ownerId || ownerId !== session.user.id) {
       return NextResponse.json(
-        { message: updatedMess.isOpen ? "Mess Opened" : "Mess Closed", mess: updatedMess },
-        { status: 200 }
+        { message: "Forbidden: not the owner" },
+        { status: 403 }
       );
+    }
+    const updatedMess = await Mess.findByIdAndUpdate(
+      id,
+      { $set: { isOpen: !mess.isOpen } },
+      { new: true }
+    );
 
+    return NextResponse.json(
+      {
+        message: updatedMess.isOpen ? "Mess Opened" : "Mess Closed",
+        mess: updatedMess,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("PATCH error:", error);
     return NextResponse.json(
@@ -83,7 +80,7 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const { id } = await params || {};
+    const { id } = (await params) || {};
     await connectDB();
     const { default: Mess } = await import("../../../../models/mess");
     const deletedMess = await Mess.findByIdAndDelete(id);

@@ -56,21 +56,29 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
     const parsed = value ? parseInt(value, 10) : null;
 
     if (parsed) {
+      // Check if geolocation is available
+      if (!navigator?.geolocation) {
+        alert("Geolocation is not supported by your browser.");
+        return;
+      }
+
+      // Request location permission when user selects a radius
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          window.userHasLocation = true;
           setRadius(parsed);
         },
         (err) => {
-          window.userHasLocation = false;
-          alert("Please allow location access to use this feature.");
+          console.error("Location error:", err);
+          alert("Please allow location access to filter by distance.");
+          // Reset to show all messes if location denied
+          event.target.value = "";
         },
-        { enableHighAccuracy: true }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
-      return;
+    } else {
+      // Clear filter
+      setRadius(null);
     }
-
-    setRadius(parsed);
   };
 
   return (
@@ -125,10 +133,12 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
                 value={radius ? String(radius) : ""}
                 onChange={handleRadiusChange}
               >
-                <option value="">Mess Within</option>
-                <option value="50">50mtrs</option>
-                <option value="100">100mtrs</option>
-                <option value="200">200mtrs</option>
+                <option value="">All Messes</option>
+                <option value="50">Within 50m</option>
+                <option value="100">Within 100m</option>
+                <option value="200">Within 200m</option>
+                <option value="500">Within 500m</option>
+                <option value="1000">Within 1km</option>
               </select>
             </>
           )}
@@ -239,10 +249,12 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
                 value={radius ? String(radius) : ""}
                 onChange={handleRadiusChange}
               >
-                <option value="">Filter Radius</option>
-                <option value="50">50m</option>
-                <option value="100">100m</option>
-                <option value="200">200m</option>
+                <option value="">All Messes</option>
+                <option value="50">Within 50m</option>
+                <option value="100">Within 100m</option>
+                <option value="200">Within 200m</option>
+                <option value="500">Within 500m</option>
+                <option value="1000">Within 1km</option>
               </select>
             )}
 
