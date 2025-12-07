@@ -170,10 +170,13 @@ export default function MessMenuComponent({
       setLoading(false);
     }
   }
-  if (loading) return <Loading />;
+  if (loading) return 
+  <div className="min-h-screen flex items-center justify-center bg-gray-950">
+  <Loading /></div>
+  ;
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm">
+    <div className="bg-gray-800 p-4 rounded-lg shadow-sm">
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>

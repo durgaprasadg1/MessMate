@@ -6,7 +6,6 @@ import Loading from "@/Component/Others/Loading";
 import OwnerNavbar from "@/Component/Owner/OwnerNavbar";
 import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
-import { div } from "framer-motion/client";
 
 const MessageComponent = () => {
   const {data : session} = useSession();
@@ -20,7 +19,7 @@ const MessageComponent = () => {
       try {
         const res = await fetch(`/api/mess/${id}`);
         if (!res.ok) {
-          setError(data.message || "Failed to fetch messages");
+          setError("Failed to fetch messages");
           return;
         }
 
@@ -30,6 +29,7 @@ const MessageComponent = () => {
         }
         setMessages(data.alert || []);
       } catch (err) {
+        console.error("Error fetching messages:", err);
         setError("Internet connection error");
       } finally {
         setLoading(false);
@@ -61,6 +61,7 @@ const MessageComponent = () => {
       toast.success("Message Deleted !"); ;
         return;
     } catch (err) {
+      console.error("Error in deleting message:", err);
       toast.error("Internet connection error");
     } 
   };
@@ -80,7 +81,7 @@ const MessageComponent = () => {
 
   return (
 
-    <div className="space-y-4  min-h-screen">
+    <div className="space-y-4  min-h-screen bg-gray-950">
         <OwnerNavbar />
       <h2 className="text-xl font-semibold mt-5 ml-5">Messages</h2>
 

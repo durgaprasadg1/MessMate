@@ -52,7 +52,6 @@ const NewCustomerToMess = () => {
 
     const newErrors = {};
 
-    // validate all fields
     Object.entries(formData).forEach(([key, value]) => {
       const err = validateField(key, value);
       if (err) newErrors[key] = err;
@@ -82,7 +81,6 @@ const NewCustomerToMess = () => {
       if (res.ok) {
         toast.success("Requested successfully! Please wait for approval.");
 
-        // reset form only on success
         setFormData({
           name: "",
           phone: "",

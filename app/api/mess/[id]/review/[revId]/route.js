@@ -6,7 +6,6 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 export async function DELETE(request, { params }) {
   try {
     const { id, revId } = await params;
-    // require session
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -27,7 +26,6 @@ export async function DELETE(request, { params }) {
 
     const authorId = review.author ? review.author.toString() : null;
 
-    // allow deletion by review author or mess owner
     let allowed = false;
     if (authorId && authorId === session.user.id) allowed = true;
     if (!allowed) {
@@ -40,7 +38,6 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    // remove review
     const deletedReview = await Review.findByIdAndDelete(revId);
     if (!deletedReview) {
       return NextResponse.json(
@@ -49,7 +46,6 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // also remove reference from mess
     const mess = await Mess.findById(id);
     if (mess) {
       mess.reviews = (mess.reviews || []).filter(

@@ -8,10 +8,18 @@ export default async function UpdateMenuPage({ params }) {
   const res = await fetch(`${base}/api/mess/${id}`, { cache: 'no-store' });
 
   if (!res.ok) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
+    return  (
+      <>
+       <OwnerNavbar />
+     
+      <div className="min-h-screen  flex items-center justify-center bg-gray-950">
+        
+        <div className="p-7 bg-gray-800 rounded text-white  text-center">
+         
        ----- Mess not found ------
+       </div>
       </div>
+       </>
     );
   }
 

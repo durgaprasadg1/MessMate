@@ -139,7 +139,7 @@ export default function ConsumerMonthlyMess() {
 
               <InfoRow
                 label="Food Preference"
-                value={customerData.foodPreference}
+                value={customerData.foodPreference ? "Both"? "Veg + Non-Veg" : customerData.foodPreference === "veg" ? "Vegetarian" : "Non-Vegetarian" : "Not Specified"}
               />
               <InfoRow
                 label="Payment Mode"
