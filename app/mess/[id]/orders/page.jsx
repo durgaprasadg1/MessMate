@@ -109,7 +109,7 @@ export default function OrdersPage() {
         header: "Order",
         enableSorting: false,
         cell: ({ row }) => (
-          <span className="font-mono text-xs">
+          <span className="font-mono text-xs text-white">
             {String(row.original._id).slice(0, 8)}
           </span>
         ),
@@ -120,18 +120,24 @@ export default function OrdersPage() {
         accessorFn: (row) =>
           (row.consumer && (row.consumer.username || row.consumer.email)) ||
           "Unknown",
-        cell: ({ getValue }) => <span>{getValue()}</span>,
+        cell: ({ getValue }) => (
+          <span className="text-white">{getValue()}</span>
+        ),
       },
       {
         accessorKey: "selectedDishName",
         header: "Dish",
-        cell: ({ getValue }) => <span>{getValue() || "-"}</span>,
+        cell: ({ getValue }) => (
+          <span className="text-white">{getValue() || "-"}</span>
+        ),
       },
       {
         accessorKey: "noOfPlate",
         header: "Plates",
         cell: ({ getValue }) => (
-          <span className="block text-center">{getValue() ?? 0}</span>
+          <span className="block text-center text-white font-semibold">
+            {getValue() ?? 0}
+          </span>
         ),
       },
       {
@@ -139,7 +145,7 @@ export default function OrdersPage() {
         header: "Amount",
         accessorFn: (row) => (row.totalPrice || 0) / 100,
         cell: ({ getValue }) => (
-          <span className="block text-right ">
+          <span className="block text-right text-white font-semibold">
             ₹{(getValue() || 0).toFixed(2)}
           </span>
         ),
@@ -157,15 +163,15 @@ export default function OrdersPage() {
           if (status === "paid" && !o.done) label = "pending";
 
           let classes =
-            "inline-block px-2 py-1 rounded-full text-xs font-medium ";
+            "inline-block px-2 py-1 rounded-full text-xs font-semibold ";
           if (status === "completed") {
-            classes += "bg-green-100 text-green-700";
+            classes += "bg-green-600 text-white";
           } else if (status === "refunded" || isCancelled) {
-            classes += "bg-red-100 text-red-700";
+            classes += "bg-red-600 text-white";
           } else if (status === "paid") {
-            classes += "bg-yellow-100 text-yellow-700";
+            classes += "bg-yellow-500 text-black";
           } else {
-            classes += "bg-gray-100 text-gray-700";
+            classes += "bg-gray-600 text-white";
           }
 
           return <span className={classes}>{label}</span>;
@@ -177,7 +183,7 @@ export default function OrdersPage() {
         cell: ({ getValue }) => {
           const val = getValue();
           return (
-            <span className="whitespace-nowrap">
+            <span className="whitespace-nowrap text-white">
               {val ? new Date(val).toLocaleString() : "-"}
             </span>
           );
@@ -208,27 +214,31 @@ export default function OrdersPage() {
 
   const data = useMemo(
     () =>
-      (orders || []).slice().sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      ),
+      (orders || [])
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ),
     [orders]
   );
 
   if (loading) return <LoadingComponent />;
 
   return (
-    <div className="min-h-screen bg-gray-400 text-black">
+    <div className="min-h-screen bg-gray-950 text-white">
       <OwnerNavbar />
 
-      <div className="p-5 max-w-5xl mx-auto">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-          <h2 className="text-2xl font-semibold">Orders for this Mess</h2>
+      <div className="p-5 max-w-7xl mx-auto pt-20 sm:pt-24">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+            Orders for this Mess
+          </h2>
 
           {isOwner && data.length > 0 && (
             <button
               onClick={handleClickOfDelete}
-              className="px-3 py-2 rounded text-sm bg-gray-600 text-white hover:bg-black transition-colors"
+              className="px-4 py-2 rounded text-sm bg-red-600 text-white hover:bg-red-700 transition-colors font-medium"
             >
               Delete All Completed Orders
             </button>
@@ -236,7 +246,7 @@ export default function OrdersPage() {
         </div>
 
         {data.length === 0 ? (
-          <div className="p-6 bg-gray-300 rounded shadow-sm text-gray-600">
+          <div className="p-6 bg-gray-800 rounded-lg shadow-xl text-gray-400 text-center">
             No orders yet.
           </div>
         ) : (
