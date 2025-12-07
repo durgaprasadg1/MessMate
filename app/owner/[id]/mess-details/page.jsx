@@ -96,11 +96,11 @@ export default function OwnedMessPage() {
     <div className="min-h-screen bg-gray-950 pb-16">
       <OwnerNavbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        <h1 className="text-3xl font-extrabold text-white tracking-tight mb-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-4">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
           🍽️ Mess Management Dashboard
         </h1>
-        <p className="text-gray-400 text-base">
+        <p className="text-gray-400 text-sm sm:text-base">
           View and control all aspects of your verified mess operations.
         </p>
       </div>
@@ -177,7 +177,9 @@ export default function OwnedMessPage() {
                           {mess.isOpen ? "Open Now" : "Currently Closed"}
                         </span>
                         <span className="text-sm text-gray-300">
-                          {mess.isLimited ? "Limited Service" : "Unlimited Service"}
+                          {mess.isLimited
+                            ? "Limited Service"
+                            : "Unlimited Service"}
                         </span>
                       </div>
                     </div>
@@ -187,16 +189,8 @@ export default function OwnedMessPage() {
                         Operational Details
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {renderDetailItem(
-                          Users,
-                          "Owner",
-                          mess.ownerName
-                        )}
-                        {renderDetailItem(
-                          Phone,
-                          "Phone",
-                          mess.phoneNumber
-                        )}
+                        {renderDetailItem(Users, "Owner", mess.ownerName)}
+                        {renderDetailItem(Phone, "Phone", mess.phoneNumber)}
                         {renderDetailItem(
                           CreditCard,
                           "Aadhaar",
@@ -231,16 +225,16 @@ export default function OwnedMessPage() {
 
                     <Panel mess={mess} />
 
-                    <div className="pt-2 space-y-2">
-                      <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="pt-2 space-y-2 sm:space-y-3">
+                      <div className="flex flex-col gap-2 sm:gap-3">
                         <button
-                          className="flex items-center justify-center w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition duration-200 shadow-md"
+                          className="flex items-center justify-center w-full py-3 sm:py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm sm:text-base transition duration-200 shadow-md touch-manipulation"
                           onClick={() =>
                             handleClick(`/mess/${mess._id}/messages`)
                           }
                         >
                           <MessageSquare className="w-4 h-4 mr-2" />
-                           Messages
+                          Messages
                         </button>
                         <button
                           className="flex items-center justify-center w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition duration-200 shadow-md"
@@ -264,13 +258,14 @@ export default function OwnedMessPage() {
                       <button
                         className="flex items-center justify-center mt-2 w-full py-2.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-medium text-sm transition duration-200 shadow-md"
                         onClick={() =>
-                          handleClick(`/owner/${mess._id}/all-registered-customers`)
+                          handleClick(
+                            `/owner/${mess._id}/all-registered-customers`
+                          )
                         }
                       >
                         <Users className="w-4 h-4 mr-2" />
                         View All Registered Customers
                       </button>
-                     
                     </div>
                   </div>
 

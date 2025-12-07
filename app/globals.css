@@ -76,6 +76,30 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Mobile-first base styles */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Touch-friendly minimum sizes */
+button,
+a,
+input[type="submit"],
+input[type="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -117,5 +141,4 @@
   body {
     @apply bg-background text-foreground;
   }
-  
 }

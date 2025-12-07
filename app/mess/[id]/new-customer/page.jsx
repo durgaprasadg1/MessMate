@@ -75,8 +75,6 @@ const NewCustomerToMess = () => {
       document.body.appendChild(script);
     });
 
-  
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -222,147 +220,146 @@ const NewCustomerToMess = () => {
     );
   }
 
-
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-6 border rounded-lg shadow">
+    <div className="w-full min-h-screen bg-gray-50">
       <Navbar />
-      <br />
-      <br />
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-20 sm:py-24">
+        <div className="bg-white p-4 sm:p-6 md:p-8 border rounded-lg shadow-lg">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-center">
+            New Customer Registration
+          </h2>
 
-      <h2 className="text-2xl font-semibold mb-4 text-center">
-        New Customer Registration
-      </h2>
+          {mess && formData.duration && (
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-gray-700">
+                <span className="font-semibold">Selected Duration:</span>{" "}
+                {formData.duration}
+              </p>
+              <p className="text-lg font-bold text-blue-600 mt-2">
+                Amount to Pay: ₹{displayAmount}
+              </p>
+            </div>
+          )}
 
-      {mess && formData.duration && (
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-gray-700">
-            <span className="font-semibold">Selected Duration:</span>{" "}
-            {formData.duration}
-          </p>
-          <p className="text-lg font-bold text-blue-600 mt-2">
-            Amount to Pay: ₹{displayAmount}
-          </p>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <FormInput
+              label="Full Name"
+              name="name"
+              type="text"
+              placeholder="Raja Mohan"
+              value={formData.name}
+              onChange={handleChange}
+              error={errors.name}
+            />
+
+            <FormInput
+              label="Phone Number"
+              name="phone"
+              type="tel"
+              placeholder="9823******"
+              value={formData.phone}
+              onChange={handleChange}
+              error={errors.phone}
+            />
+
+            <div>
+              <label className="block font-medium">Address</label>
+              <textarea
+                name="address"
+                placeholder="123 Main St, City"
+                rows={3}
+                className="w-full border p-2 rounded"
+                value={formData.address}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <SelectBox
+              label="Gender"
+              name="gender"
+              value={formData.gender}
+              onChange={handleChange}
+              options={[
+                { value: "", label: "Select" },
+                { value: "Male", label: "Male" },
+                { value: "Female", label: "Female" },
+                { value: "Other", label: "Other" },
+              ]}
+            />
+
+            <SelectBox
+              label="Payment Mode"
+              name="paymentMode"
+              value={formData.paymentMode}
+              onChange={handleChange}
+              options={[
+                { value: "", label: "Select" },
+                { value: "upi", label: "Online Transfer" },
+                { value: "cash", label: "Cash" },
+              ]}
+            />
+
+            <SelectBox
+              label="Duration of Meal"
+              name="duration"
+              value={formData.duration}
+              onChange={handleChange}
+              options={[
+                { value: "", label: "Select" },
+                { value: "Day", label: "Day Only" },
+                { value: "Night", label: "Night Only" },
+                { value: "Day + Night", label: "Day + Night" },
+              ]}
+            />
+
+            <FormInput
+              label="College / Workplace"
+              name="college"
+              type="text"
+              placeholder="VIT Kondhwa Campus"
+              value={formData.college}
+              onChange={handleChange}
+            />
+
+            <SelectBox
+              label="Food Preference"
+              name="foodPreference"
+              value={formData.foodPreference}
+              onChange={handleChange}
+              options={[
+                { value: "", label: "Select" },
+                { value: "veg", label: "Veg" },
+                { value: "both", label: "Veg + Non-Veg" },
+              ]}
+            />
+
+            <FormInput
+              label="Emergency Contact"
+              name="emergencyContact"
+              type="tel"
+              placeholder="Emergency Contact Number"
+              value={formData.emergencyContact}
+              onChange={handleChange}
+              error={errors.emergencyContact}
+            />
+
+            <button
+              type="submit"
+              disabled={loading || !formData.duration}
+              className="w-full bg-gray-600 hover:bg-black text-white p-3 sm:p-4 text-base sm:text-lg font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-2"
+            >
+              {loading
+                ? "Processing..."
+                : formData.paymentMode === "upi"
+                ? `Pay  Online and Register`
+                : "Register with Cash Payment"}
+            </button>
+          </form>
         </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <FormInput
-          label="Full Name"
-          name="name"
-          type="text"
-          placeholder="Raja Mohan"
-          value={formData.name}
-          onChange={handleChange}
-          error={errors.name}
-        />
-
-        <FormInput
-          label="Phone Number"
-          name="phone"
-          type="tel"
-          placeholder="9823******"
-          value={formData.phone}
-          onChange={handleChange}
-          error={errors.phone}
-        />
-
-        <div>
-          <label className="block font-medium">Address</label>
-          <textarea
-            name="address"
-            placeholder="123 Main St, City"
-            rows={3}
-            className="w-full border p-2 rounded"
-            value={formData.address}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <SelectBox
-          label="Gender"
-          name="gender"
-          value={formData.gender}
-          onChange={handleChange}
-          options={[
-            { value: "", label: "Select" },
-            { value: "Male", label: "Male" },
-            { value: "Female", label: "Female" },
-            { value: "Other", label: "Other" },
-          ]}
-        />
-
-        <SelectBox
-          label="Payment Mode"
-          name="paymentMode"
-          value={formData.paymentMode}
-          onChange={handleChange}
-          options={[
-            { value: "", label: "Select" },
-            { value: "upi", label: "Online Transfer" },
-            { value: "cash", label: "Cash" },
-          ]}
-        />
-
-        <SelectBox
-          label="Duration of Meal"
-          name="duration"
-          value={formData.duration}
-          onChange={handleChange}
-          options={[
-            { value: "", label: "Select" },
-            { value: "Day", label: "Day Only" },
-            { value: "Night", label: "Night Only" },
-            { value: "Day + Night", label: "Day + Night" },
-          ]}
-        />
-
-        <FormInput
-          label="College / Workplace"
-          name="college"
-          type="text"
-          placeholder="VIT Kondhwa Campus"
-          value={formData.college}
-          onChange={handleChange}
-        />
-
-        <SelectBox
-          label="Food Preference"
-          name="foodPreference"
-          value={formData.foodPreference}
-          onChange={handleChange}
-          options={[
-            { value: "", label: "Select" },
-            { value: "veg", label: "Veg" },
-            { value: "both", label: "Veg + Non-Veg" },
-          ]}
-        />
-
-        <FormInput
-          label="Emergency Contact"
-          name="emergencyContact"
-          type="tel"
-          placeholder="Emergency Contact Number"
-          value={formData.emergencyContact}
-          onChange={handleChange}
-          error={errors.emergencyContact}
-        />
-
-        <button
-          type="submit"
-          disabled={loading || !formData.duration}
-          className="w-full bg-gray-600 hover:bg-black text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading
-            ? "Processing..."
-            : formData.paymentMode === "upi"
-            ? `Pay  Online and Register`
-            : "Register with Cash Payment"}
-        </button>
-      </form>
+      </div>
     </div>
   );
 };
 
 export default NewCustomerToMess;
-

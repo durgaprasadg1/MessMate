@@ -350,15 +350,15 @@ export default function YourMessRegisteredUser() {
         </div>
       )}
 
-      <main className="py-8 px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-extrabold text-white mb-6">
+      <main className="py-20 sm:py-24 px-4 sm:px-6 lg:px-8">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 sm:mb-6">
           Registered Mess Users
         </h2>
 
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
           <button
             onClick={() => setFilterAllowed("allowed")}
-            className={`px-4 py-2 rounded ${
+            className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded text-sm sm:text-base font-medium ${
               filterAllowed === "allowed"
                 ? "bg-green-600 text-white"
                 : "bg-gray-700 text-gray-300"
@@ -368,7 +368,7 @@ export default function YourMessRegisteredUser() {
           </button>
           <button
             onClick={() => setFilterAllowed("notallowed")}
-            className={`px-4 py-2 rounded ${
+            className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded text-sm sm:text-base font-medium ${
               filterAllowed === "notallowed"
                 ? "bg-red-600 text-white"
                 : "bg-gray-700 text-gray-300"
@@ -383,8 +383,10 @@ export default function YourMessRegisteredUser() {
             No customers found.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-lg shadow-xl">
-            <DataTable columns={columns} data={filteredUsers} />
+          <div className="overflow-x-auto rounded-lg shadow-xl -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <DataTable columns={columns} data={filteredUsers} />
+            </div>
           </div>
         )}
       </main>
