@@ -22,20 +22,18 @@ const Panel = ({ mess }) => {
         body: JSON.stringify({ action: "toggleOpen" }),
       });
 
-      if (mess.isOpen){
+      if (mess.isOpen) {
         toast.success("Closed Successfully");
       } else {
         toast.success("Opened Successfully");
       }
-      window.location.reload()
-
+      window.location.reload();
     } catch (err) {
       console.error(err);
       toast.error("Update failed");
     }
   };
 
- 
   const deleteMess = async () => {
     if (!confirm("Are you sure you want to delete this mess?")) return;
     try {
@@ -59,57 +57,48 @@ const Panel = ({ mess }) => {
   const ownerId = mess?.owner?.toString?.() ?? mess?.owner;
 
   if (userId && ownerId && userId === ownerId && !mess.isBlocked) {
-    
     return (
-        <div className="flex gap-1">
-         
-          <div className="flex items-center justify-around gap-1">
-            <Botton
-              text={mess.isOpen ? "Close" : "Open"}
-              link={`/owner/${session?.user?.id}/mess-details`}
-              mess={mess}
-              functionAfterClick={openClose}
-              className="w-full text-center bg-gray-700 text-white py-3 rounded  hover:bg-black transition font-medium"
-            />
-             
-          </div>
-          <div className="flex items-center justify-around gap-1" >
-            <Botton
-              text="Menu"
-              link={`/mess/${mess._id}/update-menu`}
-              className="w-full text-center bg-blue-600 text-white py-3 rounded  hover:bg-blue-800 transition font-medium"
-            />
-         
-
-            <Botton
-              text="Edit "
-              link={`/mess/${mess._id}/edit-info`}
-              mess={mess}
-              className="w-full text-center bg-yellow-600 text-white py-3 rounded  hover:bg-yellow-700 transition font-medium"
-            />
-          </div>
+      <div className="flex gap-1">
+        <div className="flex items-center justify-around gap-1">
           <Botton
-              text="Delete"
-              link={`/mess`}
-              functionAfterClick={deleteMess}
-              className="w-full text-center bg-red-600 text-white py-3 rounded-xl hover:bg-red-800 transition font-medium"
-            />
+            text={mess.isOpen ? "Close" : "Open"}
+            link={`/owner/${session?.user?.id}/mess-details`}
+            mess={mess}
+            functionAfterClick={openClose}
+            className="w-full text-center bg-gray-700 text-white py-3 rounded  hover:bg-black transition font-medium"
+          />
+        </div>
+        <div className="flex items-center justify-around gap-1">
+          <Botton
+            text="Menu"
+            link={`/mess/${mess._id}/update-menu`}
+            className="w-full text-center bg-blue-600 text-white py-3 rounded  hover:bg-blue-800 transition font-medium"
+          />
 
-
-           
-
-        </div>                                                              
-
-      
+          <Botton
+            text="Edit "
+            link={`/mess/${mess._id}/edit-info`}
+            mess={mess}
+            className="w-full text-center bg-yellow-600 text-white py-3 rounded  hover:bg-yellow-700 transition font-medium"
+          />
+        </div>
+        <Botton
+          text="Delete"
+          link={`/mess`}
+          functionAfterClick={deleteMess}
+          className="w-full text-center bg-red-600 text-white py-3 rounded-xl hover:bg-red-800 transition font-medium"
+        />
+      </div>
     );
-  } else if(mess.isBlocked){
+  } else if (mess.isBlocked) {
     return (
       <div className="flex gap-1">
         <h2 className="w-full text-center bg-red-600 text-white py-3 rounded-xl  font-medium">
-          This Mess is Blocked wait for Owner's Action. It Will be Unblocked Soon.
+          This Mess is Blocked wait for Owner's Action. It Will be Unblocked
+          Soon.
         </h2>
       </div>
-    )
+    );
   }
 };
 

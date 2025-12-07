@@ -29,7 +29,7 @@ export default function ConsumerMonthlyMess() {
 
       if (res.ok) {
         // Check if monthlyMess exists and has data
-        if (data.monthlyMess && data.monthlyMess.length > 0) {
+        if (data.monthlyMess && data.monthlymess?.length > 0) {
           const messData = data.monthlyMess[0]; // Use first item (index 0)
           console.log("Setting customer data:", messData);
           setCustomerData(messData);
@@ -65,14 +65,14 @@ export default function ConsumerMonthlyMess() {
       <div className="flex justify-center mt-20">
         <Navbar />
         <div className="text-center mt-20 text-gray-700 text-lg">
-          You are not registered for any Monthly Mess.
+          You are not registered for any Monthly mess?.
         </div>
       </div>
     );
 
-  const joiningDate = new Date(customerData.joiningDate);
+  const joiningDate = new Date(customerData?.joiningDate);
   const expiryDate = new Date(joiningDate);
-  expiryDate.setDate(joiningDate.getDate() + (customerData.messDuration || 30));
+  expiryDate.setDate(joiningDate.getDate() + (customerData?.messDuration || 30));
 
   return (
     <>
@@ -91,17 +91,17 @@ export default function ConsumerMonthlyMess() {
                 Status:{" "}
                 <span
                   className={
-                    customerData.isAllowed
+                    customerData?.isAllowed
                       ? "text-green-700 font-semibold"
                       : "text-yellow-600 font-semibold"
                   }
                 >
-                  {customerData.isAllowed ? "Approved ✓" : "Pending Approval"}
+                  {customerData?.isAllowed ? "Approved ✓" : "Pending Approval"}
                 </span>
               </p>
 
               <p className="text-center text-gray-600 text-sm mt-1">
-                {customerData.isAllowed
+                {customerData?.isAllowed
                   ? "You can now avail all Monthly Mess services."
                   : "Your request is under review by the mess owner."}
               </p>
@@ -113,18 +113,18 @@ export default function ConsumerMonthlyMess() {
               </h3>
 
               <div className="mt-3 space-y-3">
-                <InfoRow label="Full Name" value={customerData.name} />
-                <InfoRow label="Phone Number" value={customerData.phone} />
+                <InfoRow label="Full Name" value={customerData?.name} />
+                <InfoRow label="Phone Number" value={customerData?.phone} />
                 <InfoRow
                   label="Emergency Contact"
-                  value={customerData.emergencyContact || "Not Provided"}
+                  value={customerData?.emergencyContact || "Not Provided"}
                 />
-                <InfoRow label="Gender" value={customerData.gender} />
+                <InfoRow label="Gender" value={customerData?.gender} />
                 <InfoRow
                   label="College / Workplace"
-                  value={customerData.college || "Not Provided"}
+                  value={customerData?.college || "Not Provided"}
                 />
-                <InfoRow label="Address" value={customerData.address} />
+                <InfoRow label="Address" value={customerData?.address} />
               </div>
             </section>
 
@@ -134,7 +134,7 @@ export default function ConsumerMonthlyMess() {
               </h3>
 
               <div className="mt-3 space-y-3">
-                <InfoRow label="Mess Name" value={customerData.mess.name} />
+                <InfoRow label="Mess Name" value={customerData?.mess?.name} />
                 <div className="flex justify-between items-center py-2 border-b">
                   <h6 className="font-medium text-gray-700">Location:</h6>
 
@@ -142,7 +142,7 @@ export default function ConsumerMonthlyMess() {
                     className="text-gray-900 hover:underline"
                     onClick={() =>
                       window.open(
-                        `https://www.google.com/maps?q=${customerData.mess.lat},${customerData.mess.lon}`,
+                        `https://www.google.com/maps?q=${customerData?.mess?.lat},${customerData?.mess?.lon}`,
                         "_blank"
                       )
                     }
@@ -154,11 +154,11 @@ export default function ConsumerMonthlyMess() {
                 <InfoRow
                   label="Food Preference"
                   value={
-                    customerData.foodPreference === "both"
+                    customerData?.foodPreference === "both"
                       ? "Veg + Non-Veg"
-                      : customerData.foodPreference === "veg"
+                      : customerData?.foodPreference === "veg"
                       ? "Vegetarian"
-                      : customerData.foodPreference === "nonveg"
+                      : customerData?.foodPreference === "nonveg"
                       ? "Non-Vegetarian"
                       : "Not Specified"
                   }
@@ -166,12 +166,12 @@ export default function ConsumerMonthlyMess() {
                 <InfoRow
                   label="Payment Mode"
                   value={
-                    customerData.paymentMode === "upi"
+                    customerData?.paymentMode === "upi"
                       ? "Online Transfer"
                       : "Cash"
                   }
                 />
-                <InfoRow label="Meal Duration" value={customerData.duration} />
+                <InfoRow label="Meal Duration" value={customerData?.duration} />
               </div>
             </section>
 
@@ -193,8 +193,8 @@ export default function ConsumerMonthlyMess() {
               </div>
             </section>
 
-            {customerData.paymentMode === "upi" &&
-              customerData.paymentVerified && (
+            {customerData?.paymentMode === "upi" &&
+              customerData?.paymentVerified && (
                 <section>
                   <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
                     Payment Invoice
@@ -206,7 +206,7 @@ export default function ConsumerMonthlyMess() {
                         ✓ Payment Verified
                       </span>
                       <span className="text-green-600 font-bold text-xl">
-                        ₹{customerData.totalAmount}
+                        ₹{customerData?.totalAmount}
                       </span>
                     </div>
 
@@ -215,7 +215,7 @@ export default function ConsumerMonthlyMess() {
                         label="Transaction ID"
                         value={
                           <span className="font-mono text-xs break-all">
-                            {customerData.razorpayPaymentId}
+                            {customerData?.razorpayPaymentId}
                           </span>
                         }
                       />
@@ -223,19 +223,19 @@ export default function ConsumerMonthlyMess() {
                         label="Order ID"
                         value={
                           <span className="font-mono text-xs break-all">
-                            {customerData.razorpayOrderId}
+                            {customerData?.razorpayOrderId}
                           </span>
                         }
                       />
                       <InfoRow
                         label="Payment Date"
                         value={new Date(
-                          customerData.createdAt || customerData.joiningDate
+                          customerData?.createdAt || customerData?.joiningDate
                         ).toLocaleDateString("en-GB")}
                       />
                       <InfoRow
                         label="Duration Paid For"
-                        value={customerData.duration}
+                        value={customerData?.duration}
                       />
                     </div>
 
