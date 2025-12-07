@@ -114,7 +114,10 @@ export async function POST(request, { params }) {
       );
     if (consumer.isBlocked)
       return NextResponse.json(
-        { message: "Your account is blocked by admin due to your activities. You cannot create bookings." },
+        {
+          message:
+            "Your account is blocked by admin due to your activities. You cannot create bookings.",
+        },
         { status: 403 }
       );
 
@@ -179,17 +182,11 @@ export async function POST(request, { params }) {
       messName: mess && mess.name ? String(mess.name) : undefined,
     });
 
-    const sessionDb = await mongoose.startSession();
     try {
-      sessionDb.startTransaction();
-      await dbOrder.save({ session: sessionDb });
-      await sessionDb.commitTransaction();
+      await dbOrder.save();
     } catch (e) {
-      await sessionDb.abortTransaction();
-      console.error("Booking POST transaction failed", e);
+      console.error("Booking POST save failed", e);
       return NextResponse.json({ message: "Server error" }, { status: 500 });
-    } finally {
-      sessionDb.endSession();
     }
 
     return NextResponse.json(
@@ -221,7 +218,10 @@ export async function PATCH(request, { params }) {
       dbOrderId,
     } = body;
 
-    // validate payment payload
+    const { bookingPaymentSchema } = await import(
+      "../../../../../validators/booking.validator.js"
+    );
+
     const paymentValidation = validateAgainst(bookingPaymentSchema, body || {});
     if (!paymentValidation.ok) {
       return NextResponse.json(
@@ -272,49 +272,41 @@ export async function PATCH(request, { params }) {
       );
     if (consumer.isBlocked)
       return NextResponse.json(
-        { message: "Your account is blocked by admin due to your activities. You cannot pay for bookings." },
+        {
+          message:
+            "Your account is blocked by admin due to your activities. You cannot pay for bookings.",
+        },
         { status: 403 }
       );
 
     if (expectedSign === razorpay_signature) {
-      const session = await mongoose.startSession();
       try {
-        session.startTransaction();
-
         dbOrder.status = "paid";
         dbOrder.razorpayPaymentId = razorpay_payment_id;
         dbOrder.razorpaySignature = razorpay_signature;
         dbOrder.paymentVerified = true;
-        await dbOrder.save({ session });
+        await dbOrder.save();
 
-        await Consumer.findByIdAndUpdate(
-          dbOrder.consumer,
-          { $push: { orders: dbOrder._id } },
-          { session }
-        );
+        await Consumer.findByIdAndUpdate(dbOrder.consumer, {
+          $push: { orders: dbOrder._id },
+        });
 
-        await Mess.findByIdAndUpdate(
-          dbOrder.mess,
-          { $push: { orders: dbOrder._id } },
-          { session }
-        );
+        await Mess.findByIdAndUpdate(dbOrder.mess, {
+          $push: { orders: dbOrder._id },
+        });
 
-        await session.commitTransaction();
         return NextResponse.json(
           { message: "Payment verified", order: dbOrder },
           { status: 200 }
         );
       } catch (e) {
-        await session.abortTransaction();
-        console.error("Payment verification transaction failed", e);
+        console.error("Payment verification failed", e);
         // attempt to mark order failed
         try {
           dbOrder.status = "failed";
           await dbOrder.save();
         } catch (_) {}
         return NextResponse.json({ message: "Server error" }, { status: 500 });
-      } finally {
-        session.endSession();
       }
     } else {
       dbOrder.status = "failed";

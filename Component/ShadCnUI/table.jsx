@@ -47,7 +47,7 @@ export function DataTable({ columns, data }) {
   return (
     <div className="">
       <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div className="flex-1 max-w-sm">
+        <div className="flex-1 max-w-sm ">
           <Input
             placeholder="Search..."
             value={globalFilter}
@@ -59,7 +59,7 @@ export function DataTable({ columns, data }) {
           <label className="text-sm text-muted-foreground">Rows</label>
           <select
             aria-label="Rows per page"
-            className="h-8 rounded border border-input bg-background px-2 text-sm"
+            className="h-8 rounded border border-input bg-background px-2 text-sm text-black"
             value={pagination.pageSize}
             onChange={(e) =>
               setPagination((p) => ({
@@ -78,11 +78,11 @@ export function DataTable({ columns, data }) {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-md border ">
         <Table>
           <TableHeader> 
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="bg-gray-700 hover:bg-gray-600">
                 {headerGroup.headers.map((header) => {
                   const canSort = header.column.getCanSort();
                   const sortState = header.column.getIsSorted();

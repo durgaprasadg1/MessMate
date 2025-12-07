@@ -12,6 +12,7 @@ const Botton = ({ text, link, functionAfterClick, className = "" }) => {
       if (functionAfterClick) await functionAfterClick(e);
       if (link) {
         router.push(link);
+        router.refresh();
       }
     } catch (err) {
       console.error("Button action failed:", err);

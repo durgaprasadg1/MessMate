@@ -84,7 +84,7 @@ const Panel = ({ mess }) => {
         </div>
         <Botton
           text="Delete"
-          link={`/mess`}
+          link={`/owner/${session?.user?.id}/mess-details`}
           functionAfterClick={deleteMess}
           className="w-full text-center bg-red-600 text-white py-3 rounded-xl hover:bg-red-800 transition font-medium"
         />

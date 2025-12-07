@@ -31,39 +31,28 @@ export async function PATCH(request, { params }) {
       if (order.consumer.toString() !== session.user.id)
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-      const sessionDb = await mongoose.startSession();
       try {
-        sessionDb.startTransaction();
-
         order.isCancelled = true;
         if (order.status === "paid") {
           order.refundInitiated = true;
         }
         order.status = order.status === "paid" ? "failed" : order.status;
-        await order.save({ session: sessionDb });
+        await order.save();
 
-        await Mess.findByIdAndUpdate(
-          order.mess,
-          { $pull: { orders: order._id } },
-          { session: sessionDb }
-        );
-        await Consumer.findByIdAndUpdate(
-          order.consumer,
-          { $pull: { orders: order._id } },
-          { session: sessionDb }
-        );
+        await Mess.findByIdAndUpdate(order.mess, {
+          $pull: { orders: order._id },
+        });
+        await Consumer.findByIdAndUpdate(order.consumer, {
+          $pull: { orders: order._id },
+        });
 
-        await sessionDb.commitTransaction();
         return NextResponse.json(
           { message: "Order cancelled; refund will be started soon" },
           { status: 200 }
         );
       } catch (e) {
-        await sessionDb.abortTransaction();
-        console.error("Cancel transaction failed", e);
+        console.error("Cancel order failed", e);
         return NextResponse.json({ message: "Server error" }, { status: 500 });
-      } finally {
-        sessionDb.endSession();
       }
     }
 
@@ -95,37 +84,26 @@ export async function PATCH(request, { params }) {
       if (!mess.owner || mess.owner.toString() !== session.user.id)
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-      const sessionDb2 = await mongoose.startSession();
       try {
-        sessionDb2.startTransaction();
-
         order.isCancelled = true;
         order.refundInitiated = true;
         order.status = order.status === "paid" ? "refunded" : "failed";
-        await order.save({ session: sessionDb2 });
+        await order.save();
 
-        await Mess.findByIdAndUpdate(
-          order.mess,
-          { $pull: { orders: order._id } },
-          { session: sessionDb2 }
-        );
-        await Consumer.findByIdAndUpdate(
-          order.consumer,
-          { $pull: { orders: order._id } },
-          { session: sessionDb2 }
-        );
+        await Mess.findByIdAndUpdate(order.mess, {
+          $pull: { orders: order._id },
+        });
+        await Consumer.findByIdAndUpdate(order.consumer, {
+          $pull: { orders: order._id },
+        });
 
-        await sessionDb2.commitTransaction();
         return NextResponse.json(
           { message: "Refund initiated and order marked cancelled" },
           { status: 200 }
         );
       } catch (e) {
-        await sessionDb2.abortTransaction();
-        console.error("Refund transaction failed", e);
+        console.error("Refund order failed", e);
         return NextResponse.json({ message: "Server error" }, { status: 500 });
-      } finally {
-        sessionDb2.endSession();
       }
     }
 
@@ -185,32 +163,18 @@ export async function DELETE(request, { params }) {
         { status: 400 }
       );
 
-    // delete order and clean up refs in a transaction
-    const sessionDel = await mongoose.startSession();
     try {
-      sessionDel.startTransaction();
+      await Order.findByIdAndDelete(orderid);
 
-      await Order.findByIdAndDelete(orderid, { session: sessionDel });
+      await Mess.findByIdAndUpdate(mess._id, { $pull: { orders: orderid } });
+      await Consumer.findByIdAndUpdate(order.consumer, {
+        $pull: { orders: orderid },
+      });
 
-      await Mess.findByIdAndUpdate(
-        mess._id,
-        { $pull: { orders: orderid } },
-        { session: sessionDel }
-      );
-      await Consumer.findByIdAndUpdate(
-        order.consumer,
-        { $pull: { orders: orderid } },
-        { session: sessionDel }
-      );
-
-      await sessionDel.commitTransaction();
       return NextResponse.json({ message: "Order deleted" }, { status: 200 });
     } catch (e) {
-      await sessionDel.abortTransaction();
-      console.error("Delete order transaction failed", e);
+      console.error("Delete order failed", e);
       return NextResponse.json({ message: "Server error" }, { status: 500 });
-    } finally {
-      sessionDel.endSession();
     }
   } catch (err) {
     console.error("Order DELETE error:", err);

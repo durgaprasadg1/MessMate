@@ -151,8 +151,8 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
               onClick={() => handleBlockingOfMess(mess._id)}
               className={
                 mess.isBlocked
-                  ? "bg-green-400 px-3 py-1 rounded text-black"
-                  : "bg-red-600 px-3 py-1 rounded text-black"
+                  ? "bg-green-400 px-3 py-1 rounded text-white font-bold"
+                  : "bg-red-600 px-3 py-1 rounded text-white font-bold"
               }
             >
               {mess.isBlocked ? "Unblock" : "Block"}
@@ -182,7 +182,7 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
 
       <main className="py-8 px-4 bg-zinc-800 min-h-screen">
         <h1 className="text-3xl font-extrabold text-white mb-8">
-          All Mess Listings (Admin)
+          All Mess Listings
         </h1>
 
         <div className="overflow-auto rounded-lg">

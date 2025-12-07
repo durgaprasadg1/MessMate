@@ -107,37 +107,25 @@ export async function DELETE(request, { params }) {
 
     const ids = completed.map((d) => d._id);
 
-    const sessionDb = await mongoose.startSession();
     try {
-      sessionDb.startTransaction();
+      await Order.deleteMany({ _id: { $in: ids } });
 
-      await Order.deleteMany({ _id: { $in: ids } }, { session: sessionDb });
-
-      await Mess.findByIdAndUpdate(
-        id,
-        { $pull: { orders: { $in: ids } } },
-        { session: sessionDb }
-      );
+      await Mess.findByIdAndUpdate(id, { $pull: { orders: { $in: ids } } });
       await Consumer.updateMany(
         { orders: { $in: ids } },
-        { $pull: { orders: { $in: ids } } },
-        { session: sessionDb }
+        { $pull: { orders: { $in: ids } } }
       );
 
-      await sessionDb.commitTransaction();
       return NextResponse.json(
         { message: "Deleted completed or failed orders", deleted: ids.length },
         { status: 200 }
       );
     } catch (e) {
-      await sessionDb.abortTransaction();
-      console.error("Batch delete transaction failed", e);
+      console.error("Batch delete orders failed", e);
       return NextResponse.json(
         { message: "Server error", error: e.message },
         { status: 500 }
       );
-    } finally {
-      sessionDb.endSession();
     }
   } catch (err) {
     console.error("DELETE /api/mess/[id]/orders error:", err);
