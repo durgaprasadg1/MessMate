@@ -318,6 +318,7 @@ const NewMessForm = () => {
               onChange={handleChange}   className="mt-1 w-full border rounded-md px-3 py-2 ">
               <option className="text-black" value={0}>Select Duration</option>
               <option value={15}  className="text-black">15 Days</option>
+              <option value={28}  className="text-black">28 Days</option>
               <option value={30} className="text-black">30 Days</option>
             </select>
           </div>

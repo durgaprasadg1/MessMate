@@ -31,7 +31,6 @@ export const authOptions = {
             email: admin.email,
             isAdmin: true,
             isOwner: false,
-            haveMonthlyMess:false,
 
           };
         }
@@ -50,7 +49,6 @@ export const authOptions = {
             email: owner.email,
             isAdmin: false,
             isOwner: true,
-            haveMonthlyMess:false,
 
           };
         }
@@ -70,7 +68,6 @@ export const authOptions = {
           email: user.email,
           isAdmin: false,
           isOwner: false,
-          haveMonthlyMess:false,
         };
       },
     }),
@@ -87,7 +84,6 @@ export const authOptions = {
         token.username = user.username;
         token.isAdmin = user.isAdmin || false;
         token.isOwner = user.isOwner || false;
-        token.haveMonthlyMess = user.haveMonthlyMess || false;
       }
       return token;
     },
@@ -97,7 +93,6 @@ export const authOptions = {
       session.user.username = token.username;
       session.user.isAdmin = token.isAdmin;
       session.user.isOwner = token.isOwner;
-      session.user.haveMonthlyMess = token.haveMonthlyMess;
 
       return session;
     },

@@ -9,9 +9,9 @@ const newMessCustomerSchema = new Schema(
         ref: "Consumer",
       },
     ],
-    mess :{
-        type: Schema.Types.ObjectId,
-        ref: "Mess",
+    mess: {
+      type: Schema.Types.ObjectId,
+      ref: "Mess",
     },
     duration: {
       type: String,
@@ -69,6 +69,27 @@ const newMessCustomerSchema = new Schema(
     isAllowed: {
       type: Boolean,
       default: false,
+    },
+    razorpayOrderId: {
+      type: String,
+    },
+    razorpayPaymentId: {
+      type: String,
+    },
+    razorpaySignature: {
+      type: String,
+    },
+    paymentVerified: {
+      type: Boolean,
+      default: false,
+    },
+    totalAmount: {
+      type: Number,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "created", "paid", "failed"],
+      default: "pending",
     },
   },
   { timestamps: true }

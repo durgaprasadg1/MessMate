@@ -27,7 +27,8 @@ export default function ConsumerMonthlyMess() {
       const data = await res.json();
 
       if (res.ok) {
-        setCustomerData(data.monthlyMess[0] || null);
+        setCustomerData(data.monthlyMess[1] || null);
+        
       } else {
         console.log("API Error:", data.message);
       }
@@ -139,7 +140,15 @@ export default function ConsumerMonthlyMess() {
 
               <InfoRow
                 label="Food Preference"
-                value={customerData.foodPreference ? "Both"? "Veg + Non-Veg" : customerData.foodPreference === "veg" ? "Vegetarian" : "Non-Vegetarian" : "Not Specified"}
+                value={
+                  customerData.foodPreference
+                    ? "Both"
+                      ? "Veg + Non-Veg"
+                      : customerData.foodPreference === "veg"
+                      ? "Vegetarian"
+                      : "Non-Vegetarian"
+                    : "Not Specified"
+                }
               />
               <InfoRow
                 label="Payment Mode"
@@ -170,6 +179,62 @@ export default function ConsumerMonthlyMess() {
               />
             </div>
           </section>
+
+          {customerData.paymentMode === "upi" &&
+            customerData.paymentVerified && (
+              <section>
+                <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
+                  Payment Invoice
+                </h3>
+
+                <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-green-700 font-semibold text-lg">
+                      ✓ Payment Verified
+                    </span>
+                    <span className="text-green-600 font-bold text-xl">
+                      ₹{customerData.totalAmount}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <InfoRow
+                      label="Transaction ID"
+                      value={
+                        <span className="font-mono text-xs break-all">
+                          {customerData.razorpayPaymentId}
+                        </span>
+                      }
+                    />
+                    <InfoRow
+                      label="Order ID"
+                      value={
+                        <span className="font-mono text-xs break-all">
+                          {customerData.razorpayOrderId}
+                        </span>
+                      }
+                    />
+                    <InfoRow
+                      label="Payment Date"
+                      value={new Date(
+                        customerData.createdAt || customerData.joiningDate
+                      ).toLocaleDateString("en-GB")}
+                    />
+                    <InfoRow
+                      label="Duration Paid For"
+                      value={customerData.duration}
+                    />
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-green-300">
+                    <p className="text-xs text-gray-600 text-center">
+                      This invoice can be shown to the mess owner for
+                      transparent transaction verification.
+                    </p>
+                  </div>
+                </div>
+              </section>
+            )}
         </div>
       </div>
     </>

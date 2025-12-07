@@ -2,7 +2,8 @@ import mongoose from "mongoose";
 import Review from "./reviews";
 import Order from "./order";
 import cloudinary from "../lib/cloudinary";
-import NewMessCustomer from "./newMessCustomer";
+import Menu from "./menu";
+
 const Schema = mongoose.Schema;
 
 const messSchema = Schema({
@@ -28,7 +29,7 @@ const messSchema = Schema({
     required: true,
     minLength: 3,
   },
-  upi : {
+  upi: {
     type: String,
     required: true,
     minLength: 5,
@@ -152,45 +153,45 @@ const messSchema = Schema({
     filename: String,
     public_id: String,
   },
-  isBlocked :{
-    type : Boolean ,
-    default: false, 
-  }, 
-  alert : [
+  isBlocked: {
+    type: Boolean,
+    default: false,
+  },
+  alert: [
     {
-      type : Schema.Types.ObjectId,
-      ref : "Message",
-    }
+      type: Schema.Types.ObjectId,
+      ref: "Message",
+    },
   ],
   location: {
     type: {
       type: String,
       enum: ["Point"],
-      default: "Point"
+      default: "Point",
     },
     coordinates: {
-      type: [Number], 
-      index: "2dsphere" 
-    }
+      type: [Number],
+      index: "2dsphere",
+    },
   },
-  monthlyMessDuration : {
+  monthlyMessDuration: {
     type: Number,
-    min : 15,
-    max : 31,
-    
-    required : true,
-  },
-  monthlyMessFee : {
-    type: Number,
-    required : true,
-       
-  },
-  newMessCustomer:[{
-    type : Schema.Types.ObjectId,
-    ref : "NewMessCustomer",
-  }]
-});
+    min: 15,
+    max: 31,
 
+    required: true,
+  },
+  monthlyMessFee: {
+    type: Number,
+    required: true,
+  },
+  newMessCustomer: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "NewMessCustomer",
+    },
+  ],
+});
 
 messSchema.post("findOneAndDelete", async function (doc) {
   if (doc) {
@@ -232,9 +233,15 @@ messSchema.post("findOneAndDelete", async function (doc) {
     }
     try {
       const ConsumerModule = await import("./consumer");
-      const ConsumerModel = ConsumerModule && ConsumerModule.default ? ConsumerModule.default : ConsumerModule;
+      const ConsumerModel =
+        ConsumerModule && ConsumerModule.default
+          ? ConsumerModule.default
+          : ConsumerModule;
       if (ConsumerModel && ConsumerModel.updateMany) {
-        await ConsumerModel.updateMany({ mess: doc._id }, { $pull: { mess: doc._id } });
+        await ConsumerModel.updateMany(
+          { mess: doc._id },
+          { $pull: { mess: doc._id } }
+        );
       }
     } catch (e) {
       console.error("Error removing mess references from consumers:", e);

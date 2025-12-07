@@ -23,6 +23,14 @@ export default function YourMessRegisteredUser() {
   const [showAddDaysModal, setShowAddDaysModal] = useState(false);
   const [daysToAdd, setDaysToAdd] = useState("");
 
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+  const showInvoiceModalFunc = (user) => {
+    setSelectedInvoice(user);
+    setShowInvoiceModal(true);
+  };
+
   const fetchUsers = async () => {
     try {
       const res = await fetch(`/api/owner/${messId}/new-reg-customers`);
@@ -249,6 +257,26 @@ export default function YourMessRegisteredUser() {
         ),
       },
       {
+        accessorKey: "paymentMode",
+        header: "Payment",
+        cell: ({ row }) => (
+          <div className="flex flex-col gap-1">
+            <span className="text-white capitalize">
+              {row.original.paymentMode === "upi" ? "Online" : "Cash"}
+            </span>
+            {row.original.paymentMode === "upi" &&
+              row.original.paymentVerified && (
+                <button
+                  onClick={() => showInvoiceModalFunc(row.original)}
+                  className="px-2 py-0.5 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  View Invoice
+                </button>
+              )}
+          </div>
+        ),
+      },
+      {
         accessorKey: "isAllowed",
         header: "Allowed",
         cell: ({ row }) => (
@@ -307,7 +335,7 @@ export default function YourMessRegisteredUser() {
         ),
       },
     ],
-    []
+    [showInvoiceModalFunc]
   );
 
   if (loading) return <Loading />;
@@ -328,7 +356,6 @@ export default function YourMessRegisteredUser() {
         </h2>
 
         <div className="flex gap-3 mb-6">
-          
           <button
             onClick={() => setFilterAllowed("allowed")}
             className={`px-4 py-2 rounded ${
@@ -416,6 +443,78 @@ export default function YourMessRegisteredUser() {
                 className="px-4 py-2 bg-yellow-500 text-black rounded"
               >
                 Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showInvoiceModal && selectedInvoice && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/30 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">
+              Payment Invoice
+            </h3>
+
+            <div className="space-y-3 mb-4">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Customer Name:</span>
+                <span className="font-semibold text-gray-800">
+                  {selectedInvoice.name}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Phone:</span>
+                <span className="font-semibold text-gray-800">
+                  {selectedInvoice.phone}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Duration:</span>
+                <span className="font-semibold text-gray-800">
+                  {selectedInvoice.duration}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Amount Paid:</span>
+                <span className="font-semibold text-green-600 text-lg">
+                  ₹{selectedInvoice.totalAmount}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Payment ID:</span>
+                <span className="font-mono text-xs text-gray-800 break-all">
+                  {selectedInvoice.razorpayPaymentId}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Order ID:</span>
+                <span className="font-mono text-xs text-gray-800 break-all">
+                  {selectedInvoice.razorpayOrderId}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Payment Status:</span>
+                <span className="font-semibold text-green-600">
+                  {selectedInvoice.paymentVerified ? "✓ Verified" : "Pending"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Registration Date:</span>
+                <span className="font-semibold text-gray-800">
+                  {new Date(
+                    selectedInvoice.createdAt || selectedInvoice.joiningDate
+                  ).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <button
+                onClick={() => setShowInvoiceModal(false)}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded"
+              >
+                Close
               </button>
             </div>
           </div>

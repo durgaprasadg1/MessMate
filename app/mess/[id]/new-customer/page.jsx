@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/Component/Others/Navbar";
 import Loading from "@/Component/Others/Loading";
@@ -10,6 +10,7 @@ const NewCustomerToMess = () => {
   const messId = useParams().id;
   const router = useRouter();
 
+  const [mess, setMess] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -24,6 +25,21 @@ const NewCustomerToMess = () => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchMess = async () => {
+      try {
+        const res = await fetch(`/api/mess/${messId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setMess(data.mess);
+        }
+      } catch (err) {
+        console.error("Failed to fetch mess details:", err);
+      }
+    };
+    if (messId) fetchMess();
+  }, [messId]);
 
   const validators = {
     name: /^[A-Za-z ]+$/,
@@ -45,6 +61,24 @@ const NewCustomerToMess = () => {
 
     const errorMsg = validateField(name, value);
     setErrors((prev) => ({ ...prev, [name]: errorMsg }));
+  };
+
+  const loadScript = (src) =>
+    new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = src;
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => reject(new Error("Failed to load script"));
+      document.body.appendChild(script);
+    });
+
+  const calculateAmount = () => {
+    if (!mess?.monthlyMessFee) return 0;
+    if (formData.duration === "Day + Night") {
+      return mess.monthlyMessFee * 2;
+    }
+    return mess.monthlyMessFee;
   };
 
   const handleSubmit = async (e) => {
@@ -78,9 +112,85 @@ const NewCustomerToMess = () => {
 
       const data = await res.json();
 
-      if (res.ok) {
-        toast.success("Requested successfully! Please wait for approval.");
+      if (!res.ok) {
+        toast.error(data.message || "Failed to register customer.");
+        setLoading(false);
+        return;
+      }
 
+      // If payment mode is online and we got an order, proceed with Razorpay
+      if (formData.paymentMode === "upi" && data.order) {
+        await loadScript("https://checkout.razorpay.com/v1/checkout.js");
+        const { order, key, dbOrderId, amount } = data;
+
+        const options = {
+          key: key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          amount: order.amount,
+          currency: order.currency,
+          name: mess?.name || "Mess Registration",
+          description: `Monthly Mess Registration - ${formData.duration}`,
+          order_id: order.id,
+          handler: async function (response) {
+            try {
+              const verifyRes = await fetch(
+                `/api/mess/${messId}/new-customer`,
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    dbOrderId,
+                  }),
+                }
+              );
+
+              const verifyData = await verifyRes.json();
+              if (verifyRes.ok) {
+                toast.success("Payment successful! Registration complete.");
+                setFormData({
+                  name: "",
+                  phone: "",
+                  address: "",
+                  gender: "",
+                  paymentMode: "",
+                  college: "",
+                  duration: "",
+                  foodPreference: "",
+                  emergencyContact: "",
+                });
+                router.back();
+              } else {
+                toast.error(
+                  verifyData.message || "Payment verification failed"
+                );
+              }
+            } catch (err) {
+              console.error(err);
+              toast.error("Payment verification failed");
+            } finally {
+              setLoading(false);
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              setLoading(false);
+              toast.info("Payment cancelled");
+            },
+          },
+          prefill: {
+            name: formData.name,
+            contact: formData.phone,
+          },
+          theme: { color: "#3399cc" },
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } else {
+        // Cash payment - registration successful
+        toast.success("Requested successfully! Please wait for approval.");
         setFormData({
           name: "",
           phone: "",
@@ -92,14 +202,12 @@ const NewCustomerToMess = () => {
           foodPreference: "",
           emergencyContact: "",
         });
-
+        setLoading(false);
         router.back();
-      } else {
-        toast.error(data.message || "Failed to register customer.");
       }
     } catch (err) {
+      console.error(err);
       toast.error("Something went wrong. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
@@ -119,6 +227,8 @@ const NewCustomerToMess = () => {
     );
   }
 
+  const displayAmount = calculateAmount();
+
   return (
     <div className="max-w-4xl mx-auto mt-10 p-6 border rounded-lg shadow">
       <Navbar />
@@ -128,6 +238,18 @@ const NewCustomerToMess = () => {
       <h2 className="text-2xl font-semibold mb-4 text-center">
         New Customer Registration
       </h2>
+
+      {mess && formData.duration && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Selected Duration:</span>{" "}
+            {formData.duration}
+          </p>
+          <p className="text-lg font-bold text-blue-600 mt-2">
+            Amount to Pay: ₹{displayAmount}
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormInput
@@ -234,11 +356,14 @@ const NewCustomerToMess = () => {
 
         <button
           type="submit"
-          className="w-full bg-gray-600 hover:bg-black text-white p-2 rounded"
+          disabled={loading || !formData.duration}
+          className="w-full bg-gray-600 hover:bg-black text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {formData.paymentMode === "upi"
-            ? "Pay Online and Join"
-            : "Pay Via Cash and Join"}
+          {loading
+            ? "Processing..."
+            : formData.paymentMode === "upi"
+            ? `Pay ₹${displayAmount} Online and Register`
+            : "Register with Cash Payment"}
         </button>
       </form>
     </div>
@@ -250,7 +375,15 @@ export default NewCustomerToMess;
 //
 // Form Input
 //
-const FormInput = ({ label, name, type, placeholder, value, onChange, error }) => (
+const FormInput = ({
+  label,
+  name,
+  type,
+  placeholder,
+  value,
+  onChange,
+  error,
+}) => (
   <div>
     <label className="block font-medium">{label}</label>
     <input
@@ -287,5 +420,3 @@ const SelectBox = ({ label, name, value, onChange, options }) => (
     </select>
   </div>
 );
-
-

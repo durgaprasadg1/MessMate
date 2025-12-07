@@ -18,7 +18,6 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [consumerData, setConsumerData] = useState({});
   const consumerid = session?.user?.id;
-  console.log(session);
   const handleLogout = async () => {
     await signOut({ redirect: false });
     router.replace("/");
@@ -43,7 +42,6 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
         if (!res.ok) throw new Error("Failed to fetch user info");
 
         const data = await res.json();
-        console.log("Consumer Data in Navbar: ", data);
         setConsumerData({haveMonthlyMess: data.consumer.haveMonthlyMess ?? false});
       } catch (err) {
         console.error(err);
