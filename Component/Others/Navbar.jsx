@@ -223,6 +223,17 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
                 >
                   Your Orders
                 </p>
+                {consumerData.haveMonthlyMess && (
+              <div>
+                <Button
+                  data="Your Daily Mess"
+                  classes="bg-pink-300 rounded p-1.5 hover:bg-pink-400 transition-colors text-white duration-300"
+                  link={`/consumer/${session?.user?.id}/daily-mess`}
+                />
+              </div>
+            )}
+
+
               </>
             )}
 
