@@ -29,13 +29,8 @@ export default function Home() {
     >
       <header className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
         <Navbar />
-        <nav className="flex items-center gap-4">
-          <Link
-            href="/signup"
-            className="ml-3 inline-flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-black transition"
-          >
-            <button className="text-white">Sign Up</button>
-          </Link>
+        <nav className="flex items-center gap-4 ">
+          
         </nav>
       </header>
 
