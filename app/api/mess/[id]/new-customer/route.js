@@ -62,28 +62,6 @@ export async function POST(request, { params }) {
       return remaining > 0;
     });
 
-    const existingCustomer = await NewMessCustomer.findOne({
-      customer: session.user.id,
-      mess: id,
-    });
-
-    if (existingCustomer) {
-      const joining = new Date(existingCustomer.joiningDate);
-      const diffDays = Math.floor((today - joining) / (1000 * 60 * 60 * 24));
-
-      const totalDuration = existingCustomer.messDuration || 30;
-      const remaining = Math.max(totalDuration - diffDays, 0);
-
-      if (remaining > 0) {
-        return NextResponse.json(
-          {
-            message: `You are already registered in this mess. Your current service still has ${remaining} day(s) remaining.`,
-          },
-          { status: 403 }
-        );
-      }
-    }
-
     const body = await request.json();
     const {
       name,
@@ -97,6 +75,45 @@ export async function POST(request, { params }) {
       paymentMode,
     } = body || {};
 
+    const existingCustomer = await NewMessCustomer.findOne({
+      customer: session.user.id,
+      mess: id,
+    });
+
+    if (existingCustomer) {
+      const joining = new Date(existingCustomer.joiningDate);
+      const diffDays = Math.floor((today - joining) / (1000 * 60 * 60 * 24));
+
+      const totalDuration = existingCustomer.messDuration || 30;
+      const remaining = Math.max(totalDuration - diffDays, 0);
+
+      if (remaining > 0) {
+        const existingDuration = existingCustomer.duration;
+        const newDuration = duration;
+
+        const hasSameDay =
+          (existingDuration === "Day" && newDuration === "Day") ||
+          (existingDuration === "Day + Night" &&
+            (newDuration === "Day" || newDuration === "Day + Night")) ||
+          (existingDuration === "Day" && newDuration === "Day + Night");
+
+        const hasSameNight =
+          (existingDuration === "Night" && newDuration === "Night") ||
+          (existingDuration === "Day + Night" &&
+            (newDuration === "Night" || newDuration === "Day + Night")) ||
+          (existingDuration === "Night" && newDuration === "Day + Night");
+
+        if (hasSameDay || hasSameNight) {
+          return NextResponse.json(
+            {
+              message: `You are already registered in this mess for ${existingDuration} with ${remaining} day(s) remaining. You cannot register for the same meal time again.`,
+            },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     const phoneRe = /^[6-9]\d{9}$/;
     const durationEnum = ["Day", "Night", "Day + Night"];
     const genderEnum = ["Male", "Female", "Other"];
@@ -108,19 +125,21 @@ export async function POST(request, { params }) {
       );
     }
 
-    // Validate meal time restrictions
     const hasDay = activeRegistrations.some(
       (reg) => reg.duration === "Day" || reg.duration === "Day + Night"
     );
     const hasNight = activeRegistrations.some(
       (reg) => reg.duration === "Night" || reg.duration === "Day + Night"
     );
+    const hasDayAndNight = activeRegistrations.some(
+      (reg) => reg.duration === "Day + Night"
+    );
 
     if (duration === "Day" && hasDay) {
       return NextResponse.json(
         {
           message:
-            "You are already registered for Day meal in another mess. Please choose Night meal or cancel your existing Day registration.",
+            "You are already registered for Day meal time. Please cancel your existing Day registration first.",
         },
         { status: 403 }
       );
@@ -130,7 +149,7 @@ export async function POST(request, { params }) {
       return NextResponse.json(
         {
           message:
-            "You are already registered for Night meal in another mess. Please choose Day meal or cancel your existing Night registration.",
+            "You are already registered for Night meal time. Please cancel your existing Night registration first.",
         },
         { status: 403 }
       );
@@ -140,20 +159,7 @@ export async function POST(request, { params }) {
       return NextResponse.json(
         {
           message:
-            "You are already registered for a meal time. You cannot register for both Day + Night.",
-        },
-        { status: 403 }
-      );
-    }
-
-    if (
-      (hasDay && hasNight) ||
-      activeRegistrations.some((reg) => reg.duration === "Day + Night")
-    ) {
-      return NextResponse.json(
-        {
-          message:
-            "You are already registered for both meal times. Please cancel an existing registration first.",
+            "You cannot register for Day + Night because you already have a Day or Night registration. Please cancel your existing registration first.",
         },
         { status: 403 }
       );
@@ -209,7 +215,6 @@ export async function POST(request, { params }) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
 
-    // Validate food preference based on mess category
     if (foodPreference) {
       const messCategory = mess.category?.toLowerCase();
       const userPref = foodPreference.toLowerCase();
@@ -233,8 +238,6 @@ export async function POST(request, { params }) {
           { status: 400 }
         );
       }
-
-      // For "both" category mess, all preferences are allowed
     }
 
     let calculatedAmount = mess.monthlyMessFee || 0;

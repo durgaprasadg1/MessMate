@@ -261,16 +261,14 @@ export default function YourMessRegisteredUser() {
         header: "Payment",
         cell: ({ row }) => (
           <div className="flex flex-col gap-1">
-            <span className="text-white capitalize">
-              {row.original.paymentMode === "upi" ? "Online" : "Cash"}
-            </span>
+           
             {row.original.paymentMode === "upi" &&
               row.original.paymentVerified && (
                 <button
                   onClick={() => showInvoiceModalFunc(row.original)}
                   className="px-2 py-0.5 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  View Invoice
+                  {row.original.paymentMode === "upi" ? "Online : " : "Cash : "} View Invoice
                 </button>
               )}
           </div>
@@ -345,7 +343,7 @@ export default function YourMessRegisteredUser() {
       <OwnerNavbar />
 
       {actionLoading && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 backdrop-blur-sm bg-black/50  z-50">
           <Loading />
         </div>
       )}

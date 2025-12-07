@@ -212,7 +212,7 @@ export async function PATCH(request) {
 export async function DELETE(request, { params }) {
   try {
     await connectDB();
-    const { id: messId } = params;
+    const { id: messId } = await params;
     const { userId } = await request.json();
 
     if (!userId) {

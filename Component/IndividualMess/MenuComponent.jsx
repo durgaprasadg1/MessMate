@@ -1,7 +1,6 @@
 const MenuComponent = ({ mess, isOwner }) => {
   return (
     <div className="w-full px-3 sm:px-6 py-4">
-      {/* VEG MENU */}
       {mess.vegMenu?.length > 0 && (
         <div className="mb-6">
           {!isOwner && (
@@ -55,10 +54,8 @@ const MenuComponent = ({ mess, isOwner }) => {
         </div>
       )}
 
-      {/* Divider */}
       <div className="my-4 border-t border-dashed border-gray-300"></div>
 
-      {/* NON VEG MENU */}
       {mess.nonVegMenu?.length > 0 && (
         <div className="mt-4">
           {!isOwner && (

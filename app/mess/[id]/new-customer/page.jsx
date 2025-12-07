@@ -38,7 +38,6 @@ const NewCustomerToMess = () => {
           setMess(messData.mess);
         }
 
-        // Fetch existing registrations for this user
         const regRes = await fetch(
           `/api/consumer/${messId}/check-registrations`
         );
@@ -105,41 +104,33 @@ const NewCustomerToMess = () => {
       return;
     }
 
-    // Check meal time restrictions
     const hasDay = existingRegistrations.some(
       (reg) => reg.duration === "Day" || reg.duration === "Day + Night"
     );
     const hasNight = existingRegistrations.some(
       (reg) => reg.duration === "Night" || reg.duration === "Day + Night"
     );
+    const hasDayAndNight = existingRegistrations.some(
+      (reg) => reg.duration === "Day + Night"
+    );
 
     if (formData.duration === "Day" && hasDay) {
       toast.error(
-        "You are already registered for Day meal in another mess. Please choose Night or cancel your existing Day registration."
+        "You are already registered for Day meal time. Please cancel your existing Day registration first."
       );
       return;
     }
 
     if (formData.duration === "Night" && hasNight) {
       toast.error(
-        "You are already registered for Night meal in another mess. Please choose Day or cancel your existing Night registration."
+        "You are already registered for Night meal time. Please cancel your existing Night registration first."
       );
       return;
     }
 
     if (formData.duration === "Day + Night" && (hasDay || hasNight)) {
       toast.error(
-        "You are already registered for a meal time. You cannot register for Day + Night."
-      );
-      return;
-    }
-
-    if (
-      (hasDay && hasNight) ||
-      existingRegistrations.some((reg) => reg.duration === "Day + Night")
-    ) {
-      toast.error(
-        "You are already registered for both meal times. Please cancel an existing registration first."
+        "You cannot register for Day + Night because you already have a Day or Night registration. Please cancel your existing registration first."
       );
       return;
     }
@@ -231,7 +222,6 @@ const NewCustomerToMess = () => {
         const rzp = new window.Razorpay(options);
         rzp.open();
       } else {
-        // Cash payment - registration successful
         toast.success("Requested successfully! Please wait for approval.");
         setFormData({
           name: "",
@@ -301,7 +291,8 @@ const NewCustomerToMess = () => {
                 </p>
               ))}
               <p className="text-xs text-amber-700 mt-2">
-                You can only register for meal times you haven't already booked.
+                ℹ️ You can register for both Day and Night meals at different
+                messes, but cannot register for the same meal time twice.
               </p>
             </div>
           )}
@@ -379,6 +370,9 @@ const NewCustomerToMess = () => {
                   (reg) =>
                     reg.duration === "Night" || reg.duration === "Day + Night"
                 );
+                const hasDayAndNight = existingRegistrations.some(
+                  (reg) => reg.duration === "Day + Night"
+                );
 
                 return [
                   { value: "", label: "Select" },
@@ -400,7 +394,7 @@ const NewCustomerToMess = () => {
                     value: "Day + Night",
                     label:
                       hasDay || hasNight
-                        ? "Day + Night (Not Available)"
+                        ? "Day + Night (Not Available - Already have Day or Night)"
                         : "Day + Night",
                     disabled: hasDay || hasNight,
                   },
