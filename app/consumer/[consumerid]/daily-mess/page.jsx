@@ -25,14 +25,25 @@ export default function ConsumerMonthlyMess() {
     try {
       const res = await fetch(`/api/consumer/${userId}/monthly-mess`);
       const data = await res.json();
+      console.log("Monthly Mess Data:", data);
 
       if (res.ok) {
-        setCustomerData(data.monthlyMess[1] || null);
+        // Check if monthlyMess exists and has data
+        if (data.monthlyMess && data.monthlyMess.length > 0) {
+          const messData = data.monthlyMess[0]; // Use first item (index 0)
+          console.log("Setting customer data:", messData);
+          setCustomerData(messData);
+        } else {
+          console.log("No monthly mess data found");
+          setCustomerData(null);
+        }
       } else {
         console.log("API Error:", data.message);
+        setCustomerData(null);
       }
     } catch (err) {
       console.log("Error fetching monthly mess:", err);
+      setCustomerData(null);
     } finally {
       setLoading(false);
     }
@@ -51,12 +62,12 @@ export default function ConsumerMonthlyMess() {
 
   if (!customerData)
     return (
-      <>
+      <div className="flex justify-center mt-20">
         <Navbar />
         <div className="text-center mt-20 text-gray-700 text-lg">
           You are not registered for any Monthly Mess.
         </div>
-      </>
+      </div>
     );
 
   const joiningDate = new Date(customerData.joiningDate);
@@ -143,12 +154,12 @@ export default function ConsumerMonthlyMess() {
                 <InfoRow
                   label="Food Preference"
                   value={
-                    customerData.foodPreference
-                      ? "Both"
-                        ? "Veg + Non-Veg"
-                        : customerData.foodPreference === "veg"
-                        ? "Vegetarian"
-                        : "Non-Vegetarian"
+                    customerData.foodPreference === "both"
+                      ? "Veg + Non-Veg"
+                      : customerData.foodPreference === "veg"
+                      ? "Vegetarian"
+                      : customerData.foodPreference === "nonveg"
+                      ? "Non-Vegetarian"
                       : "Not Specified"
                   }
                 />

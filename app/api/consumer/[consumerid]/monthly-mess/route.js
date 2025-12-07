@@ -8,7 +8,6 @@ export async function GET(request, { params }) {
   try {
     await connectDB();
     const { consumerid } = await params || {};
-    console.log("UserId ", consumerid)
 
     if (!consumerid || !consumerid.match(/^[0-9a-fA-F]{24}$/)) {
       return NextResponse.json({ message: "Invalid or missing userId" }, { status: 400 });
@@ -27,7 +26,7 @@ export async function GET(request, { params }) {
       .populate("mess")
       .populate("customer");
 
-      console.log("Records : ",records)
+      // console.log("Records : ",records)
     if (!records || records.length === 0) {
       return NextResponse.json({ message: "No Monthly Mess subscription found for this user." }, { status: 404 });
     }

@@ -8,7 +8,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import ProfileComponent from "./ProfileComponent";
 import Button from "../../Component/Others/Button";
-
+import { toast } from "react-toastify";
 const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin;
@@ -56,13 +56,11 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
     const parsed = value ? parseInt(value, 10) : null;
 
     if (parsed) {
-      // Check if geolocation is available
       if (!navigator?.geolocation) {
         alert("Geolocation is not supported by your browser.");
         return;
       }
 
-      // Request location permission when user selects a radius
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setRadius(parsed);
@@ -70,13 +68,11 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
         (err) => {
           console.error("Location error:", err);
           alert("Please allow location access to filter by distance.");
-          // Reset to show all messes if location denied
           event.target.value = "";
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
       );
     } else {
-      // Clear filter
       setRadius(null);
     }
   };

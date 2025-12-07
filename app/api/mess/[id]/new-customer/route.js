@@ -145,7 +145,6 @@ export async function POST(request, { params }) {
     if (!mess) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
-    console.log("MESS : ",mess)
 
     let calculatedAmount = mess.monthlyMessFee || 0;
     if (duration === "Day + Night") {
