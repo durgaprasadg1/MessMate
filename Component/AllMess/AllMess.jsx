@@ -116,7 +116,7 @@ export default function ConsumerAllMesses({
         )}
 
         {!locationLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {visibleMesses.map((mess) => {
               const dist = userLocation
                 ? distanceInMeters(
@@ -130,57 +130,113 @@ export default function ConsumerAllMesses({
               return (
                 <article
                   key={mess._id}
-                  className="rounded border bg-white shadow hover:scale-105 transition"
+                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-amber-200"
                 >
-                  <img
-                    src={
-                      mess.image?.url || "https://via.placeholder.com/800x500"
-                    }
-                    className="w-full h-48 object-cover"
-                  />
+                  <div className="relative h-56 overflow-hidden">
+                    <img
+                      src={
+                        mess.image?.url || "https://via.placeholder.com/800x500"
+                      }
+                      alt={mess.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
 
-                  <div className="p-4">
-                    <h2 className="text-xl font-bold text-amber-900">
-                      {mess.name}
-                    </h2>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 
-                    <p className="text-sm italic text-gray-600">
-                      {mess.category === "both"
-                        ? "Veg + Non-Veg"
-                        : mess.category}
-                    </p>
-
-                    <p className="text-gray-700 text-sm mt-2 line-clamp-3">
-                      {mess.description}
-                    </p>
-
-                    <p className="text-sm mt-2 text-gray-600">
-                      {mess.address?.split(",")[0]}
-                    </p>
-
-                    <span
-                      className={`px-3 py-1 mt-2 inline-block rounded-full text-xs ${
-                        mess.isOpen
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {mess.isOpen ? "Open" : "Closed"}
-                    </span>
+                    <div className="absolute top-4 right-4">
+                      <span
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg backdrop-blur-sm ${
+                          mess.isOpen
+                            ? "bg-green-500/90 text-white"
+                            : "bg-red-500/90 text-white"
+                        }`}
+                      >
+                        {mess.isOpen ? "● Open Now" : "● Closed"}
+                      </span>
+                    </div>
 
                     {dist !== null && (
-                      <p className="text-sm mt-2 text-green-600">
-                        {Math.round(dist)} meters away
-                      </p>
+                      <div className="absolute bottom-4 left-4">
+                        <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/90 text-gray-800 shadow-lg backdrop-blur-sm flex items-center gap-1">
+                          <svg
+                            className="w-3 h-3"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          {dist >= 1000
+                            ? `${(dist / 1000).toFixed(1)} km`
+                            : `${Math.round(dist)} m`}
+                        </span>
+                      </div>
                     )}
+                  </div>
 
-                    <div className="mt-4 flex justify-between items-center">
+                  <div className="p-5">
+                    <div className="mb-3">
+                      <h2 className="text-xl font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-amber-600 transition-colors">
+                        {mess.name}
+                      </h2>
+
+                      <div className="flex items-center gap-2 text-sm">
+                        <span
+                          className={`px-2.5 py-1 rounded-md font-medium ${
+                            mess.category === "both"
+                              ? "bg-purple-100 text-purple-700"
+                              : mess.category?.toLowerCase() === "veg"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {mess.category === "both"
+                            ? "🥗 Veg + Non-Veg"
+                            : mess.category?.toLowerCase() === "veg"
+                            ? "🌱 Vegetarian"
+                            : "🍗 Non-Veg"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="text-gray-600 text-sm leading-relaxed mb-1 line-clamp-2 min-h-[40px]">
+                      {mess.description ||
+                        "Delicious meals served fresh daily."}
+                    </p>
+
+                    <div className="flex items-start gap-2 mb-1 text-gray-500 text-sm">
+                      <svg
+                        className="w-4 h-4 mt-0.5 flex-shrink-0"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <span className="line-clamp-1">
+                        {mess.address?.split(",").slice(0, 2).join(",") ||
+                          "Location available"}
+                      </span>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-100 mb-4"></div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3">
                       <ButtonComponent
-                        data="Get More Info"
+                        data="View Details"
                         link={`/mess/${mess._id}`}
                       />
+
                       <button
-                        className="bg-gray-600  text-white font-medium hover:bg-black p-2 transition-colors duration-300 rounded"
+                        className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm"
                         onClick={() =>
                           window.open(
                             `https://www.google.com/maps?q=${mess.lat},${mess.lon}`,
@@ -188,7 +244,18 @@ export default function ConsumerAllMesses({
                           )
                         }
                       >
-                        Get Location on Map
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Map
                       </button>
                     </div>
                   </div>
