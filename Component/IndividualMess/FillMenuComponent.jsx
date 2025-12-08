@@ -177,7 +177,6 @@ export default function MessMenuComponent({
 
   return (
     <div className="bg-gray-900 p-4 sm:p-6 rounded-lg shadow-sm">
-      {/* Menu Type Tabs */}
       {category !== "veg" && (
         <div className="mb-6">
           <div className="flex flex-wrap gap-2 sm:gap-3 p-2 bg-gray-800 rounded-lg">
@@ -210,7 +209,7 @@ export default function MessMenuComponent({
       <form onSubmit={handleSubmit}>
         <div className="mb-6">
           <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <Label labelName="Meal Time" />
+            <Label labelName="Meal Time"  />
             <select
               value={mealTime}
               onChange={(e) => setMealTime(e.target.value)}
