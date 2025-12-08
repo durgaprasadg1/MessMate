@@ -82,9 +82,8 @@ export default function EditUserInfoPage({ messID }) {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Name */}
           <div>
-            <Label labelName="Name" />
+            <label htmlFor="name" className="block text-gray-700 font-semibold mb-2">Name</label>
             <input
               type="text"
               name="name"
@@ -95,9 +94,8 @@ export default function EditUserInfoPage({ messID }) {
             />
           </div>
 
-          {/* Description */}
           <div>
-            <Label labelName="Description" />
+            <label htmlFor="description" className="block text-gray-700 font-semibold mb-2">Description</label>
             <textarea
               name="description"
               value={messData.description}
@@ -108,9 +106,8 @@ export default function EditUserInfoPage({ messID }) {
             />
           </div>
 
-          {/* Address */}
           <div>
-            <Label labelName="Address" />
+            <label htmlFor="address" className="block text-gray-700 font-semibold mb-2">Address</label>
             <input
               type="text"
               name="address"
@@ -121,9 +118,8 @@ export default function EditUserInfoPage({ messID }) {
             />
           </div>
 
-          {/* Phone */}
           <div>
-            <Label labelName="Phone Number" />
+            <label htmlFor="phone" className="block text-gray-700 font-semibold mb-2">Phone Number</label>
             <input
               type="tel"
               name="phone"
@@ -135,7 +131,7 @@ export default function EditUserInfoPage({ messID }) {
           </div>
 
           <div>
-            <Label labelName="Category" />
+            <label htmlFor="category" className="block text-gray-700 font-semibold mb-2">Category</label>
             <select
               name="category"
               value={messData.category}
@@ -151,7 +147,7 @@ export default function EditUserInfoPage({ messID }) {
           </div>
 
           <div>
-            <Label labelName="Limits" />
+            <label htmlFor="limits" className="block text-gray-700 font-semibold mb-2">Limits</label>
             <select
               name="limits"
               value={messData.limits}
