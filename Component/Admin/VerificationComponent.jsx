@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import Loading from "../Others/Loading";
 import Link from "next/link";
 import { Spinner } from "@/components/ui/spinner";
+import { DataTable } from "../ShadCnUI/table";
 
 const VerificationComponent = () => {
   const [pendingMesses, setPendingMesses] = useState([]);
@@ -61,6 +62,119 @@ const VerificationComponent = () => {
     }
   };
 
+  const formattedCategory = (c) =>
+    c === "Both" || c === "both" ? "Veg + Non-Veg" : c;
+
+  const columns = [
+    {
+      accessorKey: "name",
+      header: "Mess Name",
+      cell: ({ row }) => (
+        <span className="font-semibold text-white">{row.original.name}</span>
+      ),
+    },
+    {
+      accessorKey: "ownerName",
+      header: "Owner",
+      cell: ({ row }) => (
+        <span className="text-white">{row.original.ownerName}</span>
+      ),
+    },
+    {
+      accessorKey: "phoneNumber",
+      header: "Contact",
+      cell: ({ row }) => (
+        <span className="text-white">{row.original.phoneNumber}</span>
+      ),
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => (
+        <span className="text-white">
+          {formattedCategory(row.original.category)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "adharNumber",
+      header: "Aadhar",
+      cell: ({ row }) => (
+        <span className="text-white">{row.original.adharNumber}</span>
+      ),
+    },
+    {
+      accessorKey: "isLimited",
+      header: "Limited",
+      cell: ({ row }) => (
+        <span className="text-white">
+          {row.original.isLimited ? "Yes" : "No"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Submitted",
+      cell: ({ row }) => (
+        <span className="text-white">
+          {new Date(row.original.createdAt).toLocaleDateString()}
+        </span>
+      ),
+    },
+    {
+      id: "links",
+      header: "Documents",
+      cell: ({ row }) => {
+        const mess = row.original;
+        return (
+          <div className="flex flex-wrap gap-2">
+            <Link href={mess.image?.url || "#"} target="_blank">
+              <button className="px-2 py-1 text-xs rounded bg-blue-500 text-white hover:bg-blue-600">
+                Banner
+              </button>
+            </Link>
+            <Link href={mess.certificate?.url || "#"} target="_blank">
+              <button className="px-2 py-1 text-xs rounded bg-purple-500 text-white hover:bg-purple-600">
+                Certificate
+              </button>
+            </Link>
+            <Link
+              href={`https://www.google.com/maps?q=${mess.lat},${mess.lon}`}
+              target="_blank"
+            >
+              <button className="px-2 py-1 text-xs rounded bg-gray-600 text-white hover:bg-gray-700">
+                Map
+              </button>
+            </Link>
+          </div>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const mess = row.original;
+        return (
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => handleVerify(mess._id)}
+              className="px-3 py-1 text-xs rounded bg-green-600 font-semibold text-white hover:bg-green-700"
+            >
+              Verify
+            </button>
+            <button
+              onClick={() => handleDeny(mess._id)}
+              className="px-3 py-1 text-xs rounded bg-red-600 font-semibold text-white hover:bg-red-700"
+            >
+              Deny
+            </button>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="relative p-6 bg-zinc-900 min-h-screen">
       {actionLoading && (
@@ -69,7 +183,7 @@ const VerificationComponent = () => {
         </div>
       )}
 
-      <h1 className="text-3xl font-bold mb-8 text-center text-white tracking-wide">
+      <h1 className="text-3xl font-extrabold text-white mb-8">
         Mess Verification Panel
       </h1>
 
@@ -78,113 +192,15 @@ const VerificationComponent = () => {
           <Spinner />
         </div>
       ) : pendingMesses.length === 0 ? (
-        <p className="text-center text-gray-600 text-lg">
+        <p className="text-center text-gray-400 text-lg py-10">
           No pending messes for verification.
         </p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {pendingMesses.map(
-            (mess) =>
-              !mess.isVerified && (
-                <div
-                  key={mess._id}
-                  className="bg-amber-300 rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 flex flex-col justify-between border border-gray-200"
-                >
-                  <h2 className="text-xl font-semibold text-gray-800 mb-4 text-center">
-                    {mess.name}
-                  </h2>
-
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="space-y-2">
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Owner:</span>{" "}
-                        {mess.ownerName}
-                      </p>
-
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Contact:</span>{" "}
-                        {mess.phoneNumber}
-                      </p>
-
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Category:</span>{" "}
-                        {mess.category === "both"
-                          ? "Veg + Non-Veg"
-                          : mess.category}
-                      </p>
-
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Limited:</span>{" "}
-                        {mess.isLimited ? "Yes" : "No"}
-                      </p>
-
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Aadhar:</span>{" "}
-                        {mess.adharNumber}
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Banner:</span>{" "}
-                        <Link href={mess.image.url} target="_blank">
-                          <button className="text-gray-600 cursor-pointer">
-                            View
-                          </button>
-                        </Link>
-                      </p>
-
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Certificate:</span>{" "}
-                        <Link href={mess.certificate?.url} target="_blank">
-                          <button className="text-gray-600 cursor-pointer">
-                            View
-                          </button>
-                        </Link>
-                      </p>
-
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Location:</span>{" "}
-                        <Link
-                          href={`https://www.google.com/maps?q=${mess.lat},${mess.lon}`}
-                          target="_blank"
-                        >
-                          <button className="text-gray-600 cursor-pointer">
-                            Open Map
-                          </button>
-                        </Link>
-                      </p>
-
-                      <p className="text-gray-700">
-                        <span className="font-semibold">Submitted:</span>{" "}
-                        {new Date(mess.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-
-                  <p className="text-white text-sm mt-4 bg-black p-3 rounded-xl">
-                    <span className="font-semibold">Description:</span>{" "}
-                    {mess.description}
-                  </p>
-
-                  <div className="mt-6 flex justify-between gap-3">
-                    <button
-                      onClick={() => handleVerify(mess._id)}
-                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded transition-all shadow-sm"
-                    >
-                      Verify
-                    </button>
-
-                    <button
-                      onClick={() => handleDeny(mess._id)}
-                      className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded transition-all shadow-sm"
-                    >
-                      Deny
-                    </button>
-                  </div>
-                </div>
-              )
-          )}
+        <div className="overflow-auto rounded-lg">
+          <DataTable
+            columns={columns}
+            data={pendingMesses.filter((m) => !m.isVerified)}
+          />
         </div>
       )}
     </div>

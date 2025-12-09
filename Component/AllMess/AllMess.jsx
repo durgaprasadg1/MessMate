@@ -225,10 +225,8 @@ export default function ConsumerAllMesses({
                       </span>
                     </div>
 
-                    {/* Divider */}
                     <div className="border-t border-gray-100 mb-4"></div>
 
-                    {/* Action Buttons */}
                     <div className="flex gap-3">
                       <ButtonComponent
                         data="View Details"

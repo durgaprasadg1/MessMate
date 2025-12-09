@@ -209,7 +209,7 @@ export default function MessMenuComponent({
       <form onSubmit={handleSubmit}>
         <div className="mb-6">
           <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <Label labelName="Meal Time"  />
+            <label htmlFor="mealTime" className="block text-sm font-medium text-white"  >Meal Time</label>
             <select
               value={mealTime}
               onChange={(e) => setMealTime(e.target.value)}
@@ -242,7 +242,7 @@ export default function MessMenuComponent({
             >
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                 <div className="flex-1">
-                  <Label labelName="Dish Name" />
+                  <label htmlFor="dishName" className="block text-sm font-medium text-white"  >Dish Name</label>
                   <input
                     value={dish.name}
                     onChange={(e) => updateDish(di, { name: e.target.value })}
@@ -252,7 +252,7 @@ export default function MessMenuComponent({
                   />
                 </div>
                 <div className="w-full sm:w-32">
-                  <Label labelName="Price (₹)" />
+                  <label htmlFor="price" className="block text-sm font-medium text-white"  >Price (₹)</label>
                   <input
                     type="number"
                     value={dish.price ?? ""}
@@ -265,7 +265,7 @@ export default function MessMenuComponent({
 
               <div className="mt-3 space-y-2">
                 <div className="flex items-center justify-between mb-2">
-                  <Label labelName="Menu Items" />
+                  <label className="block text-sm font-medium text-white"  >Menu Items</label>
                   <button
                     type="button"
                     className="text-xs sm:text-sm px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
