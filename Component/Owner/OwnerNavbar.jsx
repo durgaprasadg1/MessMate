@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import ProfileComponent from "../Others/ProfileComponent";
+import NotificationBell from "../Others/NotificationBell";
 
 export default function OwnerNavbar() {
   const { data: session } = useSession();
@@ -41,10 +42,9 @@ export default function OwnerNavbar() {
       </motion.div>
 
       <div className="hidden md:flex gap-3 items-center text-gray-300 text-lg mr-2">
+        <ButtonComponent data="About" link="/owner/dashboard" />
 
-                <ButtonComponent data="About" link="/owner/dashboard" />
-
-         <ButtonComponent
+        <ButtonComponent
           data="Add Your Mess"
           link={`/owner/${session?.user?.id}/new-mess`}
         />
@@ -53,10 +53,11 @@ export default function OwnerNavbar() {
           link={`/owner/${session?.user?.id}/mess-details`}
         />
       </div>
-        
-      <div className="ml-5 text-right">
-          <ProfileComponent  />
-      </div> 
+
+      <div className="flex items-center gap-3">
+        <NotificationBell />
+        <ProfileComponent />
+      </div>
       <div className="flex items-center gap-3">
         <Button
           onClick={() => handleLogout()}
@@ -84,6 +85,9 @@ export default function OwnerNavbar() {
                 <X size={20} />
               </button>
             </div>
+            <div className="py-2">
+              <NotificationBell />
+            </div>
             <ButtonComponent data="About" link="/owner/dashboard" />
             <ButtonComponent
               data="Details"
@@ -107,7 +111,6 @@ export default function OwnerNavbar() {
           </div>
         </div>
       )}
-      
     </motion.nav>
   );
 }

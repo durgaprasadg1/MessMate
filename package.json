@@ -2,10 +2,11 @@
   "name": "nmess",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev ",
+    "dev": "node server.js",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production node server.js",
     "lint": "eslint",
     "test:auth": "node tests/api-auth-tests.js",
     "test:e2e-auth": "node tests/e2e-auth.js"
@@ -35,6 +36,8 @@
     "react-icons": "^5.5.0",
     "react-toastify": "^11.0.5",
     "recharts": "^2.15.4",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.1.12"
   },

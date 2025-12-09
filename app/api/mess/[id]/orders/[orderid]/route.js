@@ -3,6 +3,12 @@ import { connectDB } from "@/lib/mongodb";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import {
+  notifyOrderCancelled,
+  notifyOrderCompleted,
+  notifyOrderTaken,
+  notifyOrderRefunded,
+} from "@/lib/notifications";
 
 export async function PATCH(request, { params }) {
   try {
@@ -46,6 +52,23 @@ export async function PATCH(request, { params }) {
           $pull: { orders: order._id },
         });
 
+        // Notify owner about cancellation
+        try {
+          const mess = await Mess.findById(order.mess).populate("owner");
+          if (mess?.owner) {
+            await notifyOrderCancelled(
+              order._id,
+              mess.owner._id,
+              "Owner",
+              order.mess,
+              mess.name || "your mess",
+              "customer"
+            );
+          }
+        } catch (notifErr) {
+          console.error("Notification failed:", notifErr);
+        }
+
         return NextResponse.json(
           { message: "Order cancelled; refund will be started soon" },
           { status: 200 }
@@ -68,6 +91,19 @@ export async function PATCH(request, { params }) {
 
       order.isTaken = true;
       await order.save();
+
+      // Notify consumer that order is taken
+      try {
+        await notifyOrderTaken(
+          order._id,
+          order.consumer,
+          order.mess,
+          mess?.name || "the mess"
+        );
+      } catch (notifErr) {
+        console.error("Notification failed:", notifErr);
+      }
+
       return NextResponse.json(
         { message: "Order marked as taken" },
         { status: 200 }
@@ -97,6 +133,19 @@ export async function PATCH(request, { params }) {
           $pull: { orders: order._id },
         });
 
+        // Notify consumer about refund
+        try {
+          await notifyOrderRefunded(
+            order._id,
+            order.consumer,
+            order.mess,
+            mess?.name || "the mess",
+            order.totalPrice / 100
+          );
+        } catch (notifErr) {
+          console.error("Notification failed:", notifErr);
+        }
+
         return NextResponse.json(
           { message: "Refund initiated and order marked cancelled" },
           { status: 200 }
@@ -120,6 +169,19 @@ export async function PATCH(request, { params }) {
       order.done = true;
       order.status = "completed";
       await order.save();
+
+      // Notify consumer that order is completed
+      try {
+        await notifyOrderCompleted(
+          order._id,
+          order.consumer,
+          order.mess,
+          mess?.name || "the mess"
+        );
+      } catch (notifErr) {
+        console.error("Notification failed:", notifErr);
+      }
+
       return NextResponse.json(
         { message: "Order marked completed" },
         { status: 200 }

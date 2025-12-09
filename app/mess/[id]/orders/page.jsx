@@ -250,7 +250,18 @@ export default function OrdersPage() {
             No orders yet.
           </div>
         ) : (
-          <DataTable columns={columns} data={data} />
+          <>
+          <div className="p-6 bg-gray-800 rounded-lg shadow-xl text-gray-400 text-center">
+            Delete the completed orders at the end of the day to keep your order list clean and
+            organized.
+            <br />
+            दिन के अंत में पूर्ण किए गए ऑर्डर डिलीट कर दें ताकि आपकी ऑर्डर सूची साफ़ और व्यवस्थित रहे।
+          </div>
+          <div className="mt-6">
+            <DataTable columns={columns} data={data} />
+
+          </div>
+          </>
         )}
       </div>
     </div>

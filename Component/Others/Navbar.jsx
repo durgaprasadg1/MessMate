@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import ProfileComponent from "./ProfileComponent";
 import Button from "../../Component/Others/Button";
 import { toast } from "react-toastify";
+import NotificationBell from "./NotificationBell";
+
 const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin;
@@ -42,7 +44,9 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
         if (!res.ok) throw new Error("Failed to fetch user info");
 
         const data = await res.json();
-        setConsumerData({haveMonthlyMess: data.consumer.haveMonthlyMess ?? false});
+        setConsumerData({
+          haveMonthlyMess: data.consumer.haveMonthlyMess ?? false,
+        });
       } catch (err) {
         console.error(err);
         toast.error("Error fetching user data");
@@ -151,6 +155,7 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
                 />
               </div>
             )}
+            <NotificationBell />
             <ProfileComponent />
             <button
               onClick={handleLogout}
@@ -224,16 +229,14 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
                   Your Orders
                 </p>
                 {consumerData.haveMonthlyMess && (
-              <div>
-                <Button
-                  data="Your Daily Mess"
-                  classes="bg-pink-300 rounded p-1.5 hover:bg-pink-400 transition-colors text-white duration-300"
-                  link={`/consumer/${session?.user?.id}/daily-mess`}
-                />
-              </div>
-            )}
-
-
+                  <div>
+                    <Button
+                      data="Your Daily Mess"
+                      classes="bg-pink-300 rounded p-1.5 hover:bg-pink-400 transition-colors text-white duration-300"
+                      link={`/consumer/${session?.user?.id}/daily-mess`}
+                    />
+                  </div>
+                )}
               </>
             )}
 
@@ -267,6 +270,9 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
 
             {session ? (
               <>
+                <div className="py-2">
+                  <NotificationBell />
+                </div>
                 <ProfileComponent closeDrawer={() => setDrawerOpen(false)} />
                 <button
                   onClick={() => {

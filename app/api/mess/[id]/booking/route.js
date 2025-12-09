@@ -5,6 +5,10 @@ import { validateAgainst } from "../../../../../lib/validateRequest";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import crypto from "crypto";
+import {
+  notifyNewOrder,
+  notifyOwnerNewOrder,
+} from "../../../../../lib/notifications";
 
 async function computePricePerPlate(mess, menutype, selectedDish) {
   const { default: Menu } = await import("../../../../../models/menu");
@@ -294,6 +298,27 @@ export async function PATCH(request, { params }) {
         await Mess.findByIdAndUpdate(dbOrder.mess, {
           $push: { orders: dbOrder._id },
         });
+
+        // Send notifications
+        const mess = await Mess.findById(dbOrder.mess).populate("owner");
+        try {
+          await notifyNewOrder(
+            dbOrder._id,
+            dbOrder.consumer,
+            dbOrder.mess,
+            mess?.name || "the mess"
+          );
+          if (mess?.owner) {
+            await notifyOwnerNewOrder(
+              dbOrder._id,
+              mess.owner._id,
+              dbOrder.mess,
+              consumer?.name || "A customer"
+            );
+          }
+        } catch (notifErr) {
+          console.error("Notification failed:", notifErr);
+        }
 
         return NextResponse.json(
           { message: "Payment verified", order: dbOrder },
