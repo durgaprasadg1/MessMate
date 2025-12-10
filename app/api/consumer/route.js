@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../../lib/mongodb";
-import Consumer from "../../../models/consumer";
 
 export async function GET() {
   try {
     await connectDB();
+    const { default: Consumer } = await import("../../../models/consumer");
     const consumers = await Consumer.find().populate("reviews");
     return NextResponse.json(consumers);
   } catch (error) {

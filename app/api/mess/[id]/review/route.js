@@ -2,13 +2,15 @@ import { NextResponse } from "next/server";
 import { connectDB } from "../../../../../lib/mongodb";
 import Mess from "../../../../../models/mess";
 import Review from "../../../../../models/reviews";
-import Consumer from "../../../../../models/consumer";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(request, { params }) {
   try {
     await connectDB();
+    const { default: Consumer } = await import(
+      "../../../../../models/consumer"
+    );
 
     const { id } = await params;
     if (!id) {
@@ -20,8 +22,13 @@ export async function POST(request, { params }) {
 
     const body = await request.json();
     const { rating, text } = body;
-    
-     if (typeof rating !== "number" || rating < 1 || rating > 5 || !text?.trim()) {
+
+    if (
+      typeof rating !== "number" ||
+      rating < 1 ||
+      rating > 5 ||
+      !text?.trim()
+    ) {
       return NextResponse.json(
         { message: "Valid rating (1-5) and non-empty text are required" },
         { status: 400 }
@@ -29,16 +36,19 @@ export async function POST(request, { params }) {
     }
     const consumer = Consumer.findById(session?.user?.id);
     if (!consumer)
-      return NextResponse.json({ message: "Author not found" }, { status: 404 });
-
-
+      return NextResponse.json(
+        { message: "Author not found" },
+        { status: 404 }
+      );
 
     if (consumer.isBlocked)
-          return NextResponse.json(
-            { message: "Your account is blocked by admin due to your activities. You cannot post reviews" },
-            { status: 403 }
-          );
-    
+      return NextResponse.json(
+        {
+          message:
+            "Your account is blocked by admin due to your activities. You cannot post reviews",
+        },
+        { status: 403 }
+      );
 
     if (!rating || !text) {
       return NextResponse.json(
@@ -46,19 +56,17 @@ export async function POST(request, { params }) {
         { status: 400 }
       );
     }
-     const mess = await Mess.findById(id);
-      if (!mess)
+    const mess = await Mess.findById(id);
+    if (!mess)
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
-
 
     const review = await Review.create({
       rating,
       feedback: text,
       author: session.user.id,
-      mess:id,
+      mess: id,
     });
 
-   
     mess.reviews.push(review._id);
     await mess.save();
 

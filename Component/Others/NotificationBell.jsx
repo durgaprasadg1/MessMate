@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 
 export default function NotificationBell() {
   const { data: session } = useSession();
+  const isOwner = session?.user?.isOwner;
   const {
     notifications,
     unreadCount,
@@ -84,7 +85,6 @@ export default function NotificationBell() {
 
   return (
     <div className="relative" ref={panelRef}>
-      {/* Bell Icon Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
@@ -199,7 +199,7 @@ export default function NotificationBell() {
                             {formatTime(notification.createdAt)}
                           </span>
 
-                          {notification.orderId && (
+                          {notification.orderId && !isOwner && (
                             <Link
                               href={`/consumer/${session?.user?.id}/history`}
                               className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"

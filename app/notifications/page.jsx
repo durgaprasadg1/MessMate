@@ -7,9 +7,13 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import Navbar from "@/Component/Others/Navbar";
 import Loading from "@/Component/Others/Loading";
 import Link from "next/link";
+import OwnerNavbar from "../../Component/Owner/OwnerNavbar";
+import { toast } from "react-toastify";
 
-export default function NotificationsPage() {
+export default function NotificationsPage({messId}) {
   const { data: session } = useSession();
+  const isOwner = session?.user?.isOwner;
+  const id = session?.user?.id;
   const router = useRouter();
   const {
     notifications,
@@ -18,13 +22,38 @@ export default function NotificationsPage() {
     markAllAsRead,
     clearNotifications,
   } = useNotifications();
-  const [filter, setFilter] = useState("all"); 
+  const [filter, setFilter] = useState("all");
+  const [messData, setMessData] = useState(null);
 
-  useEffect(() => {
-    if (!session) {
-      router.push("/login");
+useEffect(() => {
+  if (!session) {
+    router.push("/login");
+    return;
+  }
+
+  const fetchAnalytics = async () => {
+    try {
+      const api = `/api/owner/${id}`;
+      const res = await fetch(api, { cache: "no-store" });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data?.error || data?.message || "Failed to fetch analytics");
+        return;
+      }
+
+      setMessData(data.owner.messes[0]);
+      console.log("Fetched Data:", data);
+
+    } catch (err) {
+      console.error("Analytics fetch error:", err);
+      toast.error("Failed to fetch Mess");
     }
-  }, [session, router]);
+  };
+
+  if (id && isOwner) fetchAnalytics();
+
+}, [id, session]);  // <-- cleaned deps
 
   if (!session) {
     return <Loading />;
@@ -91,8 +120,13 @@ export default function NotificationsPage() {
 
   return (
     <>
-      <Navbar />
-      <div className="min-h-screen bg-gray-50 pt-20 pb-10">
+      {isOwner ? <OwnerNavbar /> : <Navbar />}
+      <div
+        className={`${
+          isOwner ? "bg-gray-950" : "bg-white"
+        } min-h-screen pt-20 pb-10`}
+      >
+        {" "}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -203,12 +237,10 @@ export default function NotificationsPage() {
                 >
                   <div className="p-6">
                     <div className="flex items-start gap-4">
-                      {/* Icon */}
                       <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl shadow-sm">
                         {getNotificationIcon(notification.type)}
                       </div>
 
-                      {/* Content */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <h3
@@ -234,7 +266,7 @@ export default function NotificationsPage() {
 
                           {notification.orderId && (
                             <Link
-                              href={`/consumer/${session?.user?.id}/history`}
+                              href={!isOwner ? `/consumer/${session?.user?.id}/history`: `/mess/${messData}/orders`}
                               className="text-sm text-indigo-600 hover:text-indigo-800 font-medium hover:underline"
                               onClick={(e) => e.stopPropagation()}
                             >

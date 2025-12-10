@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "../../../lib/mongodb.js";
 import Owner from "../../../models/owner.js";
-import Consumer from "../../../models/consumer.js";
 
 export async function POST(request) {
-
   try {
     await connectDB();
+    const { default: Consumer } = await import("../../../models/consumer.js");
     const body = await request.json();
     const { name, email, phoneNumber, address, password } = body;
     if (!name || !email || !password || !phoneNumber || !address) {
@@ -24,7 +23,7 @@ export async function POST(request) {
         { status: 409 }
       );
     }
-    
+
     const existedOwner = await Owner.findOne({ email });
     if (existedOwner) {
       return NextResponse.json(

@@ -1,7 +1,4 @@
 import mongoose from "mongoose";
-import Mess from "./mess";
-import Order from "./order";
-import Review from "./reviews";
 const { Schema } = mongoose;
 const consumerSchema = new Schema({
   username: {
@@ -13,7 +10,7 @@ const consumerSchema = new Schema({
     required: true,
     unique: true,
   },
-  
+
   reviews: [
     {
       type: Schema.Types.ObjectId,
@@ -53,23 +50,49 @@ const consumerSchema = new Schema({
   resetToken: String,
 
   resetTokenExpiry: Date,
-  
+
   haveMonthlyMess: {
-    type : Boolean,
+    type: Boolean,
     default: false,
-  }
-  
+  },
 });
-
-
 
 consumerSchema.post("findOneAndDelete", async (consumer) => {
   if (consumer) {
-    await Mess.deleteMany({ _id: { $in: consumer.mess } });
+    try {
+      const MessModule = await import("./mess");
+      const MessModel =
+        MessModule && MessModule.default ? MessModule.default : MessModule;
+      if (MessModel && MessModel.deleteMany) {
+        await MessModel.deleteMany({ _id: { $in: consumer.mess } });
+      }
+    } catch (e) {
+      console.error("Error deleting related Mess docs for consumer:", e);
+    }
 
-    await Review.deleteMany({ _id: { $in: consumer.reviews } });
+    try {
+      const ReviewModule = await import("./reviews");
+      const ReviewModel =
+        ReviewModule && ReviewModule.default
+          ? ReviewModule.default
+          : ReviewModule;
+      if (ReviewModel && ReviewModel.deleteMany) {
+        await ReviewModel.deleteMany({ _id: { $in: consumer.reviews } });
+      }
+    } catch (e) {
+      console.error("Error deleting related Review docs for consumer:", e);
+    }
 
-    await Order.deleteMany({ _id: { $in: consumer.orders } });
+    try {
+      const OrderModule = await import("./order");
+      const OrderModel =
+        OrderModule && OrderModule.default ? OrderModule.default : OrderModule;
+      if (OrderModel && OrderModel.deleteMany) {
+        await OrderModel.deleteMany({ _id: { $in: consumer.orders } });
+      }
+    } catch (e) {
+      console.error("Error deleting related Order docs for consumer:", e);
+    }
   }
 });
 consumerSchema.index({ phone: 1 });

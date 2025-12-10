@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Mess from "@/models/mess";
-import Consumer from "@/models/consumer";
 import NewMessCustomer from "@/models/newMessCustomer";
 import nodemailer from "nodemailer";
 
@@ -108,7 +107,7 @@ export async function PATCH(request) {
                 <b>MessMate Support Team</b>
               </p>
             </div>
-          </div>`   
+          </div>`
         );
       } else {
         await sendMail(

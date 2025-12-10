@@ -234,7 +234,7 @@ export default function ConsumerAllMesses({
                       />
 
                       <button
-                        className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm"
+                        className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium py-2.5 px-4 rounded transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm"
                         onClick={() =>
                           window.open(
                             `https://www.google.com/maps?q=${mess.lat},${mess.lon}`,

@@ -1,10 +1,10 @@
 import { connectDB } from "@/lib/mongodb";
-import Consumer from "@/models/consumer";
 import Mess from "@/models/mess";
 
 export async function GET() {
   await connectDB();
 
+  const { default: Consumer } = await import("@/models/consumer");
   const totalUsers = await Consumer.countDocuments({});
   const totalMesses = await Mess.countDocuments({});
   const pendingCount = await Mess.countDocuments({ isVerified: false });

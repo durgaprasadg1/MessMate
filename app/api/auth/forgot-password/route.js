@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "../../../../lib/mongodb.js";
-import Consumer from "../../../../models/consumer.js";
+import { connectDB } from "../../../../lib/mongodb";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 
@@ -19,10 +18,7 @@ export async function POST(req) {
     const { email } = await req.json();
 
     if (!email) {
-      return NextResponse.json(
-        { message: "Email Not Found" },
-        { status: 400 }
-      );
+      return NextResponse.json({ message: "Email Not Found" }, { status: 400 });
     }
     let user = await Consumer.findOne({ email });
 
@@ -34,7 +30,7 @@ export async function POST(req) {
     }
 
     user.resetToken = crypto.randomBytes(32).toString("hex");
-    user.resetTokenExpiry = Date.now() + 3600000; 
+    user.resetTokenExpiry = Date.now() + 3600000;
 
     await user.save();
 
@@ -65,11 +61,7 @@ export async function POST(req) {
       `,
     });
 
-    return NextResponse.json(
-      { message: "Mail Sent" },
-      { status: 200 }
-    );
-
+    return NextResponse.json({ message: "Mail Sent" }, { status: 200 });
   } catch (error) {
     console.log("Error In Sending Mail : ", error);
     return NextResponse.json(

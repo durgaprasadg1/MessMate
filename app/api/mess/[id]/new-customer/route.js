@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Mess from "@/models/mess";
-import Consumer from "@/models/consumer";
 import NewMessCustomer from "@/models/newMessCustomer";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -19,6 +18,7 @@ const transporter = nodemailer.createTransport({
 export async function POST(request, { params }) {
   try {
     await connectDB();
+    const { default: Consumer } = await import("@/models/consumer");
 
     const { id } = (await params) || {};
 

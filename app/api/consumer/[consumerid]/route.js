@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../../../lib/mongodb";
-import Consumer from "../../../../models/consumer";
 
 export async function GET(request, { params }) {
   try {
     await connectDB();
     const { consumerid } = await params;
+    const { default: Consumer } = await import("../../../../models/consumer");
 
     const consumer = await Consumer.findById(consumerid);
 
@@ -20,12 +20,8 @@ export async function GET(request, { params }) {
       { consumer, message: "Consumer found" },
       { status: 200 }
     );
-
   } catch (error) {
     console.error("Error fetching consumer:", error);
-    return NextResponse.json(
-      { message: "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
