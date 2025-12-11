@@ -205,7 +205,7 @@ export default function YourMessRegisteredUser() {
         accessorKey: "phone",
         header: "Phone",
         cell: ({ row }) => (
-          <span className="text-white">{row.original.phone}</span>
+          <span className="text-white">{row.original.phoneNum}</span>
         ),
       },
       {
@@ -350,7 +350,7 @@ export default function YourMessRegisteredUser() {
 
       <main className="py-20 sm:py-24 px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 sm:mb-6">
-          Registered Mess Users
+          Registered Monthly Mess Users
         </h2>
 
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">

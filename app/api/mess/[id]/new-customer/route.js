@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Mess from "@/models/mess";
 import NewMessCustomer from "@/models/newMessCustomer";
+import Consumer from "../../../../../models/consumer";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import nodemailer from "nodemailer";
@@ -404,8 +405,7 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    const secret =
-      process.env.RAZORPAY_SECRET || process.env.RAZORPAY_KEY_SECRET;
+    const secret = process.env. RAZORPAY_SECRET;
     const expectedSign = crypto
       .createHmac("sha256", secret)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)

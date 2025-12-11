@@ -29,7 +29,6 @@ export default function AdminLandingPage() {
     if (!session?.user?.isAdmin) {
       router.replace("/");
     }
-    
 
     setLoading(true);
     fetch("/api/admin/get-all-data")
@@ -45,8 +44,6 @@ export default function AdminLandingPage() {
       .finally(() => {
         setLoading(false);
       });
-
-    
   }, [session, status, router]);
 
   if (status === "loading") {
@@ -59,8 +56,6 @@ export default function AdminLandingPage() {
     );
   }
 
-
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -70,17 +65,17 @@ export default function AdminLandingPage() {
     >
       <AdminNavbar />
 
-      <main className="max-w-7xl mx-auto p-6 sm:p-8">
+      <main className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6 lg:p-8">
         <motion.header
           initial={{ y: -15, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="mb-10 pt-4 border-b border-gray-800 pb-4"
+          className="mb-6 sm:mb-8 md:mb-10 pt-3 sm:pt-4 border-b border-gray-800 pb-3 sm:pb-4"
         >
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-amber-400 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-amber-400 tracking-tight">
             Admin Control Center
           </h1>
-          <p className="text-gray-400 mt-1 text-base">
+          <p className="text-gray-400 mt-1 text-sm sm:text-base">
             Overview and quick access to core operational panels.
           </p>
         </motion.header>

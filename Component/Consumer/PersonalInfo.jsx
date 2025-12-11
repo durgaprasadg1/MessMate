@@ -28,7 +28,7 @@ export default function PersonalInfo({ consumerid }) {
 
   const themeConfig = {
     user: {
-      bgClass: "min-h-screen bg-gray-50 flex items-center justify-center py-14",
+      bgClass: "min-h-screen  flex items-center justify-center py-14",
       cardClass:
         "bg-white rounded-2xl shadow-2xl p-8 sm:p-10 w-full max-w-4xl border border-gray-100",
       titleColor: "text-gray-900",
@@ -37,7 +37,7 @@ export default function PersonalInfo({ consumerid }) {
       accentColor: "text-indigo-600",
     },
     owner: {
-      bgClass: "min-h-screen bg-gray-900 flex items-center justify-center py-14",
+      bgClass: "min-h-screen  flex items-center justify-center py-14",
       cardClass:
         "bg-gray-800 rounded-2xl shadow-2xl p-8 sm:p-10 w-full max-w-4xl border border-gray-700",
       titleColor: "text-white",
@@ -47,7 +47,7 @@ export default function PersonalInfo({ consumerid }) {
     },
     admin: {
       bgClass:
-        "min-h-screen bg-purple-50 flex items-center justify-center py-14",
+        "min-h-screen flex items-center justify-center py-14",
       cardClass:
         "bg-white rounded-2xl shadow-xl p-8 sm:p-10 w-full max-w-4xl border border-purple-200",
       titleColor: "text-purple-800",
@@ -135,10 +135,12 @@ export default function PersonalInfo({ consumerid }) {
   const roleDisplay = getRoleDisplay();
 
   const FieldCard = ({ label, value, icon: Icon }) => ( 
-    <div>
+    <div className="">
       <label className={`${currentTheme.labelColor} font-semibold text-xs flex items-center mb-1`}>
+        <div className="flex items-center gap-0">
         <Icon size={14} className={`mr-2 ${currentTheme.accentColor}`} />
-        {label}
+         {label}
+       </div>
       </label>
       <div
         className={`mt-1 p-3 rounded-xl border font-medium text-sm ${currentTheme.fieldBg} transition duration-200`}

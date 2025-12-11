@@ -96,28 +96,34 @@ export default function AllUsersPage() {
       accessorKey: "username",
       header: "Name",
       cell: ({ row }) => (
-        <span className="font-medium text-white">{row.original.username}</span>
+        <span className="font-medium text-white text-sm sm:text-base">
+          {row.original.username}
+        </span>
       ),
     },
     {
       accessorKey: "email",
       header: "Email",
       cell: ({ row }) => (
-        <span className="font-medium text-white">{row.original.email}</span>
+        <span className="font-medium text-white text-sm sm:text-base">
+          {row.original.email}
+        </span>
       ),
     },
     {
       accessorKey: "phone",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="font-medium text-white">{row.original.phone}</span>
+        <span className="font-medium text-white text-sm sm:text-base">
+          {row.original.phone}
+        </span>
       ),
     },
     {
       accessorKey: "orders",
       header: "Orders",
       cell: ({ row }) => (
-        <span className="font-medium text-white">
+        <span className="font-medium text-white text-sm sm:text-base">
           {row.original.orders?.length || 0}
         </span>
       ),
@@ -126,7 +132,7 @@ export default function AllUsersPage() {
       accessorKey: "reviews",
       header: "Reviews",
       cell: ({ row }) => (
-        <span className="font-medium text-white">
+        <span className="font-medium text-white text-sm sm:text-base">
           {row.original.reviews?.length || 0}
         </span>
       ),
@@ -157,18 +163,18 @@ export default function AllUsersPage() {
         const user = row.original;
 
         return (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {user.reviews?.length > 0 && (
               <Link
                 href={`/consumer/${user._id}/reviews`}
-                className="text-xs px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
+                className="text-xs px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 whitespace-nowrap"
               >
                 Reviews
               </Link>
             )}
 
             <button
-              className="text-xs px-2 py-1 rounded bg-yellow-300 text-black hover:bg-yellow-400"
+              className="text-xs px-2 py-1 rounded bg-yellow-300 text-black hover:bg-yellow-400 whitespace-nowrap"
               onClick={() => handleSendWarningMail(user)}
             >
               Warn
@@ -177,8 +183,8 @@ export default function AllUsersPage() {
             <button
               className={
                 !user.isBlocked
-                  ? "text-xs px-2 py-1 rounded bg-red-300 text-black hover:bg-red-400"
-                  : "text-xs px-2 py-1 rounded bg-green-300 text-black hover:bg-green-400"
+                  ? "text-xs px-2 py-1 rounded bg-red-300 text-black hover:bg-red-400 whitespace-nowrap"
+                  : "text-xs px-2 py-1 rounded bg-green-300 text-black hover:bg-green-400 whitespace-nowrap"
               }
               onClick={() => handleToggleBlock(user)}
             >
@@ -194,9 +200,11 @@ export default function AllUsersPage() {
 
   if (loading)
     return (
-      <div className="min-h-screen bg-zinc-50">
+      <div className="min-h-screen bg-zinc-900">
         <AdminNavbar />
-        <Loading />
+        <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
+          <Loading />
+        </div>
       </div>
     );
 
@@ -210,13 +218,17 @@ export default function AllUsersPage() {
         </div>
       )}
 
-      <main className="max-w-6xl mx-auto p-6">
-        <h1 className="text-2xl font-semibold mb-4 text-white">All Users</h1>
+      <main className="max-w-6xl mx-auto p-3 sm:p-4 md:p-6">
+        <h1 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-white">
+          All Users
+        </h1>
 
         {users.length === 0 ? (
-          <p className="text-gray-600">No users found.</p>
+          <p className="text-gray-400 text-sm sm:text-base">No users found.</p>
         ) : (
-          <DataTable columns={columns} data={users} />
+          <div className="overflow-x-auto">
+            <DataTable columns={columns} data={users} />
+          </div>
         )}
       </main>
     </div>

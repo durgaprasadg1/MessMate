@@ -93,14 +93,14 @@ export default function OwnedMessPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-950 pb-16">
+    <div className="min-h-screen bg-gray-950 pb-10 sm:pb-12 md:pb-16">
       <OwnerNavbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-4">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-1">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
           🍽️ Mess Management Dashboard
         </h1>
-        <p className="text-gray-400 text-sm sm:text-base">
+        <p className="text-gray-400 text-xs sm:text-sm md:text-base">
           View and control all aspects of your verified mess operations.
         </p>
       </div>
@@ -126,15 +126,15 @@ export default function OwnedMessPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="max-w-3xl mx-auto px-4 mt-10"
+          className="max-w-3xl mx-auto px-3 sm:px-4 mt-8 sm:mt-10"
         >
-          <div className="flex items-start p-4 rounded-xl border border-amber-500/30 bg-gray-900 shadow-xl">
-            <BarChart className="w-6 h-6 text-amber-400 mt-0.5 shrink-0" />
-            <div className="ml-3">
-              <p className="text-lg font-bold text-amber-300">
+          <div className="flex items-start p-3 sm:p-4 rounded-lg sm:rounded-xl border border-amber-500/30 bg-gray-900 shadow-xl">
+            <BarChart className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 mt-0.5 shrink-0" />
+            <div className="ml-2 sm:ml-3">
+              <p className="text-base sm:text-lg font-bold text-amber-300">
                 Mess Under Verification
               </p>
-              <p className="text-sm mt-1 text-amber-200">
+              <p className="text-xs sm:text-sm mt-1 text-amber-200">
                 Your registered mess is currently being reviewed. Once approved,
                 it will appear here for management. Thank you for your patience.
               </p>
@@ -156,19 +156,19 @@ export default function OwnedMessPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12"
+              className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 mt-8 sm:mt-10 md:mt-12"
             >
-              <div className="bg-gray-800 border border-gray-700/70 rounded-2xl p-6 shadow-2xl">
-                <div className="grid lg:grid-cols-2 gap-8 items-start">
-                  <div className="space-y-6">
-                    <div className="border-b border-gray-700 pb-4">
-                      <h2 className="text-2xl font-bold text-white flex items-center">
-                        <Utensils className="w-6 h-6 mr-2" />
+              <div className="bg-gray-800 border border-gray-700/70 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 shadow-2xl">
+                <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 items-start">
+                  <div className="space-y-4 sm:space-y-5 md:space-y-6">
+                    <div className="border-b border-gray-700 pb-3 sm:pb-4">
+                      <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white flex items-center">
+                        <Utensils className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
                         {mess.name}
                       </h2>
-                      <div className="flex items-center mt-2 space-x-4">
+                      <div className="flex flex-wrap items-center mt-2 gap-2 sm:gap-3">
                         <span
-                          className={`px-3 py-1 text-xs font-medium rounded-full ${
+                          className={`px-2 sm:px-3 py-1 text-xs font-medium rounded-full ${
                             mess.isOpen
                               ? "bg-green-500/20 text-green-400"
                               : "bg-red-500/20 text-red-400"
@@ -176,7 +176,7 @@ export default function OwnedMessPage() {
                         >
                           {mess.isOpen ? "Open Now" : "Currently Closed"}
                         </span>
-                        <span className="text-sm text-gray-300">
+                        <span className="text-xs sm:text-sm text-gray-300">
                           {mess.isLimited
                             ? "Limited Service"
                             : "Unlimited Service"}
@@ -184,11 +184,11 @@ export default function OwnedMessPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <h3 className="text-lg font-semibold text-white">
+                    <div className="space-y-2 sm:space-y-3">
+                      <h3 className="text-base sm:text-lg font-semibold text-white">
                         Operational Details
                       </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                         {renderDetailItem(Users, "Owner", mess.ownerName)}
                         {renderDetailItem(Phone, "Phone", mess.phoneNumber)}
                         {renderDetailItem(

@@ -58,42 +58,42 @@ const Panel = ({ mess }) => {
 
   if (userId && ownerId && userId === ownerId && !mess.isBlocked) {
     return (
-      <div className="flex gap-1">
-        <div className="flex items-center justify-around gap-1">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-1 w-full">
+        <div className="flex flex-col sm:flex-row items-stretch justify-around gap-2 sm:gap-1 w-full sm:w-auto">
           <Botton
             text={mess.isOpen ? "Close" : "Open"}
             link={`/owner/${session?.user?.id}/mess-details`}
             mess={mess}
             functionAfterClick={openClose}
-            className="w-full text-center bg-gray-700 text-white py-3 rounded  hover:bg-black transition font-medium"
+            className="w-full text-center bg-gray-700 text-white py-2.5 sm:py-3 rounded hover:bg-black transition font-medium text-sm sm:text-base"
           />
         </div>
-        <div className="flex items-center justify-around gap-1">
+        <div className="flex flex-col sm:flex-row items-stretch justify-around gap-2 sm:gap-1 w-full sm:w-auto">
           <Botton
             text="Menu"
             link={`/mess/${mess._id}/update-menu`}
-            className="w-full text-center bg-blue-600 text-white py-3 rounded  hover:bg-blue-800 transition font-medium"
+            className="w-full text-center bg-blue-600 text-white py-2.5 sm:py-3 rounded hover:bg-blue-800 transition font-medium text-sm sm:text-base"
           />
 
           <Botton
-            text="Edit "
+            text="Edit"
             link={`/mess/${mess._id}/edit-info`}
             mess={mess}
-            className="w-full text-center bg-yellow-600 text-white py-3 rounded  hover:bg-yellow-700 transition font-medium"
+            className="w-full text-center bg-yellow-600 text-white py-2.5 sm:py-3 rounded hover:bg-yellow-700 transition font-medium text-sm sm:text-base"
           />
         </div>
         <Botton
           text="Delete"
           link={`/owner/${session?.user?.id}/mess-details`}
           functionAfterClick={deleteMess}
-          className="w-full text-center bg-red-600 text-white py-3 rounded-xl hover:bg-red-800 transition font-medium"
+          className="w-full text-center bg-red-600 text-white py-2.5 sm:py-3 rounded-lg sm:rounded-xl hover:bg-red-800 transition font-medium text-sm sm:text-base"
         />
       </div>
     );
   } else if (mess.isBlocked) {
     return (
-      <div className="flex gap-1">
-        <h2 className="w-full text-center bg-red-600 text-white py-3 rounded-xl  font-medium">
+      <div className="flex gap-1 w-full">
+        <h2 className="w-full text-center bg-red-600 text-white py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-medium text-sm sm:text-base">
           This Mess is Blocked wait for Owner's Action. It Will be Unblocked
           Soon.
         </h2>

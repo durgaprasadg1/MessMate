@@ -199,11 +199,11 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
 
       {drawerOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-40 z-50 md:hidden"
+          className="fixed inset-0  bg-opacity-40 z-50 md:hidden"
           onClick={() => setDrawerOpen(false)}
         >
           <div
-            className="absolute right-0 top-0 h-full w-64 bg-white shadow-lg p-5 flex flex-col gap-5"
+            className="absolute right-0 top-0 h-full w-64 bg-gray-200 border shadow-lg p-5 flex flex-col gap-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-3">

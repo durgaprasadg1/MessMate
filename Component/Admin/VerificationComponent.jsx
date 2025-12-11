@@ -70,28 +70,34 @@ const VerificationComponent = () => {
       accessorKey: "name",
       header: "Mess Name",
       cell: ({ row }) => (
-        <span className="font-semibold text-white">{row.original.name}</span>
+        <span className="font-semibold text-white text-sm sm:text-base">
+          {row.original.name}
+        </span>
       ),
     },
     {
       accessorKey: "ownerName",
       header: "Owner",
       cell: ({ row }) => (
-        <span className="text-white">{row.original.ownerName}</span>
+        <span className="text-white text-sm sm:text-base">
+          {row.original.ownerName}
+        </span>
       ),
     },
     {
       accessorKey: "phoneNumber",
       header: "Contact",
       cell: ({ row }) => (
-        <span className="text-white">{row.original.phoneNumber}</span>
+        <span className="text-white text-sm sm:text-base">
+          {row.original.phoneNumber}
+        </span>
       ),
     },
     {
       accessorKey: "category",
       header: "Category",
       cell: ({ row }) => (
-        <span className="text-white">
+        <span className="text-white text-sm sm:text-base">
           {formattedCategory(row.original.category)}
         </span>
       ),
@@ -100,14 +106,16 @@ const VerificationComponent = () => {
       accessorKey: "adharNumber",
       header: "Aadhar",
       cell: ({ row }) => (
-        <span className="text-white">{row.original.adharNumber}</span>
+        <span className="text-white text-sm sm:text-base">
+          {row.original.adharNumber}
+        </span>
       ),
     },
     {
       accessorKey: "isLimited",
       header: "Limited",
       cell: ({ row }) => (
-        <span className="text-white">
+        <span className="text-white text-sm sm:text-base">
           {row.original.isLimited ? "Yes" : "No"}
         </span>
       ),
@@ -116,7 +124,7 @@ const VerificationComponent = () => {
       accessorKey: "createdAt",
       header: "Submitted",
       cell: ({ row }) => (
-        <span className="text-white">
+        <span className="text-white text-sm sm:text-base">
           {new Date(row.original.createdAt).toLocaleDateString()}
         </span>
       ),
@@ -176,27 +184,27 @@ const VerificationComponent = () => {
   ];
 
   return (
-    <div className="relative p-6 bg-zinc-900 min-h-screen">
+    <div className="relative p-3 sm:p-4 md:p-6 bg-zinc-900 min-h-screen">
       {actionLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <Loading />
         </div>
       )}
 
-      <h1 className="text-3xl font-extrabold text-white mb-8">
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 sm:mb-6 md:mb-8">
         Mess Verification Panel
       </h1>
 
       {loading ? (
-        <div className="flex justify-center py-20">
+        <div className="flex justify-center py-12 sm:py-16 md:py-20">
           <Spinner />
         </div>
       ) : pendingMesses.length === 0 ? (
-        <p className="text-center text-gray-400 text-lg py-10">
+        <p className="text-center text-gray-400 text-base sm:text-lg py-8 sm:py-10">
           No pending messes for verification.
         </p>
       ) : (
-        <div className="overflow-auto rounded-lg">
+        <div className="overflow-x-auto rounded-lg">
           <DataTable
             columns={columns}
             data={pendingMesses.filter((m) => !m.isVerified)}

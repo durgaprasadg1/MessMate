@@ -163,7 +163,7 @@ export default function OrderActionOwner({
   if (loading) return <Loading />;
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 text-black">
       {!done ? (
         <>
           <button
@@ -197,7 +197,7 @@ export default function OrderActionOwner({
           <button
             onClick={handleMarkDone}
             disabled={disableMarkDone}
-            className={`px-3 py-1 rounded text-white transition ${
+            className={`px-3 py-1 rounded text-black transition ${
               disableMarkDone
                 ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700"

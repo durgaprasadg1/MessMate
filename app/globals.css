@@ -142,3 +142,12 @@ input[type="button"] {
     @apply bg-background text-foreground;
   }
 }
+
+button{
+  @apply cursor-pointer;
+  @apply rounded;
+}
+Button{
+  @apply cursor-pointer;
+  @apply rounded;
+}

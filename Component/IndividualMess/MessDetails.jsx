@@ -68,9 +68,7 @@ export default function MessDetails({ mess }) {
               <p className="text-gray-700">
                 <span className="font-medium">Owner:</span> {mess.ownerName}
               </p>
-              <p className="text-gray-700">
-                <span className="font-medium">Phone:</span> {mess.phoneNumber}
-              </p>
+              
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">

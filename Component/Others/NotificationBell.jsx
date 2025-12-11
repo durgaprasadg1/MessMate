@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 export default function NotificationBell() {
   const { data: session } = useSession();
   const isOwner = session?.user?.isOwner;
+
   const {
     notifications,
     unreadCount,
@@ -15,9 +16,11 @@ export default function NotificationBell() {
     markAllAsRead,
     clearNotifications,
   } = useNotifications();
+
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef(null);
 
+  // Click outside handling
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (panelRef.current && !panelRef.current.contains(event.target)) {
@@ -25,15 +28,11 @@ export default function NotificationBell() {
       }
     };
 
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen]);
 
+  // Notification icons
   const getNotificationIcon = (type) => {
     switch (type) {
       case "new_order":
@@ -71,15 +70,15 @@ export default function NotificationBell() {
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInMs = now - date;
-    const diffInMins = Math.floor(diffInMs / 60000);
-    const diffInHours = Math.floor(diffInMins / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
+    const diff = now - date;
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(mins / 60);
+    const days = Math.floor(hours / 24);
 
-    if (diffInMins < 1) return "Just now";
-    if (diffInMins < 60) return `${diffInMins}m ago`;
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    if (diffInDays < 7) return `${diffInDays}d ago`;
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
     return date.toLocaleDateString();
   };
 
@@ -87,7 +86,7 @@ export default function NotificationBell() {
     <div className="relative" ref={panelRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded-full transition"
       >
         <svg
           className="w-6 h-6"
@@ -104,105 +103,103 @@ export default function NotificationBell() {
         </svg>
 
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
+          <span className="absolute top-0 right-0 translate-x-1/2 -translate-y-1/2 px-2 py-1 bg-red-600 text-white text-xs font-bold rounded-full">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-2xl border border-gray-200 z-50 max-h-[600px] flex flex-col">
-          <div className="p-4 border-b border-gray-200  bg-gray-400 rounded-t-lg">
-            <h3 className="text-lg font-semibold text-white">Notifications</h3>
-            
-            {notifications.length > 0 && (
-              <div className="flex gap-2 justify-end mt-2">
-                <button
-                  onClick={markAllAsRead}
-                  className="text-xs text-white hover:text-gray-200 bg-gray-600 px-1 rounded"
-                >
-                  Mark all read
-                </button>
-                <button
-                  onClick={() => {
-                    clearNotifications();
-                    setIsOpen(false);
-                  }}
-                  className="text-xs text-white hover:text-red-200 bg-red-600 px-1 rounded "
-                >
-                  Clear all
-                </button>
-              </div>
-            )}
+        <div
+          className="
+            absolute z-50 mt-2 max-h-[70vh] overflow-hidden flex flex-col
+            bg-white border border-gray-200
+            w-[90vw] left-1/2 -translate-x-1/2 rounded-lg shadow-lg
+            md:w-96 md:left-auto md:right-0 md:translate-x-0
+          "
+        >
+          <div className="p-4 bg-gray-700 text-white rounded-t-lg">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Notifications</h3>
+
+              {notifications.length > 0 && (
+                <div className="flex gap-2 ml-2">
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs bg-gray-900 px-2 py-1 rounded"
+                  >
+                    Mark all read
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      clearNotifications();
+                      setIsOpen(false);
+                    }}
+                    className="text-xs bg-red-600 px-2 py-1 rounded"
+                  >
+                    Clear all
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="overflow-y-auto flex-1">
             {notifications.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <svg
-                  className="w-16 h-16 mx-auto mb-4 text-gray-300"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                  />
-                </svg>
-                <p className="text-sm">No notifications yet</p>
+              <div className="p-10 text-center text-gray-500">
+                <p className="text-sm mt-2">No notifications yet</p>
                 <p className="text-xs mt-1">
-                  You'll see updates about your orders here
+                  Updates about your orders will appear here
                 </p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {notifications.map((notification) => (
+                {notifications.map((n) => (
                   <div
-                    key={notification._id}
-                    onClick={() => markAsRead(notification._id)}
-                    className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
-                      !notification.isRead ? "bg-blue-50/30" : ""
+                    key={n._id}
+                    onClick={() => markAsRead(n._id)}
+                    className={`p-4 cursor-pointer transition ${
+                      !n.isRead ? "bg-blue-50/40" : ""
                     }`}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex gap-3">
                       <div
-                        className={` w-10 h-10 rounded-full flex items-center justify-center text-xl border ${getNotificationColor(
-                          notification.type
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-xl border ${getNotificationColor(
+                          n.type
                         )}`}
                       >
-                        {getNotificationIcon(notification.type)}
+                        {getNotificationIcon(n.type)}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
+                        <div className="flex justify-between">
                           <p
                             className={`text-sm font-semibold text-gray-900 ${
-                              !notification.isRead ? "font-bold" : ""
+                              !n.isRead ? "font-bold" : ""
                             }`}
                           >
-                            {notification.title}
+                            {n.title}
                           </p>
-                          {!notification.isRead && (
-                            <span className="flex w-2 h-2 bg-blue-600 rounded-full"></span>
+
+                          {!n.isRead && (
+                            <span className="w-2 h-2 rounded-full bg-blue-600"></span>
                           )}
                         </div>
 
                         <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                          {notification.message}
+                          {n.message}
                         </p>
 
-                        <div className="flex items-center justify-between mt-2">
-                          <span className="text-xs text-gray-500">
-                            {formatTime(notification.createdAt)}
+                        <div className="flex justify-between mt-2 text-xs">
+                          <span className="text-gray-500">
+                            {formatTime(n.createdAt)}
                           </span>
 
-                          {notification.orderId && !isOwner && (
+                          {n.orderId && !isOwner && (
                             <Link
                               href={`/consumer/${session?.user?.id}/history`}
-                              className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                              className="text-indigo-600"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setIsOpen(false);
@@ -220,12 +217,11 @@ export default function NotificationBell() {
             )}
           </div>
 
-          {/* Footer */}
           {notifications.length > 0 && (
-            <div className="p-3 border-t border-gray-200 bg-gray-50 rounded-b-lg">
+            <div className="p-3 border-t bg-gray-50 text-center">
               <Link
                 href="/notifications"
-                className="block text-center text-sm text-indigo-600 hover:text-indigo-800 font-medium"
+                className="text-sm text-indigo-600"
                 onClick={() => setIsOpen(false)}
               >
                 View All Notifications

@@ -83,7 +83,7 @@ const MessageComponent = () => {
 
     <div className="space-y-4  min-h-screen bg-gray-950">
         <OwnerNavbar />
-      <h2 className="text-xl font-semibold mt-5 ml-5">Messages</h2>
+      <h2 className="text-xl font-semibold mt-5 ml-5 text-white"><u>Messages</u> : </h2>
 
 
       {messages.length === 0 ? (

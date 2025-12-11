@@ -14,6 +14,7 @@ const NewCustomerToMess = () => {
 
   const [mess, setMess] = useState(null);
   const [existingRegistrations, setExistingRegistrations] = useState([]);
+  const [displayAmount, setDisplayAmount] = useState(0);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -51,6 +52,14 @@ const NewCustomerToMess = () => {
     };
     if (messId) fetchMessAndRegistrations();
   }, [messId]);
+
+  useEffect(() => {
+    if (mess && formData.duration) {
+      let amt = mess.monthlyMessFee || 0;
+      if (formData.duration === "Day + Night") amt *= 2;
+      setDisplayAmount(amt);
+    }
+  }, [mess, formData.duration]);
 
   const validators = {
     name: /^[A-Za-z ]+$/,
@@ -157,7 +166,7 @@ const NewCustomerToMess = () => {
         const { order, key, dbOrderId, amount } = data;
 
         const options = {
-          key: key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          key: key,
           amount: order.amount,
           currency: order.currency,
           name: mess?.name || "Mess Registration",

@@ -8,7 +8,10 @@ import DialogBox from "../ShadCnUI/Dialog";
 import ButtonComponent from "../Others/Button";
 import Loading from "../Others/Loading";
 
-export default function AdminAllMesses({ messes = [], filteredMesses: passedFiltered }) {
+export default function AdminAllMesses({
+  messes = [],
+  filteredMesses: passedFiltered,
+}) {
   const [searchQuery] = useState("");
   const [messesState, setMessesState] = useState(messes);
 
@@ -90,21 +93,36 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
       accessorKey: "name",
       header: "Name",
       cell: ({ row }) => (
-        <span className="font-semibold text-white">{row.original.name}</span>
+        <span className="font-semibold text-white text-sm sm:text-base">
+          {row.original.name}
+        </span>
       ),
     },
     {
       accessorKey: "ownerName",
       header: "Owner",
       cell: ({ row }) => (
-        <span className="text-white">{row.original.ownerName}</span>
+        <span className="text-white text-sm sm:text-base">
+          {row.original.ownerName}
+        </span>
       ),
     },
     {
       accessorKey: "category",
       header: "Category",
       cell: ({ row }) => (
-        <span className="text-white">{formattedCategory(row.original.category)}</span>
+        <span className="text-white text-sm sm:text-base">
+          {formattedCategory(row.original.category)}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "phone",
+      header: "Phone",
+      cell: ({ row }) => (
+        <span className="text-white text-sm sm:text-base">
+          {row.original.phoneNumber}
+        </span>
       ),
     },
     {
@@ -132,7 +150,7 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
         const mess = row.original;
 
         return (
-          <div className="flex flex-wrap gap-2 text-white">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 text-white">
             <ButtonComponent
               data="Reviews"
               link={`/admin/all-messes/${mess._id}/reviews`}
@@ -142,17 +160,17 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
 
             <button
               onClick={() => handleSendWarningMail(mess.owner)}
-              className="px-3 py-1 text-xs rounded bg-yellow-300 font-semibold text-black"
+              className="px-2 sm:px-3 py-1 text-xs rounded bg-yellow-300 font-semibold text-black whitespace-nowrap"
             >
-              Send Warning
+              Warn
             </button>
 
             <button
               onClick={() => handleBlockingOfMess(mess._id)}
               className={
                 mess.isBlocked
-                  ? "bg-green-400 px-3 py-1 rounded text-white font-bold"
-                  : "bg-red-600 px-3 py-1 rounded text-white font-bold"
+                  ? "bg-green-400 px-2 sm:px-3 py-1 rounded text-white font-bold text-xs whitespace-nowrap"
+                  : "bg-red-600 px-2 sm:px-3 py-1 rounded text-white font-bold text-xs whitespace-nowrap"
               }
             >
               {mess.isBlocked ? "Unblock" : "Block"}
@@ -160,7 +178,7 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
 
             <button
               onClick={() => handleDeletingOfMess(mess._id)}
-              className="px-3 py-1 text-xs rounded bg-red-600 font-semibold text-white"
+              className="px-2 sm:px-3 py-1 text-xs rounded bg-red-600 font-semibold text-white whitespace-nowrap"
             >
               Delete
             </button>
@@ -180,12 +198,12 @@ export default function AdminAllMesses({ messes = [], filteredMesses: passedFilt
         </div>
       )}
 
-      <main className="py-8 px-4 bg-zinc-800 min-h-screen">
-        <h1 className="text-3xl font-extrabold text-white mb-8">
+      <main className="py-4 sm:py-6 md:py-8 px-3 sm:px-4 bg-zinc-800 min-h-screen">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 sm:mb-6 md:mb-8">
           All Mess Listings
         </h1>
 
-        <div className="overflow-auto rounded-lg">
+        <div className="overflow-x-auto rounded-lg">
           <DataTable columns={columns} data={visibleMesses} />
         </div>
       </main>

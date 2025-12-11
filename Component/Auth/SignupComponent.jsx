@@ -226,7 +226,7 @@ const RegisterComponent = () => {
             <button
               type="button"
               onClick={() => setShow(!show)}
-              className="absolute right-3 top-2 text-gray-500"
+              className="absolute right-3 top-2 text-gray-500 mt-3"
             >
               {show ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -241,7 +241,7 @@ const RegisterComponent = () => {
           </button>
         </form>
 
-        <p className="text-center text-gray-500 text-sm mt-3">
+        <p className="text-center text-gray-500 text-sm mt-0">
          {" "}
           <button
             onClick={() => router.push("/terms-and-conditions")}
@@ -251,7 +251,7 @@ const RegisterComponent = () => {
           </button>
         </p>
 
-        <p className="text-center text-gray-500 text-sm mt-3">
+        <p className="text-center text-gray-500 text-sm ">
           Already have an account?{" "}
           <button
             onClick={() => router.push("/login")}
