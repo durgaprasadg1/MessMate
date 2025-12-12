@@ -20,6 +20,7 @@ export const createOrderSchema = z.object({
   done: z.boolean().optional(),
   isTaken: z.boolean().optional(),
   notified: z.boolean().optional(),
+  consumerSubscription: z.any().optional(),
   isCancelled: z.boolean().optional(),
   refundInitiated: z.boolean().optional(),
 });

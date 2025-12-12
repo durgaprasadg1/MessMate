@@ -67,6 +67,23 @@ orderSchema.index({ mess: 1 });
 orderSchema.index({ razorpayOrderId: 1 }, { unique: true, sparse: true });
 orderSchema.index({ createdAt: -1 });
 
+orderSchema.post("findOneAndDelete", async (order) => {
+  if (order) {
+    try {
+      const NotificationModule = await import("./notification");
+      const NotificationModel =
+        NotificationModule && NotificationModule.default
+          ? NotificationModule.default
+          : NotificationModule;
+      if (NotificationModel && NotificationModel.deleteMany) {
+        await NotificationModel.deleteMany({ orderId: order._id });
+      }
+    } catch (e) {
+      console.error("Error deleting related Notification docs for order:", e);
+    }
+  }
+});
+
 const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 
 export default Order;

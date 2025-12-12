@@ -231,6 +231,59 @@ messSchema.post("findOneAndDelete", async function (doc) {
     } catch (e) {
       console.error("Error deleting related Menu docs:", e);
     }
+
+    try {
+      const NewMessCustomerModule = await import("./newMessCustomer");
+      const NewMessCustomerModel =
+        NewMessCustomerModule && NewMessCustomerModule.default
+          ? NewMessCustomerModule.default
+          : NewMessCustomerModule;
+      if (NewMessCustomerModel && NewMessCustomerModel.deleteMany) {
+        await NewMessCustomerModel.deleteMany({ mess: doc._id });
+      }
+    } catch (e) {
+      console.error("Error deleting related NewMessCustomer docs:", e);
+    }
+
+    try {
+      const WastageModule = await import("./wastage");
+      const WastageModel =
+        WastageModule && WastageModule.default
+          ? WastageModule.default
+          : WastageModule;
+      if (WastageModel && WastageModel.deleteMany) {
+        await WastageModel.deleteMany({ mess: doc._id });
+      }
+    } catch (e) {
+      console.error("Error deleting related Wastage docs:", e);
+    }
+
+    try {
+      const NotificationModule = await import("./notification");
+      const NotificationModel =
+        NotificationModule && NotificationModule.default
+          ? NotificationModule.default
+          : NotificationModule;
+      if (NotificationModel && NotificationModel.deleteMany) {
+        await NotificationModel.deleteMany({ messId: doc._id });
+      }
+    } catch (e) {
+      console.error("Error deleting related Notification docs:", e);
+    }
+
+    try {
+      const MessageModule = await import("./message");
+      const MessageModel =
+        MessageModule && MessageModule.default
+          ? MessageModule.default
+          : MessageModule;
+      if (MessageModel && MessageModel.deleteMany) {
+        await MessageModel.deleteMany({ toMess: doc._id });
+      }
+    } catch (e) {
+      console.error("Error deleting related Message docs:", e);
+    }
+
     try {
       const ConsumerModule = await import("./consumer");
       const ConsumerModel =

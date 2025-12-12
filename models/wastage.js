@@ -32,6 +32,12 @@ const wastageSchema = new Schema(
 
 wastageSchema.index({ mess: 1, date: -1 });
 
+wastageSchema.post("findOneAndDelete", async (wastage) => {
+  if (wastage) {
+    // Wastage doesn't own child documents
+  }
+});
+
 const Wastage =
   mongoose.models.Wastage || mongoose.model("Wastage", wastageSchema);
 

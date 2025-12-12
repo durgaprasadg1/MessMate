@@ -42,5 +42,19 @@ const ownerSchema = new Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Owner ||
-  mongoose.model("Owner", ownerSchema);
+ownerSchema.post("findOneAndDelete", async (owner) => {
+  if (owner) {
+    try {
+      const MessModule = await import("./mess");
+      const MessModel =
+        MessModule && MessModule.default ? MessModule.default : MessModule;
+      if (MessModel && MessModel.deleteMany) {
+        await MessModel.deleteMany({ _id: { $in: owner.messes } });
+      }
+    } catch (e) {
+      console.error("Error deleting related Mess docs for owner:", e);
+    }
+  }
+});
+
+export default mongoose.models.Owner || mongoose.model("Owner", ownerSchema);

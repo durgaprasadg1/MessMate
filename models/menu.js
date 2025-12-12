@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 const itemSchema = new Schema({
@@ -27,6 +27,11 @@ const menuSchema = new Schema({
   createdAt: { type: Date, default: Date.now },
 });
 menuSchema.index({ mess: 1, menutype: 1 }, { unique: true });
+
+menuSchema.post("findOneAndDelete", async (menu) => {
+  if (menu) {
+  }
+});
 
 const Menu = mongoose.models.Menu || mongoose.model("Menu", menuSchema);
 export default Menu;

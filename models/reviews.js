@@ -29,5 +29,11 @@ const reviewSchema = new Schema({
 reviewSchema.index({ author: 1 });
 reviewSchema.index({ createdAt: -1 });
 
+reviewSchema.post("findOneAndDelete", async (review) => {
+  if (review) {
+    // Review doesn't own child documents
+  }
+});
+
 const Review = mongoose.models.Review || mongoose.model("Review", reviewSchema);
 export default Review;

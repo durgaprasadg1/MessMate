@@ -53,5 +53,10 @@ const notificationSchema = new mongoose.Schema(
 
 notificationSchema.index({ recipient: 1, isRead: 1, createdAt: -1 });
 
+notificationSchema.post("findOneAndDelete", async (notification) => {
+  if (notification) {
+  }
+});
+
 export default mongoose.models.Notification ||
   mongoose.model("Notification", notificationSchema);

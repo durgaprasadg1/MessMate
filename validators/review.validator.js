@@ -6,6 +6,7 @@ export const createReviewSchema = z.object({
   feedback: z.string().min(3).optional(),
   rating: z.number().int().min(1).max(5).optional(),
   author: objectId.optional(),
+  mess: objectId.optional(),
 });
 
 export const updateReviewSchema = createReviewSchema.partial();
