@@ -10,7 +10,7 @@ import Link from "next/link";
 import OwnerNavbar from "../../Component/Owner/OwnerNavbar";
 import { toast } from "react-toastify";
 
-export default function NotificationsPage({messId}) {
+export default function NotificationsPage() {
   const { data: session } = useSession();
   const isOwner = session?.user?.isOwner;
   const id = session?.user?.id;
@@ -237,7 +237,7 @@ useEffect(() => {
                 >
                   <div className="p-6">
                     <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl shadow-sm">
+                      <div className="shrink-0 w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl shadow-sm">
                         {getNotificationIcon(notification.type)}
                       </div>
 
@@ -251,7 +251,7 @@ useEffect(() => {
                             {notification.title}
                           </h3>
                           {!notification.isRead && (
-                            <span className="flex-shrink-0 w-3 h-3 bg-indigo-600 rounded-full"></span>
+                            <span className="shrink-0 w-3 h-3 bg-indigo-600 rounded-full"></span>
                           )}
                         </div>
 

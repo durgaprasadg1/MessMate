@@ -141,7 +141,7 @@ export default function ConsumerAllMesses({
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent"></div>
 
                     <div className="absolute top-4 right-4">
                       <span
@@ -202,14 +202,14 @@ export default function ConsumerAllMesses({
                       </div>
                     </div>
 
-                    <p className="text-gray-600 text-sm leading-relaxed mb-1 line-clamp-2 min-h-[40px]">
+                    <p className="text-gray-600 text-sm leading-relaxed mb-1 line-clamp-2 min-h-10">
                       {mess.description ||
                         "Delicious meals served fresh daily."}
                     </p>
 
                     <div className="flex items-start gap-2 mb-1 text-gray-500 text-sm">
                       <svg
-                        className="w-4 h-4 mt-0.5 flex-shrink-0"
+                        className="w-4 h-4 mt-0.5 shrink-0"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                       >
@@ -234,7 +234,7 @@ export default function ConsumerAllMesses({
                       />
 
                       <button
-                        className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium py-2.5 px-4 rounded transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm"
+                        className="flex-1 bg-linear-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium py-2.5 px-4 rounded transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm"
                         onClick={() =>
                           window.open(
                             `https://www.google.com/maps?q=${mess.lat},${mess.lon}`,
