@@ -1,6 +1,6 @@
 # MessMate
 
-A modern Next.js (App Router) platform for managing mess/food services, bookings, orders, inventory, and user authentication.
+A modern  platform for managing mess/food services, bookings, orders, inventory, and user authentication.
 
 ## Badges
 
