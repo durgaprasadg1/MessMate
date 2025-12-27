@@ -13,12 +13,10 @@ export async function GET(request, { params }) {
 
     await connectDB();
 
-    // Find all active registrations for this user
     const registrations = await NewMessCustomer.find({
       customer: session.user.id,
     }).populate("mess", "name category");
 
-    // Filter for active registrations (with remaining days)
     const today = new Date();
     const activeRegistrations = registrations.filter((reg) => {
       const joining = new Date(reg.joiningDate);

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import Loading from "../../../../Component/Others/Loading";
 import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
+import imageCompression from "browser-image-compression";
 import EmptynessShowBox from "@/Component/Others/EmptynessShowBox";
 import OwnerNavbar from "@/Component/Owner/OwnerNavbar";
 const NewMessForm = () => {
@@ -58,11 +59,50 @@ const NewMessForm = () => {
     setForm((s) => ({ ...s, [name]: value }));
   };
 
-  const handleFile = (e) => {
-    setImage(e.target.files?.[0] ?? null);
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0] ?? null;
+    if (!file) {
+      setImage(null);
+      return;
+    }
+
+    try {
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+      };
+      const compressedFile = await imageCompression(file, options);
+      setImage(compressedFile);
+    } catch (err) {
+      console.error("Image compression failed:", err);
+      setImage(file);
+    }
   };
-  const handleCertificate = (e) => {
-    setCertificate(e.target.files?.[0] ?? null);
+
+  const handleCertificate = async (e) => {
+    const file = e.target.files?.[0] ?? null;
+    if (!file) {
+      setCertificate(null);
+      return;
+    }
+
+    if (file.type && file.type.startsWith("image/")) {
+      try {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        };
+        const compressed = await imageCompression(file, options);
+        setCertificate(compressed);
+      } catch (err) {
+        console.error("Certificate compression failed:", err);
+        setCertificate(file);
+      }
+    } else {
+      setCertificate(file);
+    }
   };
 
   const handleSubmit = async (e) => {

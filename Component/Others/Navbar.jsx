@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Search, Menu, X } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import ProfileComponent from "./ProfileComponent";
 import Button from "../../Component/Others/Button";
 import { toast } from "react-toastify";
@@ -20,6 +20,7 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [consumerData, setConsumerData] = useState({});
   const consumerid = session?.user?.id;
+
   const handleLogout = async () => {
     await signOut({ redirect: false });
     router.replace("/");
@@ -34,27 +35,35 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
     router.refresh();
   };
 
-  useEffect(() => {
-    async function fetchUser() {
-      try {
-        const res = await fetch(`/api/consumer/${consumerid}`, {
-          cache: "no-store",
-        });
-
-        if (!res.ok) throw new Error("Failed to fetch user info");
-
-        const data = await res.json();
-        setConsumerData({
-          haveMonthlyMess: data.consumer.haveMonthlyMess ?? false,
-        });
-      } catch (err) {
-        console.error(err);
-        toast.error("Error fetching user data");
+  const fetchUser = useCallback(async () => {
+    if (!consumerid || isOwner || isAdmin) return;
+    try {
+      const res = await fetch(`/api/consumer/${consumerid}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        toast.error("Something went wrong");
+        console.log(res.text);
       }
+      const data = await res.json();
+      setConsumerData({
+        haveMonthlyMess: data.consumer.haveMonthlyMess ?? false,
+      });
+    } catch {
+      toast.error("Error fetching user data");
     }
+  }, [consumerid, isOwner, isAdmin]);
 
-    if (consumerid && !isOwner && !isAdmin) fetchUser();
-  }, [consumerid]);
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  useEffect(() => {
+    if (!consumerid || isOwner || isAdmin) return;
+    const interval = setInterval(fetchUser, 10000);
+    return () => clearInterval(interval);
+  }, [fetchUser, consumerid, isOwner, isAdmin]);
+
   const handleRadiusChange = (event) => {
     const value = event.target.value;
     const parsed = value ? parseInt(value, 10) : null;
@@ -66,11 +75,10 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
       }
 
       navigator.geolocation.getCurrentPosition(
-        (pos) => {
+        () => {
           setRadius(parsed);
         },
-        (err) => {
-          console.error("Location error:", err);
+        () => {
           alert("Please allow location access to filter by distance.");
           event.target.value = "";
         },
@@ -147,13 +155,11 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
         {session ? (
           <div className="hidden md:flex items-center gap-3">
             {consumerData.haveMonthlyMess && (
-              <div>
-                <Button
-                  data="Your Daily Mess"
-                  classes="bg-pink-300 rounded p-1.5 hover:bg-pink-400 transition-colors text-white duration-300"
-                  link={`/consumer/${session?.user?.id}/daily-mess`}
-                />
-              </div>
+              <Button
+                data="Your Daily Mess"
+                classes="bg-pink-300 rounded p-1.5 hover:bg-pink-400 transition-colors text-white duration-300"
+                link={`/consumer/${session?.user?.id}/daily-mess`}
+              />
             )}
             <NotificationBell />
             <ProfileComponent />
@@ -199,7 +205,7 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
 
       {drawerOpen && (
         <div
-          className="fixed inset-0  bg-opacity-40 z-50 md:hidden"
+          className="fixed inset-0 bg-opacity-40 z-50 md:hidden"
           onClick={() => setDrawerOpen(false)}
         >
           <div
@@ -228,51 +234,48 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
                 >
                   Your Orders
                 </p>
+
                 {consumerData.haveMonthlyMess && (
-                  <div>
-                    <Button
-                      data="Your Daily Mess"
-                      classes="bg-pink-300 rounded p-1.5 hover:bg-pink-400 transition-colors text-white duration-300"
-                      link={`/consumer/${session?.user?.id}/daily-mess`}
-                    />
-                  </div>
+                  <Button
+                    data="Your Daily Mess"
+                    classes="bg-pink-300 rounded p-1.5 hover:bg-pink-400 transition-colors text-white duration-300"
+                    link={`/consumer/${session?.user?.id}/daily-mess`}
+                  />
                 )}
               </>
             )}
 
             {pathname === "/mess" && (
-              <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2 shadow-sm w-full">
-                <input
-                  type="text"
-                  value={searchQuery || ""}
-                  onChange={(e) => setSearchQuery?.(e.target.value)}
-                  placeholder="Search Mess..."
-                  className="bg-transparent outline-none flex-1 text-sm text-gray-700"
-                />
-                <Search size={18} />
-              </div>
-            )}
+              <>
+                <div className="flex items-center bg-gray-100 rounded-lg px-3 py-2 shadow-sm w-full">
+                  <input
+                    type="text"
+                    value={searchQuery || ""}
+                    onChange={(e) => setSearchQuery?.(e.target.value)}
+                    placeholder="Search Mess..."
+                    className="bg-transparent outline-none flex-1 text-sm text-gray-700"
+                  />
+                  <Search size={18} />
+                </div>
 
-            {pathname === "/mess" && (
-              <select
-                className="border bg-white px-2 py-2 rounded text-sm"
-                value={radius ? String(radius) : ""}
-                onChange={handleRadiusChange}
-              >
-                <option value="">All Messes</option>
-                <option value="50">Within 50m</option>
-                <option value="100">Within 100m</option>
-                <option value="200">Within 200m</option>
-                <option value="500">Within 500m</option>
-                <option value="1000">Within 1km</option>
-              </select>
+                <select
+                  className="border bg-white px-2 py-2 rounded text-sm"
+                  value={radius ? String(radius) : ""}
+                  onChange={handleRadiusChange}
+                >
+                  <option value="">All Messes</option>
+                  <option value="50">Within 50m</option>
+                  <option value="100">Within 100m</option>
+                  <option value="200">Within 200m</option>
+                  <option value="500">Within 500m</option>
+                  <option value="1000">Within 1km</option>
+                </select>
+              </>
             )}
 
             {session ? (
               <>
-                <div className="py-2">
-                  <NotificationBell />
-                </div>
+                <NotificationBell />
                 <ProfileComponent closeDrawer={() => setDrawerOpen(false)} />
                 <button
                   onClick={() => {

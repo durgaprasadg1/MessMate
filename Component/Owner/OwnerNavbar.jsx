@@ -1,25 +1,33 @@
 "use client";
+
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { LogOut, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ButtonComponent from "../Others/Owner/Button";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ProfileComponent from "../Others/ProfileComponent";
 import NotificationBell from "../Others/NotificationBell";
 
 export default function OwnerNavbar() {
   const { data: session } = useSession();
   const router = useRouter();
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
     router.push("/");
   };
-  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    if (!session) return;
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [session, router]);
 
   return (
     <motion.nav
@@ -59,8 +67,8 @@ export default function OwnerNavbar() {
             <NotificationBell />
             <ProfileComponent />
             <Button
-              onClick={() => handleLogout()}
-              className="bg-gray-600 hover:bg-black text-white flex items-center gap-2 px-4 py-2 rounded transition-colors duration-300"
+              onClick={handleLogout}
+              className="bg-gray-600 hover:bg-black text-white flex items-center gap-2 px-4 py-2 rounded"
             >
               <LogOut size={18} /> Logout
             </Button>
@@ -71,7 +79,6 @@ export default function OwnerNavbar() {
             <button
               className="text-white p-1"
               onClick={() => setDrawerOpen(true)}
-              aria-label="Open menu"
             >
               <Menu size={24} />
             </button>
@@ -81,25 +88,20 @@ export default function OwnerNavbar() {
 
       {drawerOpen && (
         <div
-          className="fixed inset-0 bg-opacity-50 z-50 md:hidden "
+          className="fixed inset-0 bg-opacity-50 z-50 md:hidden"
           onClick={() => setDrawerOpen(false)}
         >
           <motion.div
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
-            exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25 }}
             className="absolute right-0 top-0 h-full w-4/5 max-w-sm bg-gray-800 shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-4 border-b bg-gray-800">
               <h2 className="text-lg font-bold text-gray-100">Menu</h2>
-              <button
-                onClick={() => setDrawerOpen(false)}
-                className="p-2 rounded  hover:bg-gray-200  transition-colors "
-                aria-label="Close menu"
-              >
-                <X size={20} className="text-gray-600 ml-1" />
+              <button onClick={() => setDrawerOpen(false)}>
+                <X size={20} className="text-gray-300" />
               </button>
             </div>
 
