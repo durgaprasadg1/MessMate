@@ -53,7 +53,7 @@ async function computePricePerPlate(mess, menutype, selectedDish) {
       ) {
         pricePerPlate = dish.items.reduce(
           (s, it) => s + (it && it.price ? Number(it.price) || 0 : 0),
-          0
+          0,
         );
       }
 
@@ -99,22 +99,20 @@ export async function POST(request, { params }) {
     await connectDB();
     const { default: Mess } = await import("../../../../../models/mess");
     const { default: Order } = await import("../../../../../models/order");
-    const { bookingCreateSchema, bookingPaymentSchema } = await import(
-      "../../../../../validators/booking.validator.js"
-    );
+    const { bookingCreateSchema, bookingPaymentSchema } =
+      await import("../../../../../validators/booking.validator.js");
 
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    const { default: Consumer } = await import(
-      "../../../../../models/consumer"
-    );
+    const { default: Consumer } =
+      await import("../../../../../models/consumer");
     const consumer = await Consumer.findById(session.user.id);
     if (!consumer)
       return NextResponse.json(
         { message: "Consumer not found" },
-        { status: 404 }
+        { status: 404 },
       );
     if (consumer.isBlocked)
       return NextResponse.json(
@@ -122,7 +120,7 @@ export async function POST(request, { params }) {
           message:
             "Your account is blocked by admin due to your activities. You cannot create bookings.",
         },
-        { status: 403 }
+        { status: 403 },
       );
 
     const mess = await Mess.findById(id);
@@ -133,7 +131,7 @@ export async function POST(request, { params }) {
     if (!validateResult.ok) {
       return NextResponse.json(
         { message: "Validation failed", errors: validateResult.errors },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -153,7 +151,7 @@ export async function POST(request, { params }) {
     if (!pricePerPlate || pricePerPlate <= 0) {
       return NextResponse.json(
         { message: "Cannot determine price for selected dish" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -200,13 +198,13 @@ export async function POST(request, { params }) {
         dbOrderId: dbOrder._id,
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Booking POST error:", error);
     return NextResponse.json(
       { message: "Server error", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -222,15 +220,14 @@ export async function PATCH(request, { params }) {
       dbOrderId,
     } = body;
 
-    const { bookingPaymentSchema } = await import(
-      "../../../../../validators/booking.validator.js"
-    );
+    const { bookingPaymentSchema } =
+      await import("../../../../../validators/booking.validator.js");
 
     const paymentValidation = validateAgainst(bookingPaymentSchema, body || {});
     if (!paymentValidation.ok) {
       return NextResponse.json(
         { message: "Validation failed", errors: paymentValidation.errors },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -242,9 +239,9 @@ export async function PATCH(request, { params }) {
 
     const { default: Order } = await import("../../../../../models/order");
     const { default: Mess } = await import("../../../../../models/mess");
-    const { default: Consumer } = await import(
-      "../../../../../models/consumer"
-    );
+    await import("../../../../../models/owner");
+    const { default: Consumer } =
+      await import("../../../../../models/consumer");
 
     const secret =
       process.env.RAZORPAY_SECRET ||
@@ -272,7 +269,7 @@ export async function PATCH(request, { params }) {
     if (!consumer)
       return NextResponse.json(
         { message: "Consumer not found" },
-        { status: 404 }
+        { status: 404 },
       );
     if (consumer.isBlocked)
       return NextResponse.json(
@@ -280,7 +277,7 @@ export async function PATCH(request, { params }) {
           message:
             "Your account is blocked by admin due to your activities. You cannot pay for bookings.",
         },
-        { status: 403 }
+        { status: 403 },
       );
 
     if (expectedSign === razorpay_signature) {
@@ -306,14 +303,14 @@ export async function PATCH(request, { params }) {
             dbOrder._id,
             dbOrder.consumer,
             dbOrder.mess,
-            mess?.name || "the mess"
+            mess?.name || "the mess",
           );
           if (mess?.owner) {
             await notifyOwnerNewOrder(
               dbOrder._id,
               mess.owner._id,
               dbOrder.mess,
-              consumer?.name || "A customer"
+              consumer?.name || "A customer",
             );
           }
         } catch (notifErr) {
@@ -322,7 +319,7 @@ export async function PATCH(request, { params }) {
 
         return NextResponse.json(
           { message: "Payment verified", order: dbOrder },
-          { status: 200 }
+          { status: 200 },
         );
       } catch (e) {
         console.error("Payment verification failed", e);
@@ -338,14 +335,14 @@ export async function PATCH(request, { params }) {
       await dbOrder.save();
       return NextResponse.json(
         { message: "Invalid signature" },
-        { status: 400 }
+        { status: 400 },
       );
     }
   } catch (error) {
     console.error("Booking PATCH error:", error);
     return NextResponse.json(
       { message: "Server error", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
