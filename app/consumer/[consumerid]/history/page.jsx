@@ -20,7 +20,10 @@ export default function ConsumerHistory({ params }) {
         cache: "no-store",
       });
 
-      if (!res.ok) throw new Error("Failed to fetch consumer order history");
+      if (!res.ok) {
+        toast.error("Failed to fetch order history");
+        router.push("/mess");
+      }
 
       const data = await res.json();
       setOrders(data.orders || []);
