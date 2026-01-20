@@ -1,8 +1,9 @@
 "use client";
 
-import React, { use, useEffect, useState, useCallback } from "react";
+import { use, useEffect, useState, useCallback } from "react";
 import ConsumerHistoryUI from "../../../../Component/Consumer/ConsumerHistory";
 import { useSession } from "next-auth/react";
+import { useRouter  } from "next/navigation";
 import { toast } from "react-toastify";
 import Loading from "@/Component/Others/Loading";
 import Navbar from "@/Component/Others/Navbar";
@@ -12,7 +13,7 @@ export default function ConsumerHistory({ params }) {
   const [orders, setOrders] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const router = useRouter();
   const fetchHistory = useCallback(async () => {
     setLoading(true);
     try {
