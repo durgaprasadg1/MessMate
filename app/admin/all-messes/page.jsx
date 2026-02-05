@@ -1,11 +1,12 @@
 import AllMess from "@/Component/AllMess/AdminAllMess";
 import MessNotFound from "@/Component/Others/MessNotFound";
+import { getBaseUrl } from "@/lib/getBaseUrl";
 
 export const dynamic = "force-dynamic";
 
 const AllMessToAdmin = async () => {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/mess`, {
+    const res = await fetch(`${getBaseUrl()}/api/mess`, {
       cache: "no-store",
     });
     if (!res.ok) {

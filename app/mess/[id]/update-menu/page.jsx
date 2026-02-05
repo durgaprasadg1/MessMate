@@ -1,10 +1,11 @@
 import OwnerNavbar from "@/Component/Owner/OwnerNavbar";
 import MessMenuComponent from "@/Component/IndividualMess/FillMenuComponent";
+import { getBaseUrl } from "@/lib/getBaseUrl";
 
 export default async function UpdateMenuPage({ params }) {
   const { id } = await params;
 
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const base = getBaseUrl();
   const res = await fetch(`${base}/api/mess/${id}`, { cache: "no-store" });
 
   if (!res.ok) {

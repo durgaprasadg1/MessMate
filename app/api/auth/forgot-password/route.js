@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "../../../../lib/mongodb";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
+import Consumer from "../../../../models/consumer";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -25,7 +26,7 @@ export async function POST(req) {
     if (!user) {
       return NextResponse.json(
         { message: "User with that email Not Found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -34,7 +35,11 @@ export async function POST(req) {
 
     await user.save();
 
-    const link = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password/${user.resetToken}`;
+    // Get the actual domain for the reset link
+    const protocol = req.headers.get("x-forwarded-proto") || "http";
+    const host = req.headers.get("host");
+    const baseUrl = process.env.NEXTAUTH_URL || `${protocol}://${host}`;
+    const link = `${baseUrl}/reset-password/${user.resetToken}`;
 
     await transporter.sendMail({
       from: `"MessMate Support" <${process.env.MAIL_USER}>`,
@@ -66,7 +71,7 @@ export async function POST(req) {
     console.log("Error In Sending Mail : ", error);
     return NextResponse.json(
       { message: "Some Internal Error." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

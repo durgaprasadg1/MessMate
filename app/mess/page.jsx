@@ -14,10 +14,9 @@ export default function AllMessPage() {
   useEffect(() => {
     const fetchMesses = async () => {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BASE_URL}/api/mess`,
-          { cache: "no-store" }
-        );
+        const res = await fetch("/api/mess", {
+          cache: "no-store",
+        });
 
         if (!res.ok) {
           setError(true);

@@ -1,11 +1,12 @@
 import Navbar from "@/Component/Others/Navbar";
 import MessDetails from "../../../Component/IndividualMess/MessDetails";
 import MessNotFound from "../../../Component/Others/MessNotFound";
+import { getBaseUrl } from "@/lib/getBaseUrl";
 
 export default async function ShowMess({ params }) {
   try {
     const { id } = await params;
-    const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+    const base = getBaseUrl();
     const res = await fetch(`${base}/api/mess/${id}`, { cache: "no-store" });
 
     if (!res.ok) {
