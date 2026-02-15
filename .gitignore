@@ -16,6 +16,7 @@
 DEPLOYMENT.md
 Dockerfile
 
+
 # next.js
 /.next/
 /out/
