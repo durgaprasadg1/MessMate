@@ -9,6 +9,7 @@ export default function ConsumerAllMesses({
   messes = [],
   filteredMesses: passedFiltered,
 }) {
+  console.log("Messes: ", messes);
   const [searchQuery, setSearchQuery] = useState("");
   const [radius, setRadius] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
@@ -36,7 +37,7 @@ export default function ConsumerAllMesses({
         setLocationLoading(false);
         setUserLocation(null);
       },
-      { enableHighAccuracy: true, maximumAge: 30000, timeout: 12000 }
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 12000 },
     );
   }, []);
 
@@ -56,23 +57,33 @@ export default function ConsumerAllMesses({
   };
 
   const filteredBySearch = useMemo(() => {
-    if (passedFiltered) return passedFiltered;
+    // Ensure we always work with an array
+    if (passedFiltered && Array.isArray(passedFiltered)) return passedFiltered;
 
-    if (!searchQuery.trim()) return messes;
+    // Ensure messes is an array
+    const messesArray = Array.isArray(messes) ? messes : [];
+
+    if (!searchQuery.trim()) return messesArray;
 
     const q = searchQuery.toLowerCase();
 
-    return messes.filter((m) =>
+    return messesArray.filter((m) =>
       [m.name, m.description, m.address, m.ownerName, m.category]
         .filter(Boolean)
-        .some((item) => item.toLowerCase().includes(q))
+        .some((item) => item.toLowerCase().includes(q)),
     );
   }, [messes, searchQuery, passedFiltered]);
 
   const visibleMesses = useMemo(() => {
-    const baseList = filteredBySearch.filter(
-      (m) => m.isVerified && !m.isBlocked
-    );
+    const searchResults = Array.isArray(filteredBySearch)
+      ? filteredBySearch
+      : [];
+
+    const baseList = searchResults.filter((m) => {
+      const isVerified = m.isVerified !== false; 
+      const isNotBlocked = m.isBlocked !== true; 
+      return isVerified && isNotBlocked;
+    });
 
     if (!radius || !userLocation) return baseList;
 
@@ -81,7 +92,7 @@ export default function ConsumerAllMesses({
         userLocation.lat,
         userLocation.lon,
         m.lat,
-        m.lon
+        m.lon,
       );
       return d !== null && d <= radius;
     });
@@ -123,7 +134,7 @@ export default function ConsumerAllMesses({
                     userLocation.lat,
                     userLocation.lon,
                     mess.lat,
-                    mess.lon
+                    mess.lon,
                   )
                 : null;
 
@@ -189,15 +200,15 @@ export default function ConsumerAllMesses({
                             mess.category === "both"
                               ? "bg-purple-100 text-purple-700"
                               : mess.category?.toLowerCase() === "veg"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
                           }`}
                         >
                           {mess.category === "both"
                             ? "🥗 Veg + Non-Veg"
                             : mess.category?.toLowerCase() === "veg"
-                            ? "🌱 Vegetarian"
-                            : "🍗 Non-Veg"}
+                              ? "🌱 Vegetarian"
+                              : "🍗 Non-Veg"}
                         </span>
                       </div>
                     </div>
@@ -238,7 +249,7 @@ export default function ConsumerAllMesses({
                         onClick={() =>
                           window.open(
                             `https://www.google.com/maps?q=${mess.lat},${mess.lon}`,
-                            "_blank"
+                            "_blank",
                           )
                         }
                       >

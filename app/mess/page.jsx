@@ -24,7 +24,7 @@ export default function AllMessPage() {
         }
 
         const data = await res.json();
-        setMesses(data);
+        setMesses(data.data || []);
       } catch (err) {
         console.error("Error fetching messes:", err);
         setError(true);
@@ -38,7 +38,7 @@ export default function AllMessPage() {
 
   if (loading) return <Loader />;
 
-  if (error || !messes) return <MessNotFound />;
+  if (!messes) return <MessNotFound />;
 
   return <AllMesses messes={messes} />;
 }
