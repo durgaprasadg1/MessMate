@@ -10,6 +10,7 @@ import ProfileComponent from "./ProfileComponent";
 import Button from "../../Component/Others/Button";
 import { toast } from "react-toastify";
 import NotificationBell from "./NotificationBell";
+import Image from "next/image";
 
 const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
   const { data: session } = useSession();
@@ -99,10 +100,13 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             className="text-xl sm:text-2xl font-extrabold text-gray-700"
           >
-            <Link href="/">
+            <Link href="/" className="text-decoration-none">
+            <div className="flex items-center  ">
+              <Image src="/Logo.png" alt="Logo" width={30} height={50}></Image>
               <button className="text-gray-600 hover:text-black transition">
                 MessMate
               </button>
+            </div>
             </Link>
           </motion.div>
 
