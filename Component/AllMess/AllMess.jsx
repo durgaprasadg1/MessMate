@@ -9,7 +9,7 @@ export default function ConsumerAllMesses({
   messes = [],
   filteredMesses: passedFiltered,
 }) {
-  console.log("Messes: ", messes);
+  // console.log("Messes: ", messes);
   const [searchQuery, setSearchQuery] = useState("");
   const [radius, setRadius] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
@@ -57,7 +57,6 @@ export default function ConsumerAllMesses({
   };
 
   const filteredBySearch = useMemo(() => {
-    // Ensure we always work with an array
     if (passedFiltered && Array.isArray(passedFiltered)) return passedFiltered;
 
     // Ensure messes is an array
