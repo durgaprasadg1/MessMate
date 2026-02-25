@@ -4,7 +4,8 @@ import { connectDB } from "../../../../lib/mongodb.js";
 
 export async function POST(request) {
   try {
-    await connectDB();
+    const db = await connectDB();
+    console.log("Connection : ", db);
     const body = await request.json();
     const { username, email, phoneNumber, address, password } = body;
     if (!username || !email || !password || !phoneNumber || !address) {
@@ -56,7 +57,7 @@ export async function POST(request) {
 
     console.error("Error during registration:", error);
     return NextResponse.json(
-      { message: "❌ Internal server error. Please try again later." },
+      { message: "Internal server error. Please try again later." },
       { status: 500 }
     );
   }

@@ -4,13 +4,38 @@ import Mess from "../../../models/mess";
 
 export async function GET() {
   try {
-    await connectDB();
-    const messes = await Mess.find();
-    return NextResponse.json(messes);
-  } catch (error) {
-    console.error(error);
+    const db = await connectDB();
+
+    if (!db) {
+      return NextResponse.json(
+        { success: false, message: "Database connection failed" },
+        { status: 500 }
+      );
+    }
+
+    const messes = await Mess.find().lean();
+
+    if (!messes || messes.length === 0) {
+      return NextResponse.json(
+        { success: true, message: "No mess records found", data: [] },
+        { status: 200 }
+      );
+    }
+
     return NextResponse.json(
-      { error: "Failed to fetch messes" },
+      {
+        success: true,
+        count: messes.length,
+        data: messes,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch mess data",
+      },
       { status: 500 }
     );
   }
