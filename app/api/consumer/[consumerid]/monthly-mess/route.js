@@ -26,7 +26,6 @@ export async function GET(request, { params }) {
       .populate("mess")
       .populate("customer");
 
-      // console.log("Records : ",records)
     if (!records || records.length === 0) {
       return NextResponse.json({ message: "No Monthly Mess subscription found for this user." }, { status: 404 });
     }

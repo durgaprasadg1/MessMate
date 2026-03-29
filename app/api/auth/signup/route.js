@@ -5,7 +5,6 @@ import { connectDB } from "../../../../lib/mongodb.js";
 export async function POST(request) {
   try {
     const db = await connectDB();
-    console.log("Connection : ", db);
     const body = await request.json();
     const { username, email, phoneNumber, address, password } = body;
     if (!username || !email || !password || !phoneNumber || !address) {

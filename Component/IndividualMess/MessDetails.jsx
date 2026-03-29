@@ -22,8 +22,7 @@ export default function MessDetails({ mess }) {
           setIsOpen(!!d.isOpen);
         }
       } catch (err) {
-        console.log("ERROR in Fetching Individual Mess", err?.message);
-      }
+        console.log("Error handling mess status update:", err);}
     };
   }, [mess._id]);
 

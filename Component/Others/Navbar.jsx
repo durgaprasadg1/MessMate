@@ -44,7 +44,6 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
       });
       if (!res.ok) {
         toast.error("Something went wrong");
-        console.log(res.text);
       }
       const data = await res.json();
       setConsumerData({

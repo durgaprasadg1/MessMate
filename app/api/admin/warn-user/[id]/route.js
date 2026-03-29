@@ -27,7 +27,6 @@ export async function POST(request, { params }) {
 
     
       const consumer = await Consumer.findById(id);
-      console.log("Found Consumer:", !!consumer, "for id:", id);
       if (!consumer)
         return NextResponse.json(
           { consumerage: "consumer not found" },

@@ -4,7 +4,7 @@ import cloudinary from "@/lib/cloudinary";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import nodemailer from "nodemailer";
-
+import bcrypt from "bcryptjs";
 export const runtime = "nodejs";
 
 const transporter = nodemailer.createTransport({
@@ -51,7 +51,6 @@ export async function POST(request, { params }) {
       formData.get("monthlyMessDuration") || 0
     );
 
-    console.log(monthlyMessDuration + "   " + monthlyMessFee);
 
     const lat = parseFloat(formData.get("lat") || "0");
     const lon = parseFloat(formData.get("lon") || "0");
@@ -109,6 +108,7 @@ export async function POST(request, { params }) {
         )
         .end(certBuffer);
     });
+    const hashedAdhaarNumber = await bcrypt.hash(adharNumber, 10);
 
     const messData = {
       name,
@@ -119,7 +119,7 @@ export async function POST(request, { params }) {
       category,
       isLimited: limits === "true",
       ownerName,
-      adharNumber,
+      adharNumber : hashedAdhaarNumber,
       phoneNumber,
       lat: isNaN(lat) ? null : lat,
       lon: isNaN(lon) ? null : lon,
