@@ -40,7 +40,6 @@ export default function EditUserInfoPage({ consumerid }) {
   }, [consumerid]);
 
   useEffect(() => {
-    console.log("Updated Consumer Data:");
   }, [ConsumerData]);
 
   const handleChange = (e) => {

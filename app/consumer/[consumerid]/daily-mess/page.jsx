@@ -25,22 +25,17 @@ export default function ConsumerMonthlyMess() {
     try {
       const res = await fetch(`/api/consumer/${userId}/monthly-mess`);
       const data = await res.json();
-      console.log("Monthly Mess Data:", data);
 
       if (res.ok) {
         if (data.monthlyMess && data.monthlyMess.length > 0) {
-          console.log("Setting all subscriptions:", data.monthlyMess);
           setAllSubscriptions(data.monthlyMess);
         } else {
-          console.log("No monthly mess data found");
           setAllSubscriptions([]);
         }
       } else {
-        console.log("API Error:", data.message);
         setAllSubscriptions([]);
       }
     } catch (err) {
-      console.log("Error fetching monthly mess:", err);
       setAllSubscriptions([]);
     } finally {
       setLoading(false);
