@@ -1,4 +1,4 @@
-import { initSocketServer } from "../../../lib/socket.js";
+import { initSocketServer } from "../../lib/socket.js";
 
 export const config = {
   api: {
