@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { io } from "socket.io-client";
 import { toast } from "react-toastify";
 
 const NotificationContext = createContext();
@@ -19,59 +18,20 @@ export const useNotifications = () => {
 
 export const NotificationProvider = ({ children }) => {
   const { data: session } = useSession();
-  const [socket, setSocket] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (!session?.user?.id) return;
 
-    const socketInstance = io({
-      path: "/api/socket",
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
-
-    socketInstance.on("connect", () => {
-      console.log("Socket connected");
-      socketInstance.emit("join", session.user.id);
-
-      if (session.user.role === "owner" && session.user.messId) {
-        socketInstance.emit("join-mess", session.user.messId);
-      }
-    });
-
-    socketInstance.on("disconnect", () => {
-      console.log("Socket disconnected");
-    });
-
-    socketInstance.on("notification", (data) => {
-      console.log("New notification received:", data);
-      setNotifications((prev) => [data, ...prev]);
-      setUnreadCount((prev) => prev + 1);
-
-      toast.info(data.title, {
-        position: "top-right",
-        autoClose: 5000,
-      });
-    });
-
-    setSocket(socketInstance);
-
-    return () => {
-      socketInstance.disconnect();
-    };
-  }, [session?.user?.id, session?.user?.role, session?.user?.messId]);
-
-  useEffect(() => {
-    if (!session?.user?.id) return;
+    let cancelled = false;
 
     const fetchNotifications = async () => {
       try {
         const res = await fetch("/api/notifications");
         if (res.ok) {
           const data = await res.json();
+          if (cancelled) return;
           setNotifications(data.notifications || []);
           setUnreadCount(data.unreadCount || 0);
         }
@@ -81,6 +41,12 @@ export const NotificationProvider = ({ children }) => {
     };
 
     fetchNotifications();
+    const interval = setInterval(fetchNotifications, 10000); // poll every 10s
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [session?.user?.id]);
 
   const markAsRead = async (notificationId) => {
@@ -140,7 +106,6 @@ export const NotificationProvider = ({ children }) => {
         markAsRead,
         markAllAsRead,
         clearNotifications,
-        socket,
       }}
     >
       {children}

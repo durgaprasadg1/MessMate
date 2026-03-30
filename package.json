@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node server.js",
+    "dev": "next dev",
     "build": "next build",
-    "start": "NODE_ENV=production node server.js",
+    "start": "next start",
     "lint": "eslint",
     "test:auth": "node tests/api-auth-tests.js",
     "test:e2e-auth": "node tests/e2e-auth.js"
