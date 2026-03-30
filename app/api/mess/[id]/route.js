@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { connectDB } from "../../../../lib/mongodb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import {
+  validateObjectId,
+  logValidationError,
+} from "../../../../lib/validateObjectId";
 
 export async function GET(request, { params }) {
   try {
@@ -11,10 +15,12 @@ export async function GET(request, { params }) {
     console.log("[API GET /mess/:id] Received id:", id, "Type:", typeof id);
 
     // Validate ObjectId format
-    if (!id || id.length !== 24) {
-      console.warn(
-        "[API GET /mess/:id] Invalid ID format. Expected 24-char hex string, got:",
-        id,
+    const validation = validateObjectId(id);
+    if (!validation.isValid) {
+      logValidationError("API GET /mess/:id", id, validation);
+      return NextResponse.json(
+        { message: "Invalid ID format", error: validation.error },
+        { status: 400 },
       );
     }
 
