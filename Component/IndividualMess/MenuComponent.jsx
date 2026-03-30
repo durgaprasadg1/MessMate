@@ -42,7 +42,7 @@ const MenuComponent = ({ mess, isOwner }) => {
                       {item.price ? `₹${item.price} ` : " "}{" "}
                       {item.isLimited && (
                         <span className="ml-1 text-xs text-red-600">
-                          (Limit: {item.limitCount})
+                         {item.limitCount != null && item.limitCount !== 0 && `Limit: ${item.limitCount}`} 
                         </span>
                       )}
                     </span>
