@@ -35,6 +35,25 @@ export async function GET(request, { params }) {
 
     if (!mess) {
       console.warn("[API GET /mess/:id] Mess not found for id:", id);
+      // Optional debug info to help diagnose prod issues without breaking clients
+      const debug = request.nextUrl.searchParams.get("debug") === "1";
+      if (debug) {
+        const count = await Mess.countDocuments();
+        const sample = await Mess.find({}, { _id: 1 }).limit(5);
+        return NextResponse.json(
+          {
+            message: "Mess not found",
+            id,
+            collectionCount: count,
+            sampleIds: sample.map((d) => String(d._id)),
+            dbName: process.env.MONGODB_DBNAME || "messmate",
+            uriHost:
+              (process.env.MONGODB_URI || "").split("@").pop()?.split("/")[0] ||
+              null,
+          },
+          { status: 404 },
+        );
+      }
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
 
