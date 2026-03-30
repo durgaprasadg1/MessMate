@@ -6,6 +6,18 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 export async function GET(request, { params }) {
   try {
     const { id } = (await params) || {};
+
+    // DEBUG: Log received ID
+    console.log("[API GET /mess/:id] Received id:", id, "Type:", typeof id);
+
+    // Validate ObjectId format
+    if (!id || id.length !== 24) {
+      console.warn(
+        "[API GET /mess/:id] Invalid ID format. Expected 24-char hex string, got:",
+        id,
+      );
+    }
+
     await connectDB();
     const { default: Mess } = await import("../../../../models/mess");
     const { default: Message } = await import("../../../../models/message");
@@ -22,14 +34,17 @@ export async function GET(request, { params }) {
       });
 
     if (!mess) {
+      console.warn("[API GET /mess/:id] Mess not found for id:", id);
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
+
+    console.log("[API GET /mess/:id] Found mess:", mess._id, mess.name);
     return NextResponse.json(mess, { status: 200 });
   } catch (error) {
-    console.error("Error fetching mess by ID:", error);
+    console.error("[API GET /mess/:id] Error fetching mess by ID:", error);
     return NextResponse.json(
       { message: "Server error", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -53,13 +68,13 @@ export async function PATCH(request, { params }) {
     if (!ownerId || ownerId !== session.user.id) {
       return NextResponse.json(
         { message: "Forbidden: not the owner" },
-        { status: 403 }
+        { status: 403 },
       );
     }
     const updatedMess = await Mess.findByIdAndUpdate(
       id,
       { $set: { isOpen: !mess.isOpen } },
-      { new: true }
+      { new: true },
     );
 
     return NextResponse.json(
@@ -67,13 +82,13 @@ export async function PATCH(request, { params }) {
         message: updatedMess.isOpen ? "Mess Opened" : "Mess Closed",
         mess: updatedMess,
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("PATCH error:", error);
     return NextResponse.json(
       { message: "Server error", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -91,13 +106,13 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json(
       { message: "Mess Deleted Successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error fetching mess by ID:", error);
     return NextResponse.json(
       { message: "Server error", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
