@@ -5,7 +5,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(request, { params }) {
   try {
-    const { id } = (await params) || {};
+    const { id } = params || {};
 
     // DEBUG: Log received ID
     console.log("[API GET /mess/:id] Received id:", id, "Type:", typeof id);
@@ -51,7 +51,7 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request, { params }) {
   try {
-    const { id } = (await params) || {};
+    const { id } = params || {};
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -95,7 +95,7 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const { id } = (await params) || {};
+    const { id } = params || {};
     await connectDB();
     const { default: Mess } = await import("../../../../models/mess");
     const deletedMess = await Mess.findByIdAndDelete(id);
