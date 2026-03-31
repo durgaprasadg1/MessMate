@@ -6,6 +6,21 @@ import { io } from "socket.io-client";
 import { toast } from "react-toastify";
 
 const NotificationContext = createContext();
+const SOCKET_PATH = "/api/socket";
+
+const canUseLiveSockets = () => {
+  if (typeof window === "undefined") return false;
+
+  if (process.env.NEXT_PUBLIC_ENABLE_SOCKETS === "true") {
+    return true;
+  }
+
+  const isLocalhost =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1";
+
+  return process.env.NODE_ENV !== "production" && isLocalhost;
+};
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
@@ -19,15 +34,17 @@ export const useNotifications = () => {
 
 export const NotificationProvider = ({ children }) => {
   const { data: session } = useSession();
-  const [socket, setSocket] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (!session?.user?.id) return;
+    if (!canUseLiveSockets()) {
+      return;
+    }
 
     const socketInstance = io({
-      path: "/api/socket",
+      path: SOCKET_PATH,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
@@ -56,8 +73,6 @@ export const NotificationProvider = ({ children }) => {
         autoClose: 5000,
       });
     });
-
-    setSocket(socketInstance);
 
     return () => {
       socketInstance.disconnect();
@@ -140,7 +155,6 @@ export const NotificationProvider = ({ children }) => {
         markAsRead,
         markAllAsRead,
         clearNotifications,
-        socket,
       }}
     >
       {children}
