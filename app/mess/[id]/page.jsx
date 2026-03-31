@@ -5,14 +5,13 @@ import { getBaseUrl } from "@/lib/getBaseUrl";
 
 export default async function ShowMess({ params }) {
   try {
-    const { id } = await params || {};
+    const { id } = (await params) || {};
     const base = getBaseUrl();
 
     if (!id || typeof id !== "string") {
       return <MessNotFound />;
     }
 
-  
     const res = await fetch(`${base}/api/mess/${encodeURIComponent(id)}`, {
       cache: "no-store",
     });
