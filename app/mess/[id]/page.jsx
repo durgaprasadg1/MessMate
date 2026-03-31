@@ -1,31 +1,44 @@
 import Navbar from "@/Component/Others/Navbar";
 import MessDetails from "../../../Component/IndividualMess/MessDetails";
 import MessNotFound from "../../../Component/Others/MessNotFound";
-import { getBaseUrl } from "@/lib/getBaseUrl";
+import { connectDB } from "@/lib/mongodb";
+import {
+  validateObjectId,
+  logValidationError,
+} from "@/lib/validateObjectId";
 
 export default async function ShowMess({ params }) {
   try {
     const { id } = (await params) || {};
-    const base = getBaseUrl();
 
     if (!id || typeof id !== "string") {
       return <MessNotFound />;
     }
 
-    const res = await fetch(`${base}/api/mess/${encodeURIComponent(id)}`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      console.log("Failed to fetch mess details:", {
-        status: res.status,
-        statusText: res.statusText,
-        errorData,
-      });
+    const validation = validateObjectId(id);
+    if (!validation.isValid) {
+      logValidationError("ShowMess page", id, validation);
       return <MessNotFound />;
     }
-    const mess = await res.json();
+
+    await connectDB();
+    const { default: Mess } = await import("../../../models/mess");
+
+    const mess = await Mess.findById(id)
+      .populate("alert")
+      .populate("vegMenuRef")
+      .populate("nonVegMenuRef")
+      .populate({
+        path: "reviews",
+        populate: {
+          path: "author",
+        },
+      });
+
+    if (!mess) {
+      return <MessNotFound />;
+    }
+
     return (
       <div>
         <Navbar />
