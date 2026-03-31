@@ -11,10 +11,7 @@ export async function GET(request, { params }) {
   try {
     const { id } = (await params) || {};
 
-    // DEBUG: Log received ID
     console.log("[API GET /mess/:id] Received id:", id, "Type:", typeof id);
-
-    // Validate ObjectId format
     const validation = validateObjectId(id);
     if (!validation.isValid) {
       logValidationError("API GET /mess/:id", id, validation);
@@ -41,7 +38,6 @@ export async function GET(request, { params }) {
 
     if (!mess) {
       console.warn("[API GET /mess/:id] Mess not found for id:", id);
-      // Optional debug info to help diagnose prod issues without breaking clients
       const debug = request.nextUrl.searchParams.get("debug") === "1";
       if (debug) {
         const count = await Mess.countDocuments();

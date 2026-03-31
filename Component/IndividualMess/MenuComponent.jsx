@@ -40,11 +40,9 @@ const MenuComponent = ({ mess, isOwner }) => {
                     <span>{item.name}</span>
                     <span>
                       {item.price ? `₹${item.price} ` : " "}{" "}
-                      {item.isLimited && (
-                        <span className="ml-1 text-xs text-red-600">
-                          (Limit: {item.limitCount})
-                        </span>
-                      )}
+                        {item.isLimited && item.limitCount !== null && item.limitCount !== undefined && item.limitCount !== 0 && (
+                            <span>(Limit: {item.limitCount})</span>
+                          )}
                     </span>
                   </li>
                 ))}
@@ -97,7 +95,9 @@ const MenuComponent = ({ mess, isOwner }) => {
                       {item.price ? `₹${item.price} ` : " "}{" "}
                       {item.isLimited && (
                         <span className="ml-1 text-xs text-red-600">
-                          (Limit: {item.limitCount})
+                          {item.limitCount !== null && item.limitCount !== undefined && item.limitCount !== 0 && (
+                            <span>(Limit: {item.limitCount})</span>
+                          )}
                         </span>
                       )}
                     </span>

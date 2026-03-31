@@ -3,6 +3,7 @@ import Review from "./reviews";
 import Order from "./order";
 import cloudinary from "../lib/cloudinary";
 import Menu from "./menu";
+import Message from "./message";
 const Schema = mongoose.Schema;
 
 const messSchema = Schema({
@@ -292,7 +293,7 @@ messSchema.post("findOneAndDelete", async function (doc) {
       if (ConsumerModel && ConsumerModel.updateMany) {
         await ConsumerModel.updateMany(
           { mess: doc._id },
-          { $pull: { mess: doc._id } }
+          { $pull: { mess: doc._id } },
         );
       }
     } catch (e) {
