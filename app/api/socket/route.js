@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
 
-// Stub endpoint to silence legacy socket.io calls in older cached bundles.
-// This returns a clear message instead of a 404, without enabling sockets.
+// Stub endpoint for deployments that do not run a custom Socket.IO server.
+// Return no-content so stale clients do not surface hard 4xx errors.
 export const dynamic = "force-dynamic";
 
 export function GET() {
-  return NextResponse.json(
-    { message: "Sockets are disabled in this build. Please refresh." },
-    {
-      status: 410,
-      headers: {
-        "Cache-Control": "no-store, max-age=0",
-      },
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Cache-Control": "no-store, max-age=0",
     },
-  );
+  });
 }
+
+export const POST = GET;
