@@ -1,19 +1,18 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
+import supabase from "@/lib/supabaseClient";
 
 export async function PUT(request, { params }) {
   try {
     const { consumerid } =await params;
     const { username, address, phone } = await request.json();
 
-    await connectDB();
-    const { default: Consumer } = await import("@/models/consumer");
-
-    const updated = await Consumer.findByIdAndUpdate(
-      consumerid,
-      { username, address, phone },
-      { new: true }
-    );
+    const { data: updated, error } = await supabase
+      .from("consumer")
+      .update({ username, address, phone })
+      .eq("id", consumerid)
+      .select()
+      .single();
+    if (error) throw error;
 
     if (!updated) {
       return NextResponse.json({ message: "Consumer not found" }, { status: 404 });

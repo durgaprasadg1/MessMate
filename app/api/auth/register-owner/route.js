@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { connectDB } from "@/lib/mongodb";
+import supabase from "@/lib/supabaseClient";
 
 export async function POST(request) {
   try {
-    await connectDB();
     const body = await request.json();
 
     const { username, email, address, upi, phoneNumber, password } = body;
@@ -49,13 +48,17 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    const OwnerMod = await import("@/models/owner");
-    const ConsumerMod = await import("@/models/consumer");
-    const Owner = OwnerMod.default || OwnerMod;
-    const Consumer = ConsumerMod.default || ConsumerMod;
-    const ownerExists = await Owner.findOne({ email });
-    const userExists = await Consumer.findOne({ email });
-    if (ownerExists || userExists) {
+    const ownerExists = await supabase
+      .from("owner")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    const userExists = await supabase
+      .from("consumer")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    if (ownerExists.data || userExists.data) {
       return NextResponse.json(
         { message: "Email is already registered." },
         { status: 409 }
@@ -63,19 +66,24 @@ export async function POST(request) {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    const newOwner = await Owner.create({
-      name: username,
-      email,
-      phoneNumber,
-      upi,
-      address,
-      password: hashedPassword,
-    });
+    const { data: newOwner, error } = await supabase
+      .from("owner")
+      .insert({
+        name: username,
+        email,
+        phone_number: phoneNumber,
+        upi,
+        address,
+        password: hashedPassword,
+      })
+      .select("id, name")
+      .single();
+    if (error) throw error;
 
     return NextResponse.json(
       {
         message: "Registration successful!",
-        id: newOwner._id,
+        id: newOwner.id,
         username: newOwner.name,
       },
       { status: 201 }

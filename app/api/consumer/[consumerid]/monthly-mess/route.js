@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import NewMessCustomer from "@/models/newMessCustomer";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import supabase from "@/lib/supabaseClient";
 
 export async function GET(request, { params }) {
   try {
-    await connectDB();
     const { consumerid } = await params || {};
 
-    if (!consumerid || !consumerid.match(/^[0-9a-fA-F]{24}$/)) {
+    if (!consumerid) {
       return NextResponse.json({ message: "Invalid or missing userId" }, { status: 400 });
     }
 
@@ -22,9 +20,10 @@ export async function GET(request, { params }) {
     if (session.user.id !== consumerid) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
-    const records = await NewMessCustomer.find({ customer: consumerid })
-      .populate("mess")
-      .populate("customer");
+    const { data: records = [] } = await supabase
+      .from("new_mess_customer")
+      .select("*, mess:mess_id(*), consumer:consumer_id(*)")
+      .eq("consumer_id", consumerid);
 
     if (!records || records.length === 0) {
       return NextResponse.json({ message: "No Monthly Mess subscription found for this user." }, { status: 404 });

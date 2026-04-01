@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import nodemailer from "nodemailer";
+import supabase from "@/lib/supabaseClient";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -20,9 +20,12 @@ export async function POST(request, { params }) {
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    await connectDB();
-    const { default: Owner } = await import("@/models/owner");
-      const owner = await Owner.findById(id);
+      const { data: owner, error } = await supabase
+        .from("owner")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
       if (!owner)
         return NextResponse.json(
           { message: "owner not found" },

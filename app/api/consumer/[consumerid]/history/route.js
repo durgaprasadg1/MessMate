@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { connectDB } from "@/lib/mongodb";
+import supabase from "@/lib/supabaseClient";
 
 export async function GET(request, { params }) {
   try {
@@ -15,27 +15,28 @@ export async function GET(request, { params }) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    await connectDB();
-    const { default: Order } = await import("@/models/order");
-
-    const orders = await Order.find({ consumer: consumerid })
-      .populate("mess")
-      .sort({ createdAt: -1 })
-      .lean();
+    const { data: orders = [] } = await supabase
+      .from("order")
+      .select(
+        "id, mess_id, consumer_id, no_of_plate, selected_dish_name, selected_dish_price, total_price, status, is_taken, refund_initiated, done, is_cancelled, created_at, mess:mess_id(id,name)"
+      )
+      .eq("consumer_id", consumerid)
+      .order("created_at", { ascending: false });
 
     const plainOrders = orders.map((o) => ({
-      _id: String(o._id),
-      mess: o.mess ? { _id: String(o.mess._id), name: o.mess.name } : null,
-      consumer: o.consumer ? String(o.consumer) : null,
-      noOfPlate: o.noOfPlate ?? 0,
-      selectedDishName: o.selectedDishName ?? null,
-      totalPrice: o.totalPrice ?? 0,
+      _id: o.id,
+      mess: o.mess ? { _id: o.mess.id, name: o.mess.name } : null,
+      consumer: o.consumer_id ?? null,
+      noOfPlate: o.no_of_plate ?? 0,
+      selectedDishName: o.selected_dish_name ?? null,
+      selectedDishPrice: o.selected_dish_price ?? 0,
+      totalPrice: o.total_price ?? 0,
       status: o.status ?? "",
-      isTaken: !!o.isTaken,
-      refundInitiated: !!o.refundInitiated,
+      isTaken: !!o.is_taken,
+      refundInitiated: !!o.refund_initiated,
       done: !!o.done,
-      isCancelled: !!o.isCancelled,
-      createdAt: o.createdAt ? o.createdAt.toISOString() : null,
+      isCancelled: !!o.is_cancelled,
+      createdAt: o.created_at ? o.created_at : null,
     }));
 
     return NextResponse.json(
@@ -67,19 +68,11 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    await connectDB();
-    const { default: Order } = await import("@/models/order");
-    const { default: Mess } = await import("@/models/mess");
-    const { default: Consumer } = await import("@/models/consumer");
-
-    const toDelete = await Order.find({
-      consumer: consumerid,
-      $or: [
-        { done: true },
-        { isCancelled: true },
-        { status: { $in: ["refunded", "failed", "completed"] } },
-      ],
-    }).lean();
+    const { data: toDelete = [] } = await supabase
+      .from("order")
+      .select("id")
+      .eq("consumer_id", consumerid)
+      .or("done.eq.true,is_cancelled.eq.true,status.in.(refunded,failed,completed)");
 
     if (!toDelete || toDelete.length === 0) {
       return NextResponse.json(
@@ -88,26 +81,13 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    const ids = toDelete.map((o) => o._id);
-    const messIds = Array.from(
-      new Set(toDelete.map((o) => String(o.mess)).filter(Boolean))
-    );
+    const ids = toDelete.map((o) => o.id);
 
-    const del = await Order.deleteMany({ _id: { $in: ids } });
-
-    try {
-      if (messIds.length > 0) {
-        await Mess.updateMany(
-          { _id: { $in: messIds } },
-          { $pull: { orders: { $in: ids } } }
-        );
-      }
-      await Consumer.findByIdAndUpdate(consumerid, {
-        $pull: { orders: { $in: ids } },
-      });
-    } catch (e) {
-      console.error("Failed to pull order refs on clear history:", e);
-    }
+    const { error: delErr } = await supabase
+      .from("order")
+      .delete()
+      .in("id", ids);
+    if (delErr) throw delErr;
 
     return NextResponse.json(
       { message: "Cleared history", deleted: del.deletedCount || ids.length },

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { connectDB } from "@/lib/mongodb";
-import Notification from "@/models/notification";
+import supabase from "@/lib/supabaseClient";
 
 export async function PATCH(request, { params }) {
   try {
@@ -11,20 +10,17 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectDB();
-
     const { id } = await params;
 
-    const notification = await Notification.findOneAndUpdate(
-      {
-        _id: id,
-        recipient: session.user.id,
-      },
-      { isRead: true },
-      { new: true }
-    );
+    const { data: notification, error } = await supabase
+      .from("notification")
+      .update({ is_read: true })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
 
-    if (!notification) {
+    if (!notification || notification.recipient_id !== session.user.id) {
       return NextResponse.json(
         { error: "Notification not found" },
         { status: 404 }

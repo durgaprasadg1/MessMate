@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
+import supabase from "@/lib/supabaseClient";
 
 export async function PUT(request, { params }) {
   try {
@@ -9,14 +9,20 @@ export async function PUT(request, { params }) {
     const { name, address, phoneNumber, category, limits, description } = body;
 
 
-    await connectDB();
-    const { default: Mess } = await import("@/models/mess");
-
-    const updatedMess = await Mess.findByIdAndUpdate(
-      id,
-      { name, address, phoneNumber, category, limits, description },
-      { new: true, runValidators: true }
-    );
+    const { data: updatedMess, error } = await supabase
+      .from("mess")
+      .update({
+        name,
+        address,
+        phone_number: phoneNumber,
+        category,
+        is_limited: limits,
+        description,
+      })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
 
     if (!updatedMess) {
       return NextResponse.json(

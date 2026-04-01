@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "../../../../../lib/mongodb";
-import Mess from "../../../../../models/mess";
-import Review from "../../../../../models/reviews";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import supabase from "@/lib/supabaseClient";
 
 export async function POST(request, { params }) {
   try {
-    await connectDB();
-    const { default: Consumer } = await import(
-      "../../../../../models/consumer"
-    );
-
     const { id } = await params;
     if (!id) {
       return NextResponse.json({ message: "Mess ID missing" }, { status: 400 });
@@ -34,7 +27,11 @@ export async function POST(request, { params }) {
         { status: 400 }
       );
     }
-    const consumer = Consumer.findById(session?.user?.id);
+    const { data: consumer } = await supabase
+      .from("consumer")
+      .select("*")
+      .eq("id", session.user.id)
+      .single();
     if (!consumer)
       return NextResponse.json(
         { message: "Author not found" },
@@ -56,19 +53,25 @@ export async function POST(request, { params }) {
         { status: 400 }
       );
     }
-    const mess = await Mess.findById(id);
+    const { data: mess } = await supabase
+      .from("mess")
+      .select("id")
+      .eq("id", id)
+      .single();
     if (!mess)
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
 
-    const review = await Review.create({
-      rating,
-      feedback: text,
-      author: session.user.id,
-      mess: id,
-    });
-
-    mess.reviews.push(review._id);
-    await mess.save();
+    const { data: review, error } = await supabase
+      .from("review")
+      .insert({
+        rating,
+        feedback: text,
+        author_id: session.user.id,
+        mess_id: id,
+      })
+      .select()
+      .single();
+    if (error) throw error;
 
     return NextResponse.json(
       { message: " Review added successfully", review },

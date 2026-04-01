@@ -1,36 +1,33 @@
-import { connectDB } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import supabase from "@/lib/supabaseClient";
 
 export async function POST(request, { params }) {
   try {
     const { id } = await params || {};
 
     const body = await request.json();
-    await connectDB();
-
-    const { default: Mess } = await import("../../../../../models/mess");
-    const { default: Message } = await import("../../../../../models/message");
-
     const session = await getServerSession(authOptions);
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const mess = await Mess.findById(id);
+    const { data: mess, error: messErr } = await supabase
+      .from("mess")
+      .select("id, owner_id")
+      .eq("id", id)
+      .single();
+    if (messErr) throw messErr;
     if (!mess) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
 
-
-    const msg = await Message.create({
+    const { error: createErr } = await supabase.from("message").insert({
       message: body.message,
-      toMess: mess._id,
+      to_mess_id: mess.id,
     });
-
-    mess.alert.push(msg._id);
-    await mess.save();
+    if (createErr) throw createErr;
 
     return NextResponse.json({ message: "Message received" }, { status: 200 });
   } catch (err) {
@@ -46,18 +43,27 @@ export async function PATCH(req, { params }) {
   try {
     const { id } = await params || {};
 
-    const { default: Mess } = await import("@/models/mess.js");
-    const mess = await Mess.findById(id);
+    const { data: mess, error: messErr } = await supabase
+      .from("mess")
+      .select("id, is_blocked")
+      .eq("id", id)
+      .single();
+    if (messErr) throw messErr;
 
     if (!mess) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
 
-    mess.isBlocked = !mess.isBlocked;
-    await mess.save();
+    const { data: updated, error: updErr } = await supabase
+      .from("mess")
+      .update({ is_blocked: !mess.is_blocked })
+      .eq("id", id)
+      .select()
+      .single();
+    if (updErr) throw updErr;
 
     return NextResponse.json(
-      { message: "Mess open/close updated", mess },
+      { message: "Mess open/close updated", mess: updated },
       { status: 200 }
     );
   } catch (err) {
@@ -72,16 +78,11 @@ export async function PATCH(req, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = await params || {};
-    await connectDB();
-    const { default: Message } = await import("../../../../../models/message");
-
-    const deletedMsg = await Message.findByIdAndDelete(id);
-    if (!deletedMsg) {
-      return NextResponse.json(
-        { message: "Message Not Found" },
-        { status: 404 }
-      );
-    }
+    const { error: delErr } = await supabase
+      .from("message")
+      .delete()
+      .eq("id", id);
+    if (delErr) throw delErr;
     return NextResponse.json({ message: "Message deleted" }, { status: 200 });
   } catch (error) {
     console.error("Error fetching Msg by ID:", error);

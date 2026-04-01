@@ -1,38 +1,25 @@
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
-import { connectDB } from "../../../../../lib/mongodb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import supabase from "@/lib/supabaseClient";
 
 export async function GET(request, { params }) {
   try {
-    const { id: messId } = await params || {};
-
-    if (!messId || !mongoose.Types.ObjectId.isValid(messId)) {
-      return NextResponse.json(
-        { message: "Invalid mess id" },
-        { status: 400 }
-      );
+    const { id: messId } = (await params) || {};
+    if (!messId) {
+      return NextResponse.json({ message: "Invalid mess id" }, { status: 400 });
     }
-
-    await connectDB();
 
     const session = await getServerSession(authOptions);
     if (!session || !session.user?.isOwner) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
     
-    const { default: Mess } = await import("../../../../../models/mess");
-    
-    const { default: Order } = await import("../../../../../models/order");
-    
-    const { default: Review } = await import("../../../../../models/reviews");
-    
-    const { default: Consumer } = await import("../../../../../models/consumer");
-    
-    const { default: Wastage } = await import("../../../../../models/wastage");
-    
-    const messExists = await Mess.exists({ _id: messId });
+    const { data: messExists } = await supabase
+      .from("mess")
+      .select("id")
+      .eq("id", messId)
+      .single();
     if (!messExists) {
       return NextResponse.json(
         { message: "Mess not found" },
@@ -47,13 +34,12 @@ export async function GET(request, { params }) {
     const last30Days = new Date();
     last30Days.setDate(last30Days.getDate() - 30);
 
-    const monthlyOrders = await Order.find({
-      mess: { $in: messIds },
-      status: "paid",
-      createdAt: { $gte: startOfMonth },
-    })
-      .select("noOfPlate totalPrice")
-      .lean();
+    const { data: monthlyOrders = [] } = await supabase
+      .from("order")
+      .select("no_of_plate, total_price")
+      .eq("status", "paid")
+      .gte("created_at", startOfMonth.toISOString())
+      .eq("mess_id", messId);
 
     const totalMeals = monthlyOrders.reduce(
       (sum, o) => sum + (o.noOfPlate || 1),
@@ -64,12 +50,11 @@ export async function GET(request, { params }) {
       0
     );
 
-    const recentReviews = await Review.find({
-      mess: { $in: messIds },
-      createdAt: { $gte: last30Days },
-    })
+    const { data: recentReviews = [] } = await supabase
+      .from("review")
       .select("rating")
-      .lean();
+      .eq("mess_id", messId)
+      .gte("created_at", last30Days.toISOString());
 
     const avgRating =
       recentReviews.length > 0
@@ -81,16 +66,18 @@ export async function GET(request, { params }) {
           )
         : 0;
 
-    const cancelledOrders = await Order.countDocuments({
-      mess: { $in: messIds },
-      isCancelled: true,
-      createdAt: { $gte: startOfMonth },
-    });
+    const { count: cancelledOrders = 0 } = await supabase
+      .from("order")
+      .select("id", { count: "exact", head: true })
+      .eq("mess_id", messId)
+      .eq("is_cancelled", true)
+      .gte("created_at", startOfMonth.toISOString());
 
-    const totalOrdersThisMonth = await Order.countDocuments({
-      mess: { $in: messIds },
-      createdAt: { $gte: startOfMonth },
-    });
+    const { count: totalOrdersThisMonth = 0 } = await supabase
+      .from("order")
+      .select("id", { count: "exact", head: true })
+      .eq("mess_id", messId)
+      .gte("created_at", startOfMonth.toISOString());
 
     const churnRate =
       totalOrdersThisMonth > 0
@@ -99,13 +86,12 @@ export async function GET(request, { params }) {
           )
         : 0;
 
-    const last30DaysOrders = await Order.find({
-      mess: { $in: messIds },
-      status: "paid",
-      createdAt: { $gte: last30Days },
-    })
-      .select("noOfPlate createdAt")
-      .lean();
+    const { data: last30DaysOrders = [] } = await supabase
+      .from("order")
+      .select("no_of_plate, created_at")
+      .eq("mess_id", messId)
+      .eq("status", "paid")
+      .gte("created_at", last30Days.toISOString());
 
     const dailyMealsMap = {};
     for (let i = 0; i < 30; i++) {
@@ -129,12 +115,11 @@ export async function GET(request, { params }) {
       })
     );
 
-    const allOrders = await Order.find({
-      mess: { $in: messIds },
-      createdAt: { $gte: last30Days },
-    })
-      .select("createdAt")
-      .lean();
+    const { data: allOrders = [] } = await supabase
+      .from("order")
+      .select("created_at")
+      .eq("mess_id", messId)
+      .gte("created_at", last30Days.toISOString());
 
     const timeSlots = { morning: 0, lunch: 0, dinner: 0 };
     allOrders.forEach((order) => {
@@ -148,14 +133,13 @@ export async function GET(request, { params }) {
       .map(([slot, count]) => ({ slot, count }))
       .sort((a, b) => b.count - a.count);
 
-    const negativeReviews = await Review.find({
-      mess: { $in: messIds },
-      rating: { $lte: 3 },
-    })
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .populate("author", "username")
-      .lean();
+    const { data: negativeReviews = [] } = await supabase
+      .from("review")
+      .select("id, rating, feedback, created_at, author:author_id(username)")
+      .eq("mess_id", messId)
+      .lte("rating", 3)
+      .order("created_at", { ascending: false })
+      .limit(5);
 
     const negativeReviewsData = negativeReviews.map((r) => ({
       id: String(r._id),
@@ -167,13 +151,12 @@ export async function GET(request, { params }) {
         : "Anonymous",
     }));
 
-    const ordersWithDish = await Order.find({
-      mess: { $in: messIds },
-      status: "paid",
-      selectedDishName: { $exists: true, $ne: null },
-    })
-      .select("selectedDishName selectedDishPrice noOfPlate")
-      .lean();
+    const { data: ordersWithDish = [] } = await supabase
+      .from("order")
+      .select("selected_dish_name, selected_dish_price, no_of_plate")
+      .eq("mess_id", messId)
+      .eq("status", "paid")
+      .not("selected_dish_name", "is", null);
 
     const dishMap = {};
     ordersWithDish.forEach((order) => {
@@ -195,12 +178,11 @@ export async function GET(request, { params }) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    const wastageRecords = await Wastage.find({
-      mess: { $in: messIds },
-      date: { $gte: last30Days },
-    })
-      .select("date cookedQty servedQty plateName")
-      .lean();
+    const { data: wastageRecords = [] } = await supabase
+      .from("wastage")
+      .select("date, cooked_qty, served_qty, plate_name")
+      .eq("mess_id", messId)
+      .gte("date", last30Days.toISOString());
 
     const wastageMap = {};
     for (let i = 0; i < 30; i++) {

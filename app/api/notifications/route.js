@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import  { connectDB }  from "@/lib/mongodb";
-import Notification from "@/models/notification";
+import supabase from "@/lib/supabaseClient";
 
 export async function GET(request) {
   try {
@@ -11,19 +10,19 @@ export async function GET(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectDB();
+    const { data: notifications, error } = await supabase
+      .from("notification")
+      .select("*")
+      .eq("recipient_id", session.user.id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw error;
 
-    const notifications = await Notification.find({
-      recipient: session.user.id,
-    })
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .lean();
-
-    const unreadCount = await Notification.countDocuments({
-      recipient: session.user.id,
-      isRead: false,
-    });
+    const { count: unreadCount = 0 } = await supabase
+      .from("notification")
+      .select("id", { count: "exact", head: true })
+      .eq("recipient_id", session.user.id)
+      .eq("is_read", false);
 
     return NextResponse.json({
       notifications,
@@ -45,11 +44,11 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectDB();
-
-    await Notification.deleteMany({
-      recipient: session.user.id,
-    });
+    const { error } = await supabase
+      .from("notification")
+      .delete()
+      .eq("recipient_id", session.user.id);
+    if (error) throw error;
 
     return NextResponse.json({ message: "All notifications cleared" });
   } catch (error) {

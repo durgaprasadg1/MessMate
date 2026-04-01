@@ -1,25 +1,32 @@
-import { connectDB } from "@/lib/mongodb";
-import Mess from "@/models/mess";
+import supabase from "@/lib/supabaseClient";
 
 export async function GET() {
-  await connectDB();
+  const { data: totalUsersAgg } = await supabase
+    .from("consumer")
+    .select("id", { count: "exact", head: true });
+  const totalUsers = totalUsersAgg?.length ?? totalUsersAgg?.count ?? 0;
 
-  const { default: Consumer } = await import("@/models/consumer");
-  const totalUsers = await Consumer.countDocuments({});
-  const totalMesses = await Mess.countDocuments({});
-  const pendingCount = await Mess.countDocuments({ isVerified: false });
+  const { count: totalMesses = 0 } = await supabase
+    .from("mess")
+    .select("id", { count: "exact", head: true });
 
-  const recentSignups = await Consumer.find({})
-    .sort({ _id: -1 })
-    .limit(5)
-    .select("username email")
-    .lean();
+  const { count: pendingCount = 0 } = await supabase
+    .from("mess")
+    .select("id", { count: "exact", head: true })
+    .eq("is_verified", false);
 
-  const pendingMesses = await Mess.find({ isVerified: false })
-    .sort({ createdAt: -1 })
-    .limit(5)
-    .select("name createdAt")
-    .lean();
+  const { data: recentSignups = [] } = await supabase
+    .from("consumer")
+    .select("id, username, email, created_at")
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  const { data: pendingMesses = [] } = await supabase
+    .from("mess")
+    .select("id, name, created_at")
+    .eq("is_verified", false)
+    .order("created_at", { ascending: false })
+    .limit(5);
 
   return Response.json({
     stats: {
@@ -28,8 +35,10 @@ export async function GET() {
       pendingCount,
     },
     recentSignups: recentSignups.map((c) => ({
-      ...c,
-      joined: c._id.getTimestamp(),
+      id: c.id,
+      username: c.username,
+      email: c.email,
+      joined: c.createdAt,
     })),
     pendingMesses,
   });

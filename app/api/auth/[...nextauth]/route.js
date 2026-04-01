@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { connectDB } from "@/lib/mongodb";
+import supabase from "@/lib/supabaseClient";
 
 export const authOptions = {
   providers: [
@@ -13,20 +13,19 @@ export const authOptions = {
       },
 
       async authorize(credentials) {
-        await connectDB();
-
         const { email, password } = credentials;
 
-        const AdminMod = await import("@/models/admin");
-        const Admin = AdminMod.default;
-
-        const admin = await Admin.findOne({ email });
-        if (admin) {
+        const adminRes = await supabase
+          .from("admin")
+          .select("*")
+          .eq("email", email)
+          .single();
+        if (!adminRes.error && adminRes.data) {
+          const admin = adminRes.data;
           const valid = await bcrypt.compare(password, admin.password);
           if (!valid) throw new Error("Invalid password");
-
           return {
-            id: admin._id.toString(),
+            id: admin.id,
             username: admin.name,
             email: admin.email,
             isAdmin: true,
@@ -34,36 +33,37 @@ export const authOptions = {
           };
         }
 
-        const OwnerMod = await import("@/models/owner");
-        const Owner = OwnerMod.default;
-
-        const owner = await Owner.findOne({ email });
-        if (owner) {
+        const ownerRes = await supabase
+          .from("owner")
+          .select("*")
+          .eq("email", email)
+          .single();
+        if (!ownerRes.error && ownerRes.data) {
+          const owner = ownerRes.data;
           const valid = await bcrypt.compare(password, owner.password);
           if (!valid) throw new Error("Invalid password");
-
           return {
-            id: owner._id.toString(),
+            id: owner.id,
             username: owner.name,
             email: owner.email,
             isAdmin: false,
             isOwner: true,
-
           };
         }
 
-        const ConsumerMod = await import("@/models/consumer");
-        const Consumer = ConsumerMod.default;
-
-        const user = await Consumer.findOne({ email });
-        if (!user) throw new Error("User not found");
-
+        const userRes = await supabase
+          .from("consumer")
+          .select("*")
+          .eq("email", email)
+          .single();
+        if (userRes.error || !userRes.data) throw new Error("User not found");
+        const user = userRes.data;
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) throw new Error("Invalid password");
 
         return {
-          id: user._id.toString(),
-          username: user.name,
+          id: user.id,
+          username: user.username,
           email: user.email,
           isAdmin: false,
           isOwner: false,

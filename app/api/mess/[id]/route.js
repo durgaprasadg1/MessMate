@@ -1,40 +1,19 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "../../../../lib/mongodb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import {
-  validateObjectId,
-  logValidationError,
-} from "../../../../lib/validateObjectId";
+import supabase from "@/lib/supabaseClient";
 
 export async function GET(request, { params }) {
   try {
     const { id } = (await params) || {};
 
-    console.log("[API GET /mess/:id] Received id:", id, "Type:", typeof id);
-    const validation = validateObjectId(id);
-    if (!validation.isValid) {
-      logValidationError("API GET /mess/:id", id, validation);
-      return NextResponse.json(
-        { message: "Invalid ID format", error: validation.error },
-        { status: 400 },
-      );
-    }
-
-    await connectDB();
-    const { default: Mess } = await import("../../../../models/mess");
-    const { default: Message } = await import("../../../../models/message");
-
-    const mess = await Mess.findById(id)
-      .populate("alert")
-      .populate("vegMenuRef")
-      .populate("nonVegMenuRef")
-      .populate({
-        path: "reviews",
-        populate: {
-          path: "author",
-        },
-      });
+    const { data: mess } = await supabase
+      .from("mess")
+      .select(
+        "*, alerts:message(*), vegMenuRef:veg_menu_ref_id(*), nonVegMenuRef:non_veg_menu_ref_id(*), reviews:review(*, author:author_id(*))"
+      )
+      .eq("id", id)
+      .single();
 
     if (!mess) {
       console.warn("[API GET /mess/:id] Mess not found for id:", id);
@@ -59,8 +38,40 @@ export async function GET(request, { params }) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
 
-    console.log("[API GET /mess/:id] Found mess:", mess._id, mess.name);
-    return NextResponse.json(mess, { status: 200 });
+    const shaped = {
+      _id: mess.id,
+      name: mess.name,
+      description: mess.description,
+      email: mess.email,
+      upi: mess.upi,
+      address: mess.address,
+      mealTime: mess.meal_time,
+      vegMenu: mess.veg_menu,
+      vegPrice: mess.veg_price,
+      nonVegPrice: mess.non_veg_price,
+      nonVegMenu: mess.non_veg_menu,
+      vegMenuRef: mess.vegMenuRef,
+      nonVegMenuRef: mess.nonVegMenuRef,
+      owner: mess.owner_id,
+      category: mess.category,
+      isOpen: mess.is_open,
+      ownerName: mess.owner_name,
+      adharNumber: mess.adhar_number,
+      phoneNumber: mess.phone_number,
+      lat: mess.lat,
+      lon: mess.lon,
+      isLimited: mess.is_limited,
+      isVerified: mess.is_verified,
+      createdAt: mess.created_at,
+      certificate: { url: mess.certificate_url },
+      image: { url: mess.image_url },
+      isBlocked: mess.is_blocked,
+      alerts: mess.alerts,
+      reviews: mess.reviews,
+    };
+
+    console.log("[API GET /mess/:id] Found mess:", mess.id, mess.name);
+    return NextResponse.json(shaped, { status: 200 });
   } catch (error) {
     console.error("[API GET /mess/:id] Error fetching mess by ID:", error);
     return NextResponse.json(
@@ -77,26 +88,28 @@ export async function PATCH(request, { params }) {
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    await connectDB();
-    const { default: Mess } = await import("../../../../models/mess");
-    const body = await request.json();
-
-    const mess = await Mess.findById(id);
+    const { data: mess } = await supabase
+      .from("mess")
+      .select("id, owner_id, is_open")
+      .eq("id", id)
+      .single();
     if (!mess)
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
 
-    const ownerId = mess.owner ? mess.owner.toString() : null;
+    const ownerId = mess.owner_id;
     if (!ownerId || ownerId !== session.user.id) {
       return NextResponse.json(
         { message: "Forbidden: not the owner" },
         { status: 403 },
       );
     }
-    const updatedMess = await Mess.findByIdAndUpdate(
-      id,
-      { $set: { isOpen: !mess.isOpen } },
-      { new: true },
-    );
+    const { data: updatedMess, error } = await supabase
+      .from("mess")
+      .update({ is_open: !mess.is_open })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
 
     return NextResponse.json(
       {
@@ -117,9 +130,7 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = (await params) || {};
-    await connectDB();
-    const { default: Mess } = await import("../../../../models/mess");
-    const deletedMess = await Mess.findByIdAndDelete(id);
+    await supabase.from("mess").delete().eq("id", id);
 
     if (!deletedMess) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });

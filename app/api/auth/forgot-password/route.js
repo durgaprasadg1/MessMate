@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "../../../../lib/mongodb";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
-import Consumer from "../../../../models/consumer";
+import supabase from "@/lib/supabaseClient";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -14,26 +13,30 @@ const transporter = nodemailer.createTransport({
 
 export async function POST(req) {
   try {
-    await connectDB();
-
     const { email } = await req.json();
 
     if (!email) {
       return NextResponse.json({ message: "Email Not Found" }, { status: 400 });
     }
-    let user = await Consumer.findOne({ email });
-
-    if (!user) {
+    const { data: user, error: userErr } = await supabase
+      .from("consumer")
+      .select("*")
+      .eq("email", email)
+      .single();
+    if (userErr || !user) {
       return NextResponse.json(
         { message: "User with that email Not Found" },
         { status: 404 },
       );
     }
 
-    user.resetToken = crypto.randomBytes(32).toString("hex");
-    user.resetTokenExpiry = Date.now() + 3600000;
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenExpiry = new Date(Date.now() + 3600000).toISOString();
 
-    await user.save();
+    await supabase
+      .from("consumer")
+      .update({ reset_token: resetToken, reset_token_expiry: resetTokenExpiry })
+      .eq("email", email);
 
     // Get the actual domain for the reset link
     const protocol = req.headers.get("x-forwarded-proto") || "http";

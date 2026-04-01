@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import NewMessCustomer from "@/models/newMessCustomer";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import supabase from "@/lib/supabaseClient";
 
 export async function GET(request, { params }) {
   try {
@@ -11,11 +10,10 @@ export async function GET(request, { params }) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    await connectDB();
-
-    const registrations = await NewMessCustomer.find({
-      customer: session.user.id,
-    }).populate("mess", "name category");
+    const { data: registrations = [] } = await supabase
+      .from("new_mess_customer")
+      .select("*, mess:mess_id(name, category)")
+      .eq("consumer_id", session.user.id);
 
     const today = new Date();
     const activeRegistrations = registrations.filter((reg) => {

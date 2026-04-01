@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "../../../../lib/mongodb";
-// dynamic import of models performed inside handler to avoid circular import / registration timing issues
+import supabase from "@/lib/supabaseClient";
 
 export async function GET(request, { params }) {
   try {
-    await connectDB();
     const { id } = await params;
 
-    const { default: Owner } = await import("../../../../models/owner");
-
-    const owner = await Owner.findById(id);
+    const { data: owner, error } = await supabase
+      .from("owner")
+      .select("*, mess(id,name)")
+      .eq("id", id)
+      .single();
+    if (error) throw error;
 
     if (!owner) {
       return NextResponse.json({ message: "owner not found" }, { status: 404 });
