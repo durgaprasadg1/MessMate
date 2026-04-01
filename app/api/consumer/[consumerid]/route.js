@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "../../../../lib/mongodb";
+import supabase from "@/lib/supabaseClient";
 
 export async function GET(request, { params }) {
   try {
-    await connectDB();
     const { consumerid } = await params;
-    const { default: Consumer } = await import("../../../../models/consumer");
-
-    const consumer = await Consumer.findById(consumerid);
+    const { data: consumer, error } = await supabase
+      .from("consumer")
+      .select("*")
+      .eq("id", consumerid)
+      .single();
+    if (error) throw error;
 
     if (!consumer) {
       return NextResponse.json(

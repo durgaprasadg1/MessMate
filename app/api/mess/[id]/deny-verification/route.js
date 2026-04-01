@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
 import nodemailer from "nodemailer";
-import Mess from "@/models/mess"; 
+import supabase from "@/lib/supabaseClient"; 
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -24,9 +23,13 @@ export async function POST(_req, { params }) {
       );
     }
 
-    await connectDB();
-
-    const mess = await Mess.findByIdAndDelete(id);
+    const { data: mess, error } = await supabase
+      .from("mess")
+      .delete()
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw error;
 
     if (!mess) {
       return NextResponse.json(

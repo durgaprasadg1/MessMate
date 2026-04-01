@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { connectDB } from "@/lib/mongodb";
-import Notification from "@/models/notification";
+import supabase from "@/lib/supabaseClient";
 
 export async function PATCH(request) {
   try {
@@ -11,15 +10,12 @@ export async function PATCH(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectDB();
-
-    await Notification.updateMany(
-      {
-        recipient: session.user.id,
-        isRead: false,
-      },
-      { isRead: true }
-    );
+    const { error } = await supabase
+      .from("notification")
+      .update({ is_read: true })
+      .eq("recipient_id", session.user.id)
+      .eq("is_read", false);
+    if (error) throw error;
 
     return NextResponse.json({ message: "All notifications marked as read" });
   } catch (error) {

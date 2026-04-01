@@ -1,11 +1,32 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "../../../../lib/mongodb";
-import Mess from "../../../../models/mess";
+import supabase from "@/lib/supabaseClient";
 export async function GET() {
   try {
-      await connectDB();
-        const messes = await Mess.find({ isVerified: false });
-        return NextResponse.json(messes);
+        const { data: messes, error } = await supabase
+          .from("mess")
+          .select(
+            "id,name,owner_name,phone_number,category,adhar_number,is_limited,is_verified,created_at,image_url,certificate_url,lat,lon"
+          )
+          .eq("is_verified", false);
+        if (error) throw error;
+
+        const shaped = (messes || []).map((m) => ({
+          _id: m.id,
+          name: m.name,
+          ownerName: m.owner_name,
+          phoneNumber: m.phone_number,
+          category: m.category,
+          adharNumber: m.adhar_number,
+          isLimited: m.is_limited,
+          isVerified: m.is_verified,
+          createdAt: m.created_at,
+          lat: m.lat,
+          lon: m.lon,
+          image: { url: m.image_url },
+          certificate: { url: m.certificate_url },
+        }));
+
+        return NextResponse.json(shaped);
     } catch (error) {
       console.error(error);
       return NextResponse.json(

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "../../../../../../lib/mongodb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import nodemailer from "nodemailer";
+import supabase from "@/lib/supabaseClient";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -22,24 +22,25 @@ export async function PATCH(request, { params }) {
         { status: 401 }
       );
 
-    await connectDB();
-    const { default: Consumer } = await import(
-      "../../../../../../models/consumer"
-    );
-
-
-    const consumer = await Consumer.findById(userid);
+    const { data: consumer, error } = await supabase
+      .from("consumer")
+      .select("*")
+      .eq("id", userid)
+      .single();
+    if (error) throw error;
     if (!consumer)
       return NextResponse.json(
         { consumerage: "consumer not found" },
         { status: 404 }
       );
 
-    const updatedUser = await Consumer.findByIdAndUpdate(
-      userid,
-      { $set: { isBlocked: !consumer.isBlocked } },
-      { new: true }
-    );
+    const { data: updatedUser, error: updErr } = await supabase
+      .from("consumer")
+      .update({ is_blocked: !consumer.is_blocked })
+      .eq("id", userid)
+      .select()
+      .single();
+    if (updErr) throw updErr;
     if (updatedUser.isBlocked) {
       try {
         const recipientEmail = consumer.email;

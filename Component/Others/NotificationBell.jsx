@@ -155,9 +155,9 @@ export default function NotificationBell() {
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
-                {notifications.map((n) => (
+                {notifications.map((n, index) => (
                   <div
-                    key={n._id}
+                    key={n._id ?? n.id ?? `${n.type}-${n.createdAt}-${index}`}
                     onClick={() => markAsRead(n._id)}
                     className={`p-4 cursor-pointer transition ${
                       !n.isRead ? "bg-blue-50/40" : ""
@@ -166,7 +166,7 @@ export default function NotificationBell() {
                     <div className="flex gap-3">
                       <div
                         className={`w-10 h-10 rounded-full flex items-center justify-center text-xl border ${getNotificationColor(
-                          n.type
+                          n.type,
                         )}`}
                       >
                         {getNotificationIcon(n.type)}

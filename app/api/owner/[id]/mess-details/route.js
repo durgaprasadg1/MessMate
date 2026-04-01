@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { connectDB } from "@/lib/mongodb";
+import supabase from "@/lib/supabaseClient";
 
 export async function GET(req, { params }) {
   try {
     const { id } = await params;
-
-    await connectDB();
 
     const session = await getServerSession(authOptions);
 
@@ -19,15 +17,38 @@ export async function GET(req, { params }) {
       return NextResponse.json({ error: "Access Denied" }, { status: 403 });
     }
 
-    const OwnerMod = await import("@/models/owner");
-    const Owner = OwnerMod.default;
+    const { data: owner, error } = await supabase
+      .from("owner")
+      .select("messes:mess(*)")
+      .eq("id", id)
+      .single();
+    if (error) throw error;
 
-    const MessMod = await import("@/models/mess");
-    const Mess = MessMod.default;
+    const shaped =
+      owner?.messes?.map((m) => ({
+        _id: m.id,
+        name: m.name,
+        ownerName: m.owner_name,
+        owner: m.owner_id,
+        phoneNumber: m.phone_number,
+        category: m.category,
+        isOpen: m.is_open,
+        isVerified: m.is_verified,
+        isBlocked: m.is_blocked,
+        isLimited: m.is_limited,
+        adharNumber: m.adhar_number,
+        lat: m.lat,
+        lon: m.lon,
+        vegMenu: m.veg_menu,
+        nonVegMenu: m.non_veg_menu,
+        vegPrice: m.veg_price,
+        nonVegPrice: m.non_veg_price,
+        image: { url: m.image_url },
+        certificate: { url: m.certificate_url },
+        createdAt: m.created_at,
+      })) || [];
 
-    const owner = await Owner.findById(id).populate("messes");
-
-    return NextResponse.json({ messes: owner?.messes || [] });
+    return NextResponse.json({ messes: shaped });
   } catch (err) {
     console.error("ERROR in /api/owner/[id]/mess-details:", err);
     return NextResponse.json(

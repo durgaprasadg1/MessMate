@@ -1,32 +1,40 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "../../../../../lib/mongodb";
-import mongoose from "mongoose";
 import { validateAgainst } from "../../../../../lib/validateRequest";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import crypto from "crypto";
+import supabase from "@/lib/supabaseClient";
 import {
   notifyNewOrder,
   notifyOwnerNewOrder,
 } from "../../../../../lib/notifications";
 
 async function computePricePerPlate(mess, menutype, selectedDish) {
-  const { default: Menu } = await import("../../../../../models/menu");
-  let menuArray = mess[menutype] || [];
+  let menuArray =
+    menutype === "vegMenu" ? mess.vegMenu || [] : mess.nonVegMenu || [];
+
   try {
-    if (menutype === "vegMenu" && mess.vegMenuRef) {
-      const menuDoc = await Menu.findById(mess.vegMenuRef);
-      if (menuDoc && Array.isArray(menuDoc.dishes) && menuDoc.dishes.length) {
+    if (menutype === "vegMenu" && mess.veg_menu_ref_id) {
+      const { data: menuDoc } = await supabase
+        .from("menu")
+        .select("*")
+        .eq("id", mess.veg_menu_ref_id)
+        .single();
+      if (menuDoc?.dishes && Array.isArray(menuDoc.dishes)) {
         menuArray = menuDoc.dishes;
       }
-    } else if (menutype === "nonVegMenu" && mess.nonVegMenuRef) {
-      const menuDoc = await Menu.findById(mess.nonVegMenuRef);
-      if (menuDoc && Array.isArray(menuDoc.dishes) && menuDoc.dishes.length) {
+    } else if (menutype === "nonVegMenu" && mess.non_veg_menu_ref_id) {
+      const { data: menuDoc } = await supabase
+        .from("menu")
+        .select("*")
+        .eq("id", mess.non_veg_menu_ref_id)
+        .single();
+      if (menuDoc?.dishes && Array.isArray(menuDoc.dishes)) {
         menuArray = menuDoc.dishes;
       }
     }
   } catch (e) {
-    console.error("Menu doc lookup failed, falling back to mess arrays", e);
+    console.error("Menu lookup failed, falling back to mess arrays", e);
   }
 
   let pricePerPlate = 0;
@@ -96,9 +104,6 @@ export async function POST(request, { params }) {
   try {
     const { id } = (await params) || {};
     const body = await request.json();
-    await connectDB();
-    const { default: Mess } = await import("../../../../../models/mess");
-    const { default: Order } = await import("../../../../../models/order");
     const { bookingCreateSchema, bookingPaymentSchema } =
       await import("../../../../../validators/booking.validator.js");
 
@@ -106,9 +111,11 @@ export async function POST(request, { params }) {
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    const { default: Consumer } =
-      await import("../../../../../models/consumer");
-    const consumer = await Consumer.findById(session.user.id);
+    const { data: consumer } = await supabase
+      .from("consumer")
+      .select("*")
+      .eq("id", session.user.id)
+      .single();
     if (!consumer)
       return NextResponse.json(
         { message: "Consumer not found" },
@@ -123,7 +130,11 @@ export async function POST(request, { params }) {
         { status: 403 },
       );
 
-    const mess = await Mess.findById(id);
+    const { data: mess } = await supabase
+      .from("mess")
+      .select("*")
+      .eq("id", id)
+      .single();
     if (!mess)
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
 
@@ -168,34 +179,34 @@ export async function POST(request, { params }) {
       receipt: `receipt_${Date.now()}`,
     });
 
-    const dbOrder = new Order({
-      mess: id,
-      consumer: session.user.id,
-      totalPrice: amount,
-      razorpayOrderId: rOrder.id,
-      status: "created",
-      noOfPlate: noOfPlate,
-      selectedDishName:
-        dishName ||
-        (typeof selectedDish === "string"
-          ? selectedDish
-          : String(selectedDish)),
-      selectedDishPrice: pricePerPlate,
-      messName: mess && mess.name ? String(mess.name) : undefined,
-    });
+    let selectedDishName =
+      dishName ||
+      (typeof selectedDish === "string"
+        ? selectedDish
+        : String(selectedDish));
 
-    try {
-      await dbOrder.save();
-    } catch (e) {
-      console.error("Booking POST save failed", e);
-      return NextResponse.json({ message: "Server error" }, { status: 500 });
-    }
+    const { data: dbOrder, error } = await supabase
+      .from("order")
+      .insert({
+        mess_id: id,
+        consumer_id: session.user.id,
+        total_price: amount,
+        razorpay_order_id: rOrder.id,
+        status: "created",
+        no_of_plate: noOfPlate,
+        selected_dish_name: selectedDishName,
+        selected_dish_price: pricePerPlate,
+        mess_name: mess?.name,
+      })
+      .select()
+      .single();
+    if (error) throw error;
 
     return NextResponse.json(
       {
         message: "Order created",
         order: rOrder,
-        dbOrderId: dbOrder._id,
+        dbOrderId: dbOrder.id,
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
       },
       { status: 200 },
@@ -231,17 +242,9 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    await connectDB();
-
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-
-    const { default: Order } = await import("../../../../../models/order");
-    const { default: Mess } = await import("../../../../../models/mess");
-    await import("../../../../../models/owner");
-    const { default: Consumer } =
-      await import("../../../../../models/consumer");
 
     const secret =
       process.env.RAZORPAY_SECRET ||
@@ -253,19 +256,31 @@ export async function PATCH(request, { params }) {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
-    const dbOrder = dbOrderId
-      ? await Order.findById(dbOrderId)
-      : await Order.findOne({ razorpayOrderId: razorpay_order_id });
+    const { data: dbOrder } = dbOrderId
+      ? await supabase
+          .from("order")
+          .select("*")
+          .eq("id", dbOrderId)
+          .single()
+      : await supabase
+          .from("order")
+          .select("*")
+          .eq("razorpay_order_id", razorpay_order_id)
+          .single();
 
     if (!dbOrder) {
       return NextResponse.json({ message: "Order not found" }, { status: 404 });
     }
 
-    if (String(dbOrder.consumer) !== String(session.user.id)) {
+    if (dbOrder.consumer_id !== session.user.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
 
-    const consumer = await Consumer.findById(session.user.id);
+    const { data: consumer } = await supabase
+      .from("consumer")
+      .select("*")
+      .eq("id", session.user.id)
+      .single();
     if (!consumer)
       return NextResponse.json(
         { message: "Consumer not found" },
@@ -282,35 +297,37 @@ export async function PATCH(request, { params }) {
 
     if (expectedSign === razorpay_signature) {
       try {
-        dbOrder.status = "paid";
-        dbOrder.razorpayPaymentId = razorpay_payment_id;
-        dbOrder.razorpaySignature = razorpay_signature;
-        dbOrder.paymentVerified = true;
-        await dbOrder.save();
+        const { data: updatedOrder } = await supabase
+          .from("order")
+          .update({
+            status: "paid",
+            razorpay_payment_id: razorpay_payment_id,
+            razorpay_signature: razorpay_signature,
+            payment_verified: true,
+          })
+          .eq("id", dbOrder.id)
+          .select()
+          .single();
 
-        await Consumer.findByIdAndUpdate(dbOrder.consumer, {
-          $push: { orders: dbOrder._id },
-        });
+        const { data: mess } = await supabase
+          .from("mess")
+          .select("id,name, owner:owner_id(*)")
+          .eq("id", dbOrder.mess_id)
+          .single();
 
-        await Mess.findByIdAndUpdate(dbOrder.mess, {
-          $push: { orders: dbOrder._id },
-        });
-
-        // Send notifications
-        const mess = await Mess.findById(dbOrder.mess).populate("owner");
         try {
           await notifyNewOrder(
-            dbOrder._id,
-            dbOrder.consumer,
-            dbOrder.mess,
+            dbOrder.id,
+            dbOrder.consumer_id,
+            dbOrder.mess_id,
             mess?.name || "the mess",
           );
           if (mess?.owner) {
             await notifyOwnerNewOrder(
-              dbOrder._id,
-              mess.owner._id,
-              dbOrder.mess,
-              consumer?.name || "A customer",
+              dbOrder.id,
+              mess.owner.id,
+              dbOrder.mess_id,
+              consumer?.username || "A customer",
             );
           }
         } catch (notifErr) {
@@ -325,14 +342,15 @@ export async function PATCH(request, { params }) {
         console.error("Payment verification failed", e);
         // attempt to mark order failed
         try {
-          dbOrder.status = "failed";
-          await dbOrder.save();
+          await supabase
+            .from("order")
+            .update({ status: "failed" })
+            .eq("id", dbOrder.id);
         } catch (_) {}
         return NextResponse.json({ message: "Server error" }, { status: 500 });
       }
     } else {
-      dbOrder.status = "failed";
-      await dbOrder.save();
+      await supabase.from("order").update({ status: "failed" }).eq("id", dbOrder.id);
       return NextResponse.json(
         { message: "Invalid signature" },
         { status: 400 },

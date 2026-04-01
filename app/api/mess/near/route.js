@@ -1,8 +1,4 @@
-import { connectDB } from "../../../../lib/mongodb";
-import Mess from "../../../../models/mess";
-
 export default async function handler(req, res) {
-    await connectDB();
   const { lat, lon, radius } = req.query;
   if (!lat || !lon || !radius) {
     return res.status(400).json({ error: "lat, lon, radius required" });
@@ -10,16 +6,22 @@ export default async function handler(req, res) {
 
   try {
     const meters = parseInt(radius, 10);
-    const results = await Mess.find({
-      location: {
-        $nearSphere: {
-          $geometry: { type: "Point", coordinates: [parseFloat(lon), parseFloat(lat)] },
-          $maxDistance: meters
-        }
-      },
-      isVerified: true,
-      isBlocked: false
-    }).limit(200);
+    const latNum = parseFloat(lat);
+    const lonNum = parseFloat(lon);
+
+    // Placeholder: bounding-box filter via Supabase
+    const degRadius = meters / 111_000; // rough degrees per meter
+    const { data: results, error } = await supabase
+      .from("mess")
+      .select("*")
+      .eq("is_verified", true)
+      .eq("is_blocked", false)
+      .gte("lat", latNum - degRadius)
+      .lte("lat", latNum + degRadius)
+      .gte("lon", lonNum - degRadius)
+      .lte("lon", lonNum + degRadius)
+      .limit(200);
+    if (error) throw error;
 
     res.status(200).json(results);
   } catch (err) {

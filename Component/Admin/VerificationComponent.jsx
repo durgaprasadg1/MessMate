@@ -102,15 +102,7 @@ const VerificationComponent = () => {
         </span>
       ),
     },
-    {
-      accessorKey: "adharNumber",
-      header: "Aadhar",
-      cell: ({ row }) => (
-        <span className="text-white text-sm sm:text-base">
-          {row.original.adharNumber}
-        </span>
-      ),
-    },
+    
     {
       accessorKey: "isLimited",
       header: "Limited",

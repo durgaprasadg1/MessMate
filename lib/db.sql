@@ -1,0 +1,186 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.admin (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  email text NOT NULL UNIQUE,
+  phone_number text NOT NULL,
+  password text NOT NULL,
+  address text,
+  CONSTRAINT admin_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.consumer (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  username text NOT NULL,
+  email text NOT NULL UNIQUE,
+  address text NOT NULL,
+  phone text NOT NULL,
+  is_blocked boolean DEFAULT false,
+  password text NOT NULL,
+  verify_token text,
+  verify_token_expiry timestamp without time zone,
+  reset_token text,
+  reset_token_expiry timestamp without time zone,
+  have_monthly_mess boolean DEFAULT false,
+  CONSTRAINT consumer_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.menu (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  mess_id uuid,
+  menutype text NOT NULL,
+  meal_time text,
+  dishes jsonb,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT menu_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_menu_mess FOREIGN KEY (mess_id) REFERENCES public.mess(id)
+);
+CREATE TABLE public.mess (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  description text,
+  image_url text,
+  image_filename text,
+  image_public_id text,
+  email text NOT NULL,
+  upi text NOT NULL,
+  address text,
+  meal_time text,
+  veg_menu jsonb,
+  veg_price double precision,
+  non_veg_price double precision,
+  non_veg_menu jsonb,
+  veg_menu_ref_id uuid UNIQUE,
+  non_veg_menu_ref_id uuid UNIQUE,
+  owner_id uuid,
+  category text NOT NULL,
+  is_open boolean DEFAULT true,
+  owner_name text NOT NULL,
+  adhar_number text NOT NULL,
+  phone_number text NOT NULL,
+  lat double precision NOT NULL,
+  lon double precision NOT NULL,
+  is_limited boolean DEFAULT true,
+  is_verified boolean DEFAULT false,
+  created_at timestamp without time zone DEFAULT now(),
+  certificate_url text,
+  certificate_filename text,
+  certificate_public_id text,
+  is_blocked boolean DEFAULT false,
+  location jsonb,
+  monthly_mess_duration integer NOT NULL,
+  monthly_mess_fee double precision NOT NULL,
+  CONSTRAINT mess_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_mess_owner FOREIGN KEY (owner_id) REFERENCES public.owner(id),
+  CONSTRAINT fk_mess_veg_menu_ref FOREIGN KEY (veg_menu_ref_id) REFERENCES public.menu(id),
+  CONSTRAINT fk_mess_nonveg_menu_ref FOREIGN KEY (non_veg_menu_ref_id) REFERENCES public.menu(id)
+);
+CREATE TABLE public.message (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  message text NOT NULL,
+  to_mess_id uuid,
+  CONSTRAINT message_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_message_to_mess FOREIGN KEY (to_mess_id) REFERENCES public.mess(id)
+);
+CREATE TABLE public.new_mess_customer (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  mess_id uuid NOT NULL,
+  consumer_id uuid NOT NULL,
+  duration text NOT NULL,
+  phone text NOT NULL,
+  payment_mode text NOT NULL,
+  name text NOT NULL,
+  address text,
+  gender text,
+  college text,
+  joining_date timestamp without time zone DEFAULT now(),
+  food_preference text,
+  emergency_contact text,
+  is_allowed boolean DEFAULT false,
+  razorpay_order_id text,
+  razorpay_payment_id text,
+  razorpay_signature text,
+  payment_verified boolean DEFAULT false,
+  total_amount double precision,
+  payment_status text DEFAULT 'pending'::text,
+  customers jsonb,
+  CONSTRAINT new_mess_customer_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_new_mess_customer_mess FOREIGN KEY (mess_id) REFERENCES public.mess(id),
+  CONSTRAINT fk_new_mess_customer_consumer FOREIGN KEY (consumer_id) REFERENCES public.consumer(id)
+);
+CREATE TABLE public.notification (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  recipient_id text NOT NULL,
+  recipient_model text NOT NULL,
+  type text NOT NULL,
+  title text NOT NULL,
+  message text NOT NULL,
+  order_id uuid,
+  mess_id uuid,
+  is_read boolean DEFAULT false,
+  metadata jsonb,
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT notification_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_notification_order FOREIGN KEY (order_id) REFERENCES public.order(id),
+  CONSTRAINT fk_notification_mess FOREIGN KEY (mess_id) REFERENCES public.mess(id)
+);
+CREATE TABLE public.order (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  consumer_id uuid,
+  mess_id uuid NOT NULL,
+  total_price double precision NOT NULL,
+  razorpay_order_id text UNIQUE,
+  razorpay_payment_id text,
+  razorpay_signature text,
+  status text DEFAULT 'created'::text,
+  payment_verified boolean DEFAULT false,
+  no_of_plate integer DEFAULT 1,
+  selected_dish_name text,
+  selected_dish_price double precision DEFAULT 0,
+  mess_name text,
+  done boolean DEFAULT false,
+  is_taken boolean DEFAULT false,
+  notified boolean DEFAULT false,
+  consumer_subscription jsonb,
+  is_cancelled boolean DEFAULT false,
+  refund_initiated boolean DEFAULT false,
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT order_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_order_consumer FOREIGN KEY (consumer_id) REFERENCES public.consumer(id),
+  CONSTRAINT fk_order_mess FOREIGN KEY (mess_id) REFERENCES public.mess(id)
+);
+CREATE TABLE public.owner (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  email text NOT NULL UNIQUE,
+  upi text NOT NULL,
+  phone_number text NOT NULL,
+  address text NOT NULL,
+  CONSTRAINT owner_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.review (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  feedback text,
+  rating integer DEFAULT 1,
+  created_at timestamp without time zone DEFAULT now(),
+  author_id uuid,
+  mess_id uuid,
+  CONSTRAINT review_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_review_author FOREIGN KEY (author_id) REFERENCES public.consumer(id),
+  CONSTRAINT fk_review_mess FOREIGN KEY (mess_id) REFERENCES public.mess(id)
+);
+CREATE TABLE public.wastage (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  mess_id uuid NOT NULL,
+  date timestamp without time zone NOT NULL,
+  plate_name text,
+  cooked_qty double precision NOT NULL,
+  served_qty double precision NOT NULL,
+  notes text,
+  created_at timestamp without time zone DEFAULT now(),
+  updated_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT wastage_pkey PRIMARY KEY (id),
+  CONSTRAINT fk_wastage_mess FOREIGN KEY (mess_id) REFERENCES public.mess(id)
+);

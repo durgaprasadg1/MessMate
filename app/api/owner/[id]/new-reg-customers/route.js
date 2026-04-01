@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Mess from "@/models/mess";
-import NewMessCustomer from "@/models/newMessCustomer";
+import supabase from "@/lib/supabaseClient";
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
@@ -25,16 +23,20 @@ const sendMail = async (to, subject, html) => {
 
 export async function GET(request, { params }) {
   try {
-    await connectDB();
     const { id: messId } = await params;
 
-    const mess = await Mess.findById(messId).populate("newMessCustomer");
+    const { data: mess, error } = await supabase
+      .from("mess")
+      .select("id, new_mess_customer(*)")
+      .eq("id", messId)
+      .single();
+    if (error) throw error;
     if (!mess) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
 
     return NextResponse.json(
-      { newMessCustomer: mess.newMessCustomer },
+      { newMessCustomer: mess.new_mess_customer },
       { status: 200 }
     );
   } catch (error) {
@@ -44,7 +46,6 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request) {
   try {
-    await connectDB();
     const { userId, joiningDate, allow, addDays } = await request.json();
 
     if (!userId) {
@@ -54,15 +55,29 @@ export async function PATCH(request) {
       );
     }
 
-    const user = await NewMessCustomer.findById(userId)
-      .populate("customer")
-      .populate("mess");
+    const { data: user } = await supabase
+      .from("new_mess_customer")
+      .select("*, mess(*)")
+      .eq("id", userId)
+      .single();
 
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
     let updateFields = {};
+    const customerIds = Array.isArray(user.customers)
+      ? user.customers
+      : user.customers?.ids || [];
+    const consumerId =
+      Array.isArray(customerIds) && customerIds.length ? customerIds[0] : null;
+    const { data: consumer } =
+      consumerId &&
+      (await supabase
+        .from("consumer")
+        .select("*")
+        .eq("id", consumerId)
+        .single());
 
     if (joiningDate) {
       updateFields.joiningDate = new Date(joiningDate);
@@ -71,8 +86,8 @@ export async function PATCH(request) {
     if (typeof allow === "boolean") {
       updateFields.isAllowed = allow;
 
-      const email = user.customer[0]?.email;
-      const name = user.customer[0]?.username || "User";
+      const email = consumer?.email;
+      const name = consumer?.username || "User";
       const messName = user.mess?.name;
 
       if (allow) {
@@ -154,8 +169,8 @@ export async function PATCH(request) {
 
       updateFields.joiningDate = updated;
 
-      const email = user.customer[0]?.email;
-      const name = user.customer[0]?.username || "User";
+      const email = consumer?.email;
+      const name = consumer?.username || "User";
       const messName = user.mess?.name;
 
       await sendMail(
@@ -193,11 +208,13 @@ export async function PATCH(request) {
       );
     }
 
-    const updated = await NewMessCustomer.findByIdAndUpdate(
-      userId,
-      updateFields,
-      { new: true }
-    );
+    const { data: updated, error: updErr } = await supabase
+      .from("new_mess_customer")
+      .update(updateFields)
+      .eq("id", userId)
+      .select()
+      .single();
+    if (updErr) throw updErr;
 
     return NextResponse.json(
       { message: "Updated successfully", updated },
@@ -210,7 +227,6 @@ export async function PATCH(request) {
 
 export async function DELETE(request, { params }) {
   try {
-    await connectDB();
     const { id: messId } = await params;
     const { userId } = await request.json();
 
@@ -218,19 +234,34 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ message: "User ID missing" }, { status: 400 });
     }
 
-    const user = await NewMessCustomer.findById(userId)
-      .populate("customer")
-      .populate("mess");
+    const { data: user } = await supabase
+      .from("new_mess_customer")
+      .select("*, mess(*)")
+      .eq("id", userId)
+      .single();
 
-    const email = user?.customer?.[0]?.email;
-    const name = user?.customer?.[0]?.username || "User";
+    const customerIds = Array.isArray(user?.customers)
+      ? user.customers
+      : user?.customers?.ids || [];
+    const consumerId =
+      Array.isArray(customerIds) && customerIds.length ? customerIds[0] : null;
+    const { data: consumer } =
+      consumerId &&
+      (await supabase
+        .from("consumer")
+        .select("*")
+        .eq("id", consumerId)
+        .single());
+
+    const email = consumer?.email;
+    const name = consumer?.username || "User";
     const messName = user?.mess?.name;
 
-    await NewMessCustomer.findByIdAndDelete(userId);
-
-    await Mess.findByIdAndUpdate(messId, {
-      $pull: { newMessCustomer: userId },
-    });
+    const { error: delErr } = await supabase
+      .from("new_mess_customer")
+      .delete()
+      .eq("id", userId);
+    if (delErr) throw delErr;
 
     if (email) {
       await sendMail(

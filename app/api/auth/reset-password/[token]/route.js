@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { connectDB } from "@/lib/mongodb";
 import bcrypt from "bcryptjs";
+import supabase from "@/lib/supabaseClient";
 
 export async function GET(request, { params }) {
   try {
@@ -11,14 +11,13 @@ export async function GET(request, { params }) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
     const { token } = await params;
-    await connectDB();
-    const { default: Consumer } = await import(
-      "../../../../../models/consumer"
-    );
-    const user = await Consumer.findOne({
-      resetToken: token,
-      resetTokenExpiry: { $gt: Date.now() },
-    });
+
+    const { data: user } = await supabase
+      .from("consumer")
+      .select("*")
+      .eq("reset_token", token)
+      .gt("reset_token_expiry", new Date().toISOString())
+      .single();
     if (!user) {
       return NextResponse.json({ message: "Link Expired" }, { status: 400 });
     }
@@ -34,11 +33,6 @@ export async function GET(request, { params }) {
 
 export async function PATCH(req, { params }) {
   try {
-    await connectDB();
-    const { default: Consumer } = await import(
-      "../../../../../models/consumer"
-    );
-
     const { token } = await params;
     const { password } = await req.json();
 
@@ -49,10 +43,12 @@ export async function PATCH(req, { params }) {
       );
     }
 
-    const user = await Consumer.findOne({
-      resetToken: token,
-      resetTokenExpiry: { $gt: Date.now() },
-    });
+    const { data: user } = await supabase
+      .from("consumer")
+      .select("*")
+      .eq("reset_token", token)
+      .gt("reset_token_expiry", new Date().toISOString())
+      .single();
 
     if (!user) {
       return NextResponse.json(
@@ -62,11 +58,14 @@ export async function PATCH(req, { params }) {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    user.password = hashedPassword; // or hash here manually
-    user.resetToken = undefined;
-    user.resetTokenExpiry = undefined;
-
-    await user.save();
+    await supabase
+      .from("consumer")
+      .update({
+        password: hashedPassword,
+        reset_token: null,
+        reset_token_expiry: null,
+      })
+      .eq("id", user.id);
 
     return NextResponse.json(
       { message: "Password reset successful" },

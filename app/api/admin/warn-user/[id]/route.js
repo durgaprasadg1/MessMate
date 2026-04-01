@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import nodemailer from "nodemailer";
+import supabase from "@/lib/supabaseClient";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -20,13 +20,12 @@ export async function POST(request, { params }) {
     if (!session)
       return NextResponse.json({ consumerage: "Unauthorized" }, { status: 401 });
 
-    await connectDB();
-    const { default: Consumer } = await import("@/models/consumer");
-
-   
-
-    
-      const consumer = await Consumer.findById(id);
+      const { data: consumer, error } = await supabase
+        .from("consumer")
+        .select("*")
+        .eq("id", id)
+        .single();
+      if (error) throw error;
       if (!consumer)
         return NextResponse.json(
           { consumerage: "consumer not found" },

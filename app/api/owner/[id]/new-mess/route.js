@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "../../../../../lib/mongodb";
 import cloudinary from "@/lib/cloudinary";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
+import supabase from "@/lib/supabaseClient";
 export const runtime = "nodejs";
 
 const transporter = nodemailer.createTransport({
@@ -28,11 +28,6 @@ export async function POST(request, { params }) {
         { error: "Permission denied" },
         { status: 403 }
       );
-
-    await connectDB();
-
-    const Mess = (await import("../../../../../models/mess")).default;
-    const Owner = (await import("../../../../../models/owner")).default;
 
     const formData = await request.formData();
 
@@ -142,7 +137,11 @@ export async function POST(request, { params }) {
       monthlyMessDuration : monthlyMessDuration,
     };
 
-    let owner = await Owner.findById(id);
+    const { data: owner } = await supabase
+      .from("owner")
+      .select("*")
+      .eq("id", id)
+      .single();
     if (!owner)
       return NextResponse.json(
         { message: "Failed to get Mess Owner" },
@@ -165,11 +164,40 @@ export async function POST(request, { params }) {
       `,
     });
 
-    const created = await Mess.create(messData);
-    owner.messes.push(created._id);
-    await owner.save();
+    const { data: created, error } = await supabase
+      .from("mess")
+      .insert({
+        name,
+        email,
+        upi,
+        description,
+        address,
+        category,
+        is_limited: limits === "true",
+        owner_name: ownerName,
+        adhar_number: hashedAdhaarNumber,
+        phone_number: phoneNumber,
+        lat: isNaN(lat) ? 0 : lat,
+        lon: isNaN(lon) ? 0 : lon,
+        image_url: bannerUpload.secure_url,
+        image_filename: file.name,
+        image_public_id: bannerUpload.public_id,
+        certificate_url: certificateUpload.secure_url,
+        certificate_filename: certificate.name,
+        certificate_public_id: certificateUpload.public_id,
+        veg_menu: [],
+        non_veg_menu: [],
+        veg_menu_ref_id: null,
+        non_veg_menu_ref_id: null,
+        owner_id: id,
+        monthly_mess_fee: monthlyMessFee,
+        monthly_mess_duration: monthlyMessDuration,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
 
-    return NextResponse.json({ id: created._id }, { status: 201 });
+    return NextResponse.json({ id: created.id }, { status: 201 });
   } catch (error) {
     console.error("Error creating mess:", error);
     return NextResponse.json(

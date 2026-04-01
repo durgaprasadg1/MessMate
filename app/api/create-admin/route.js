@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { connectDB } from "../../../lib/mongodb.js";
-import Owner from "../../../models/owner.js";
+import supabase from "@/lib/supabaseClient";
 
 export async function POST(request) {
   try {
-    await connectDB();
-    const { default: Consumer } = await import("../../../models/consumer.js");
     const body = await request.json();
     const { name, email, phoneNumber, address, password } = body;
     if (!name || !email || !password || !phoneNumber || !address) {
@@ -16,26 +13,36 @@ export async function POST(request) {
       );
     }
 
-    const existed = await Consumer.findOne({ email });
-    if (existed) {
+    const existed = await supabase
+      .from("consumer")
+      .select("id")
+      .eq("email", email)
+      .single();
+    if (!existed.error && existed.data) {
       return NextResponse.json(
         { message: "A Consumer with this email already exists." },
         { status: 409 }
       );
     }
 
-    const existedOwner = await Owner.findOne({ email });
-    if (existedOwner) {
+    const existedOwner = await supabase
+      .from("owner")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    if (existedOwner.data) {
       return NextResponse.json(
         { message: "A Owner with this email already exists." },
         { status: 409 }
       );
     }
 
-    const modadmin = await import("../../../models/admin.js");
-    const Admin = modadmin.default || mod;
-    const Existadmin = await Admin.findOne({ email });
-    if (Existadmin) {
+    const existAdmin = await supabase
+      .from("admin")
+      .select("id")
+      .eq("email", email)
+      .maybeSingle();
+    if (existAdmin.data) {
       return NextResponse.json(
         { message: "A Admin with this email already exists." },
         { status: 409 }
@@ -44,29 +51,31 @@ export async function POST(request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new Admin({
-      name,
-      email,
-      phoneNumber,
-      address,
-      password: hashedPassword,
-    });
-
-    await newUser.save();
+    const { data: newUser, error } = await supabase
+      .from("admin")
+      .insert({
+        name,
+        email,
+        phone_number: phoneNumber,
+        address,
+        password: hashedPassword,
+      })
+      .select("id, name")
+      .single();
+    if (error) throw error;
 
     return NextResponse.json(
       {
         message: "Registration successful!",
-        id: newUser._id,
+        id: newUser.id,
         name: newUser.name,
       },
       { status: 201 }
     );
   } catch (error) {
-    if (error.code === 11000) {
-      const field = Object.keys(error.keyValue)[0];
+    if (error.code === "PGRST116") {
       return NextResponse.json(
-        { message: `Duplicate entry: ${field} already exists.` },
+        { message: "Duplicate entry: unique constraint violated." },
         { status: 409 }
       );
     }

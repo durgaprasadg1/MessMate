@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "../../../lib/mongodb";
+import supabase from "@/lib/supabaseClient";
 
 export async function GET() {
   try {
-    await connectDB();
-    const { default: Consumer } = await import("../../../models/consumer");
-    const consumers = await Consumer.find().populate("reviews");
+    const { data: consumers, error } = await supabase
+      .from("consumer")
+      .select("*, reviews:review(*)");
+    if (error) throw error;
     return NextResponse.json(consumers);
   } catch (error) {
     console.error(error);

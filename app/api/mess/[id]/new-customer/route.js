@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import Mess from "@/models/mess";
-import NewMessCustomer from "@/models/newMessCustomer";
-import Consumer from "../../../../../models/consumer";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
+import supabase from "@/lib/supabaseClient";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -18,12 +15,9 @@ const transporter = nodemailer.createTransport({
 
 export async function POST(request, { params }) {
   try {
-    await connectDB();
-    const { default: Consumer } = await import("@/models/consumer");
-
     const { id } = (await params) || {};
 
-    if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
+    if (!id) {
       return NextResponse.json(
         { message: "Invalid or missing Mess ID" },
         { status: 400 }
@@ -35,7 +29,11 @@ export async function POST(request, { params }) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const consumer = await Consumer.findById(session.user.id);
+    const { data: consumer } = await supabase
+      .from("consumer")
+      .select("*")
+      .eq("id", session.user.id)
+      .single();
     if (!consumer) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
@@ -50,9 +48,10 @@ export async function POST(request, { params }) {
       );
     }
 
-    const allUserRegistrations = await NewMessCustomer.find({
-      customer: session.user.id,
-    });
+    const { data: allUserRegistrations = [] } = await supabase
+      .from("new_mess_customer")
+      .select("*")
+      .eq("consumer_id", session.user.id);
 
     const today = new Date();
     const activeRegistrations = allUserRegistrations.filter((reg) => {
@@ -76,10 +75,12 @@ export async function POST(request, { params }) {
       paymentMode,
     } = body || {};
 
-    const existingCustomer = await NewMessCustomer.findOne({
-      customer: session.user.id,
-      mess: id,
-    });
+    const { data: existingCustomer } = await supabase
+      .from("new_mess_customer")
+      .select("*")
+      .eq("consumer_id", session.user.id)
+      .eq("mess_id", id)
+      .maybeSingle();
 
     if (existingCustomer) {
       const joining = new Date(existingCustomer.joiningDate);
@@ -211,7 +212,11 @@ export async function POST(request, { params }) {
       );
     }
 
-    const mess = await Mess.findById(id);
+    const { data: mess } = await supabase
+      .from("mess")
+      .select("*")
+      .eq("id", id)
+      .single();
     if (!mess) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
@@ -279,13 +284,36 @@ export async function POST(request, { params }) {
         paymentStatus: "created",
       };
 
-      const messCustomer = await NewMessCustomer.create(newCustomerPayload);
+      const { data: messCustomer, error } = await supabase
+        .from("new_mess_customer")
+        .insert({
+          consumer_id: consumer.id,
+          customers: [consumer.id],
+          mess_id: id,
+          duration,
+          phone,
+          payment_mode: paymentMode,
+          name,
+          address,
+          gender,
+          college,
+          food_preference: mappedFoodPref,
+          emergency_contact: emergencyContact,
+          mess_duration: mess.monthly_mess_duration || 30,
+          joining_date: new Date().toISOString(),
+          razorpay_order_id: rOrder.id,
+          total_amount: calculatedAmount,
+          payment_status: "created",
+        })
+        .select()
+        .single();
+      if (error) throw error;
 
       return NextResponse.json(
         {
           message: "Order created for payment",
           order: rOrder,
-          dbOrderId: messCustomer._id,
+          dbOrderId: messCustomer.id,
           key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
           amount: calculatedAmount,
         },
@@ -293,35 +321,37 @@ export async function POST(request, { params }) {
       );
     }
 
-    const newCustomerPayload = {
-      customer: [consumer._id],
-      mess: id,
-      duration,
-      phone,
-      paymentMode,
-      name,
-      address,
-      gender,
-      college,
-      foodPreference: mappedFoodPref,
-      emergencyContact,
-      messDuration: mess.monthlyMessDuration || 30,
-      joiningDate: new Date(),
-      paymentStatus: "paid",
-      paymentVerified: true,
-    };
-
     const recipientName = consumer.username || "User";
     const recipientEmail = consumer.email;
 
-    const messCustomer = await NewMessCustomer.create(newCustomerPayload);
+    const { data: messCustomer, error } = await supabase
+      .from("new_mess_customer")
+      .insert({
+        consumer_id: consumer.id,
+        customers: [consumer.id],
+        mess_id: id,
+        duration,
+        phone,
+        payment_mode: paymentMode,
+        name,
+        address,
+        gender,
+        college,
+        food_preference: mappedFoodPref,
+        emergency_contact: emergencyContact,
+        mess_duration: mess.monthly_mess_duration || 30,
+        joining_date: new Date().toISOString(),
+        payment_status: "paid",
+        payment_verified: true,
+      })
+      .select()
+      .single();
+    if (error) throw error;
 
-    mess.newMessCustomer.push(messCustomer._id);
-    await mess.save();
-
-    await Consumer.findByIdAndUpdate(consumer._id, {
-      haveMonthlyMess: true,
-    });
+    await supabase
+      .from("consumer")
+      .update({ have_monthly_mess: true })
+      .eq("id", consumer.id);
 
     try {
       await transporter.sendMail({
@@ -370,8 +400,6 @@ export async function POST(request, { params }) {
 
 export async function PATCH(request, { params }) {
   try {
-    await connectDB();
-
     const { id } = (await params) || {};
     const body = await request.json();
     const {
@@ -393,7 +421,11 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const consumer = await Consumer.findById(session.user.id);
+    const { data: consumer } = await supabase
+      .from("consumer")
+      .select("*")
+      .eq("id", session.user.id)
+      .single();
     if (!consumer) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
@@ -411,9 +443,17 @@ export async function PATCH(request, { params }) {
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
 
-    const messCustomer = dbOrderId
-      ? await NewMessCustomer.findById(dbOrderId)
-      : await NewMessCustomer.findOne({ razorpayOrderId: razorpay_order_id });
+    const { data: messCustomer } = dbOrderId
+      ? await supabase
+          .from("new_mess_customer")
+          .select("*")
+          .eq("id", dbOrderId)
+          .single()
+      : await supabase
+          .from("new_mess_customer")
+          .select("*")
+          .eq("razorpay_order_id", razorpay_order_id)
+          .single();
 
     if (!messCustomer) {
       return NextResponse.json(
@@ -422,26 +462,31 @@ export async function PATCH(request, { params }) {
       );
     }
 
-    if (String(messCustomer.customer[0]) !== String(session.user.id)) {
+    if (messCustomer.consumer_id !== session.user.id) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
     }
 
     if (expectedSign === razorpay_signature) {
-      messCustomer.paymentStatus = "paid";
-      messCustomer.razorpayPaymentId = razorpay_payment_id;
-      messCustomer.razorpaySignature = razorpay_signature;
-      messCustomer.paymentVerified = true;
-      await messCustomer.save();
+      await supabase
+        .from("new_mess_customer")
+        .update({
+          payment_status: "paid",
+          razorpay_payment_id: razorpay_payment_id,
+          razorpay_signature: razorpay_signature,
+          payment_verified: true,
+        })
+        .eq("id", messCustomer.id);
 
-      const mess = await Mess.findById(messCustomer.mess);
-      if (!mess.newMessCustomer.includes(messCustomer._id)) {
-        mess.newMessCustomer.push(messCustomer._id);
-        await mess.save();
-      }
+      await supabase
+        .from("consumer")
+        .update({ have_monthly_mess: true })
+        .eq("id", consumer.id);
 
-      await Consumer.findByIdAndUpdate(consumer._id, {
-        haveMonthlyMess: true,
-      });
+      const { data: mess } = await supabase
+        .from("mess")
+        .select("*")
+        .eq("id", messCustomer.mess_id)
+        .single();
 
       const recipientName = consumer.username || "User";
       const recipientEmail = consumer.email;
@@ -509,9 +554,11 @@ export async function PATCH(request, { params }) {
         console.error("Failed to send payment confirmation mail:", mailErr);
       }
 
-      const populatedCustomer = await NewMessCustomer.findById(messCustomer._id)
-        .populate("mess")
-        .populate("customer");
+      const { data: populatedCustomer } = await supabase
+        .from("new_mess_customer")
+        .select("*, mess:mess_id(*), consumer:consumer_id(*)")
+        .eq("id", messCustomer.id)
+        .single();
 
       return NextResponse.json(
         {
@@ -521,8 +568,10 @@ export async function PATCH(request, { params }) {
         { status: 200 }
       );
     } else {
-      messCustomer.paymentStatus = "failed";
-      await messCustomer.save();
+      await supabase
+        .from("new_mess_customer")
+        .update({ payment_status: "failed" })
+        .eq("id", messCustomer.id);
 
       return NextResponse.json(
         { message: "Invalid payment signature" },

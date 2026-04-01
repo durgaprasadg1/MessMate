@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/mongodb";
-import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import supabase from "@/lib/supabaseClient";
 import {
   notifyOrderCancelled,
   notifyOrderCompleted,
@@ -15,16 +14,17 @@ export async function PATCH(request, { params }) {
     const { id, orderid } = await params;
     const body = await request.json();
     const action = body.action;
-    await connectDB();
-    const { default: Order } = await import("@/models/order");
-    const { default: Mess } = await import("@/models/mess");
-    const { default: Consumer } = await import("@/models/consumer");
 
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    const order = await Order.findById(orderid);
+    const { data: order, error: orderErr } = await supabase
+      .from("order")
+      .select("*")
+      .eq("id", orderid)
+      .single();
+    if (orderErr) throw orderErr;
     if (!order)
       return NextResponse.json({ message: "Order not found" }, { status: 404 });
 
@@ -38,29 +38,28 @@ export async function PATCH(request, { params }) {
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
       try {
-        order.isCancelled = true;
-        if (order.status === "paid") {
-          order.refundInitiated = true;
-        }
-        order.status = order.status === "paid" ? "failed" : order.status;
-        await order.save();
-
-        await Mess.findByIdAndUpdate(order.mess, {
-          $pull: { orders: order._id },
-        });
-        await Consumer.findByIdAndUpdate(order.consumer, {
-          $pull: { orders: order._id },
-        });
+        await supabase
+          .from("order")
+          .update({
+            is_cancelled: true,
+            refund_initiated: order.status === "paid",
+            status: order.status === "paid" ? "failed" : order.status,
+          })
+          .eq("id", orderid);
 
         // Notify owner about cancellation
         try {
-          const mess = await Mess.findById(order.mess).populate("owner");
+          const { data: mess } = await supabase
+            .from("mess")
+            .select("id,name, owner:owner_id(*)")
+            .eq("id", order.mess_id)
+            .single();
           if (mess?.owner) {
             await notifyOrderCancelled(
-              order._id,
-              mess.owner._id,
+              order.id,
+              mess.owner.id,
               "Owner",
-              order.mess,
+              order.mess_id,
               mess.name || "your mess",
               "customer"
             );
@@ -80,24 +79,30 @@ export async function PATCH(request, { params }) {
     }
 
     if (action === "take") {
-      const mess = await Mess.findById(order.mess);
+      const { data: mess } = await supabase
+        .from("mess")
+        .select("id,name, owner:owner_id(*)")
+        .eq("id", order.mess_id)
+        .single();
       if (!mess)
         return NextResponse.json(
           { message: "Mess not found" },
           { status: 404 }
         );
-      if (!mess.owner || mess.owner.toString() !== session.user.id)
+      if (!mess.owner || mess.owner.id !== session.user.id)
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-      order.isTaken = true;
-      await order.save();
+      await supabase
+        .from("order")
+        .update({ is_taken: true })
+        .eq("id", orderid);
 
       // Notify consumer that order is taken
       try {
         await notifyOrderTaken(
-          order._id,
-          order.consumer,
-          order.mess,
+          order.id,
+          order.consumer_id,
+          order.mess_id,
           mess?.name || "the mess"
         );
       } catch (notifErr) {
@@ -111,36 +116,37 @@ export async function PATCH(request, { params }) {
     }
 
     if (action === "refund" || action === "returnPayment") {
-      const mess = await Mess.findById(order.mess);
+      const { data: mess } = await supabase
+        .from("mess")
+        .select("id,name, owner:owner_id(*)")
+        .eq("id", order.mess_id)
+        .single();
       if (!mess)
         return NextResponse.json(
           { message: "Mess not found" },
           { status: 404 }
         );
-      if (!mess.owner || mess.owner.toString() !== session.user.id)
+      if (!mess.owner || mess.owner.id !== session.user.id)
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
       try {
-        order.isCancelled = true;
-        order.refundInitiated = true;
-        order.status = order.status === "paid" ? "refunded" : "failed";
-        await order.save();
-
-        await Mess.findByIdAndUpdate(order.mess, {
-          $pull: { orders: order._id },
-        });
-        await Consumer.findByIdAndUpdate(order.consumer, {
-          $pull: { orders: order._id },
-        });
+        await supabase
+          .from("order")
+          .update({
+            is_cancelled: true,
+            refund_initiated: true,
+            status: order.status === "paid" ? "refunded" : "failed",
+          })
+          .eq("id", orderid);
 
         // Notify consumer about refund
         try {
           await notifyOrderRefunded(
-            order._id,
-            order.consumer,
-            order.mess,
+            order.id,
+            order.consumer_id,
+            order.mess_id,
             mess?.name || "the mess",
-            order.totalPrice / 100
+            order.total_price / 100
           );
         } catch (notifErr) {
           console.error("Notification failed:", notifErr);
@@ -157,25 +163,30 @@ export async function PATCH(request, { params }) {
     }
 
     if (action === "markDone") {
-      const mess = await Mess.findById(order.mess);
+      const { data: mess } = await supabase
+        .from("mess")
+        .select("id,name, owner:owner_id(*)")
+        .eq("id", order.mess_id)
+        .single();
       if (!mess)
         return NextResponse.json(
           { message: "Mess not found" },
           { status: 404 }
         );
-      if (!mess.owner || mess.owner.toString() !== session.user.id)
+      if (!mess.owner || mess.owner.id !== session.user.id)
         return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
-      order.done = true;
-      order.status = "completed";
-      await order.save();
+      await supabase
+        .from("order")
+        .update({ done: true, status: "completed" })
+        .eq("id", orderid);
 
       // Notify consumer that order is completed
       try {
         await notifyOrderCompleted(
-          order._id,
-          order.consumer,
-          order.mess,
+          order.id,
+          order.consumer_id,
+          order.mess_id,
           mess?.name || "the mess"
         );
       } catch (notifErr) {
@@ -201,22 +212,26 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id, orderid } = await params;
-    await connectDB();
-    const { default: Order } = await import("@/models/order");
-    const { default: Mess } = await import("@/models/mess");
-    const { default: Consumer } = await import("@/models/consumer");
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
 
-    const order = await Order.findById(orderid);
+    const { data: order } = await supabase
+      .from("order")
+      .select("*")
+      .eq("id", orderid)
+      .single();
     if (!order)
       return NextResponse.json({ message: "Order not found" }, { status: 404 });
 
-    const mess = await Mess.findById(order.mess);
+    const { data: mess } = await supabase
+      .from("mess")
+      .select("*")
+      .eq("id", order.mess_id)
+      .single();
     if (!mess)
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
-    if (!mess.owner || mess.owner.toString() !== session.user.id)
+    if (!mess.ownerId || mess.ownerId !== session.user.id)
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
 
     if (order.done)
@@ -226,12 +241,7 @@ export async function DELETE(request, { params }) {
       );
 
     try {
-      await Order.findByIdAndDelete(orderid);
-
-      await Mess.findByIdAndUpdate(mess._id, { $pull: { orders: orderid } });
-      await Consumer.findByIdAndUpdate(order.consumer, {
-        $pull: { orders: orderid },
-      });
+    await supabase.from("order").delete().eq("id", orderid);
 
       return NextResponse.json({ message: "Order deleted" }, { status: 200 });
     } catch (e) {

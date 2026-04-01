@@ -1,16 +1,15 @@
-import { connectDB } from "@/lib/mongodb";
+import supabase from "@/lib/supabaseClient";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await connectDB();
-    const { default: Consumer } = await import("@/models/consumer");
-    const users = await Consumer.find({})
-      .sort({ _id: -1 })
-      .limit(200)
-      .select("username email")
-      .lean();
+    const { data: users, error } = await supabase
+      .from("consumer")
+      .select("id, username, email")
+      .order("id", { ascending: false })
+      .limit(200);
+    if (error) throw error;
 
     return Response.json({ success: true, users }, { status: 200 });
   } catch (error) {

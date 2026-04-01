@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import Mess from "../../../../../models/mess";
 import nodemailer from "nodemailer";
+import supabase from "@/lib/supabaseClient";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -13,7 +13,12 @@ const transporter = nodemailer.createTransport({
 export async function POST(req, { params }) {
   try {
     const { id } = await params;
-     const mess = await Mess.findById(id);
+     const { data: mess, error } = await supabase
+       .from("mess")
+       .select("*")
+       .eq("id", id)
+       .single();
+      if (error) throw error;
       if (!mess)
         return NextResponse.json(
           { message: "Mess not found" },
@@ -71,8 +76,10 @@ export async function POST(req, { params }) {
       console.error("Failed to send denial email:", mailErr);
     }
 
-      mess.isVerified = true;
-      await mess.save();
+      await supabase
+        .from("mess")
+        .update({ is_verified: true })
+        .eq("id", id);
 
     return NextResponse.json({ message: "Verified Mess" });
   } catch (error) {

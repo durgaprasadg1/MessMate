@@ -24,7 +24,7 @@ export default function AllMessPage() {
         }
 
         const data = await res.json();
-        setMesses(data.data || []);
+        setMesses(Array.isArray(data) ? data : data.data || []);
       } catch (err) {
         console.error("Error fetching messes:", err);
         setError(true);

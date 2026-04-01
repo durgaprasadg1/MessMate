@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "../../../../../lib/mongodb";
-import Mess from "../../../../../models/mess";
-import Menu from "../../../../../models/menu";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import supabase from "@/lib/supabaseClient";
 
 export async function POST(request, { params }) {
   try {
@@ -12,7 +10,6 @@ export async function POST(request, { params }) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    await connectDB();
     const { id } = await params;
 
     if (!id) {
@@ -28,12 +25,16 @@ export async function POST(request, { params }) {
       deletedDishIds = [],
     } = await request.json();
 
-    const mess = await Mess.findById(id);
+    const { data: mess } = await supabase
+      .from("mess")
+      .select("*")
+      .eq("id", id)
+      .single();
     if (!mess) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
 
-    const ownerId = mess.owner ? mess.owner.toString() : null;
+    const ownerId = mess.owner_id;
     if (!ownerId || ownerId !== session.user.id) {
       return NextResponse.json({ message: "Not the owner" }, { status: 403 });
     }
@@ -66,73 +67,60 @@ export async function POST(request, { params }) {
       );
     }
 
-    let menuDoc = await Menu.findOne({ mess: id, menutype });
+    const { data: existingMenu } = await supabase
+      .from("menu")
+      .select("*")
+      .eq("mess_id", id)
+      .eq("menutype", menutype)
+      .single();
 
-    if (!menuDoc || replace) {
-      menuDoc = await Menu.findOneAndUpdate(
-        { mess: id, menutype },
-        { mess: id, menutype, mealTime: mealTime || "", dishes: cleanedDishes },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      );
+    const menuPayload = {
+      mess_id: id,
+      menutype,
+      meal_time: mealTime || "",
+      dishes: cleanedDishes,
+    };
+
+    let menuDoc = existingMenu;
+    if (existingMenu) {
+      const { data, error } = await supabase
+        .from("menu")
+        .update(menuPayload)
+        .eq("id", existingMenu.id)
+        .select()
+        .single();
+      if (error) throw error;
+      menuDoc = data;
     } else {
-      
-      if (Array.isArray(deletedDishIds) && deletedDishIds.length) {
-        menuDoc.dishes = menuDoc.dishes.filter(
-          (d) =>
-            !deletedDishIds.some((del) => del.toString() === d._id.toString())
-        );
-      }
-
-      for (const incoming of cleanedDishes) {
-        if (incoming._id) {
-          const idx = menuDoc.dishes.findIndex(
-            (d) => d._id.toString() === incoming._id.toString()
-          );
-          if (idx > -1) {
-            menuDoc.dishes[idx].name = incoming.name;
-            menuDoc.dishes[idx].price = incoming.price;
-            menuDoc.dishes[idx].items = incoming.items;
-          } else {
-            menuDoc.dishes.push(incoming);
-          }
-        } else {
-          const match = menuDoc.dishes.find(
-            (d) =>
-              d.name &&
-              incoming.name &&
-              d.name.trim().toLowerCase() === incoming.name.trim().toLowerCase()
-          );
-          if (match) {
-            match.price = incoming.price;
-            match.items = incoming.items;
-          } else {
-            menuDoc.dishes.push(incoming);
-          }
-        }
-      }
-
-      menuDoc.mealTime = mealTime || menuDoc.mealTime || "";
-      await menuDoc.save();
+      const { data, error } = await supabase
+        .from("menu")
+        .insert(menuPayload)
+        .select()
+        .single();
+      if (error) throw error;
+      menuDoc = data;
     }
 
-    if (menuDoc) {
-      if (menutype === "vegMenu") {
-        mess.vegMenuRef = menuDoc._id;
-        mess.vegMenu = menuDoc.dishes.map((d) => ({
-          name: d.name,
-          price: d.price,
-          items: d.items,
-        }));
-      }
-      if (menutype === "nonVegMenu") {
-        mess.nonVegMenuRef = menuDoc._id;
-        mess.nonVegMenu = menuDoc.dishes.map((d) => ({
-          name: d.name,
-          price: d.price,
-          items: d.items,
-        }));
-      }
-      await mess.save();
+    if (menutype === "vegMenu") {
+      await supabase
+        .from("mess")
+        .update({
+          veg_price: price ? Number(price) : mess.veg_price,
+          veg_menu_ref_id: menuDoc.id,
+          veg_menu: cleanedDishes,
+          meal_time: mealTime || mess.meal_time,
+        })
+        .eq("id", id);
+    } else if (menutype === "nonVegMenu") {
+      await supabase
+        .from("mess")
+        .update({
+          non_veg_price: price ? Number(price) : mess.non_veg_price,
+          non_veg_menu_ref_id: menuDoc.id,
+          non_veg_menu: cleanedDishes,
+          meal_time: mealTime || mess.meal_time,
+        })
+        .eq("id", id);
     }
 
     return NextResponse.json(
@@ -150,7 +138,6 @@ export async function POST(request, { params }) {
 
 export async function GET(request, { params }) {
   try {
-    await connectDB();
     const { id } = params;
     if (!id)
       return NextResponse.json({ message: "Missing mess id" }, { status: 400 });
@@ -159,7 +146,12 @@ export async function GET(request, { params }) {
     const menutype = url.searchParams.get("menutype");
 
     if (menutype) {
-      const menuDoc = await Menu.findOne({ mess: id, menutype });
+      const { data: menuDoc } = await supabase
+        .from("menu")
+        .select("*")
+        .eq("mess_id", id)
+        .eq("menutype", menutype)
+        .maybeSingle();
       if (!menuDoc)
         return NextResponse.json(
           { message: "Menu not found" },
@@ -169,7 +161,10 @@ export async function GET(request, { params }) {
     }
 
     // if menutype not specified return all menus for this mess
-    const menus = await Menu.find({ mess: id });
+    const { data: menus = [] } = await supabase
+      .from("menu")
+      .select("*")
+      .eq("mess_id", id);
     return NextResponse.json(menus, { status: 200 });
   } catch (e) {
     console.error("Error fetching menu", e);
