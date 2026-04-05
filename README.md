@@ -1,106 +1,105 @@
 # MessMate
 
-A modern  platform for managing mess/food services, bookings, orders, inventory, and user authentication.
+MessMate is a full-stack mess management platform built on the Next.js App Router. It supports consumer ordering, mess owner operations, and administrative workflows with server-side authentication, payments, notifications, analytics, and Redis-backed caching.
 
-## Badges
+## What this project delivers
 
-![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge\&logo=next.js)
-![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge\&logo=react)
-![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.4-38bdf8?style=for-the-badge\&logo=tailwindcss)
-![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-brightgreen?style=for-the-badge\&logo=mongodb)
-![Zod](https://img.shields.io/badge/Zod-Schema_Validation-3066BE?style=for-the-badge)
+### Consumer experience
 
-## Overview
+- Browse mess listings and view individual mess details
+- Place orders and complete payments
+- Track order history and monthly subscriptions
+- Receive notifications and leave reviews
 
-MessMate is a fully featured mess management system built with Next.js (App Router), designed for secure user authentication, bookings, payment verification, inventory handling, and validation via Zod. This version focuses only on the Next.js application, keeping things clean and straightforward.
+### Mess owner tools
 
-## Core Features
+- Manage mess availability and menu details
+- View incoming orders and update order states
+- Monitor analytics and performance trends
+- Handle monthly customer registrations
 
-### Authentication
+### Admin operations
 
-* Email-based signup/login
-* Secure server-side validation
-* Optional NextAuth-compatible patterns
+- Review and verify mess registrations
+- Access system-wide user and mess insights
+- Manage user and mess status
 
-### Mess Booking & Payments
-
-* Create mess bookings
-* Razorpay payment verification
-* Secure transactional flows
-
-### Inventory & Order Management
-
-* Add, edit, and list items
-* Fully validated API routes under `app/api/`
-* Mongoose-based storage operations
-
-### Input Validation
-
-* Strong, shared Zod schemas across server & client
-
-### UI & UX
-
-* Tailwind CSS styling
-* Framer Motion animations
-* Reusable components and clean layout
-
-## Tech Stack
+## Tech stack
 
 ### Frontend
 
-* Next.js (App Router)
-* React 19
-* Tailwind CSS
-* Framer Motion
-* Lucide Icons
-* React Toastify
+- Next.js App Router
+- React 19
+- Tailwind CSS 4
+- Radix UI primitives
+- Recharts for analytics
 
-### Backend
+### Backend and services
 
-* Mongoose (MongoDB)
-* JWT
-* Zod Validation
+- Supabase Postgres with server-side access
+- NextAuth session handling
+- Redis for caching (18 hour TTL)
+- Razorpay payments
+- Nodemailer for email flows
+- Cloudinary for media uploads
+- Socket.io for real-time updates
 
-### Utilities
+## Architecture notes
 
-* Nodemailer for email flow
-* Cloudinary for uploads (optional)
+- A custom HTTP server in [server.js](server.js) initializes the Next.js app and the Socket.io server.
+- Supabase access is centralized in [lib/supabaseClient.js](lib/supabaseClient.js) using a service role key for server-side calls.
+- Redis helpers are in [lib/redis.js](lib/redis.js) and provide JSON caching with TTL and safe fallback behavior.
+- Route handlers use server-side sessions to gate protected flows.
 
-## Quick Start
+## Project structure
+
+```
+MessMate/
+  app/
+  Component/
+  components/
+  contexts/
+  hooks/
+  lib/
+  public/
+  validators/
+  tests/
+  server.js
+  redis.js
+  next.config.ts
+  package.json
+  README.md
+```
+
+## Local setup
 
 ### Prerequisites
 
-* Node.js 18+
-* npm or yarn
-* MongoDB instance
+- Node.js 18 or newer
+- A Supabase project with database access
+- Redis instance (optional but recommended for caching)
+- Razorpay account for payments (optional in local testing)
+- SMTP credentials for mail flows (optional)
 
-### 1. Clone the repository
-
-```
-git clone <repo-url>
-cd MessMate
-```
-
-### 2. Install dependencies
+### Install dependencies
 
 ```
 npm install
 ```
 
-### 3. Add environment variables
+### Environment variables
 
-Create a `.env.local` file:
+Create a .env.local file in the project root:
 
 ```
-MONGODB_URI=<your-mongodb-uri>
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=<random-string>
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
 
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
 
-CLOUDINARY_CLOUD_NAME=
-CLOUDINARY_API_KEY=
-CLOUDINARY_API_SECRET=
+REDIS_URL=
 
 RAZORPAY_KEY_ID=
 RAZORPAY_KEY_SECRET=
@@ -110,80 +109,46 @@ SMTP_PORT=
 SMTP_USER=
 SMTP_PASS=
 
-JWT_SECRET=<jwt-secret>
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
 ```
 
-### 4. Run the development server
+Notes:
+
+- Redis is optional. If REDIS_URL is missing, the app runs without caching.
+- Use a service role key only on the server. Do not expose it to clients.
+
+### Run in development
 
 ```
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-## Folder Structure
+### Build and run production
 
 ```
-MessMate/
-├── app/                     
-├── Component/               
-├── components/              
-├── lib/                     
-├── validators/              
-├── public/                  
-├── package.json             
-└── README.md
+npm run build
+npm run start
 ```
 
-## API Endpoints (Next.js)
+## Scripts
 
-### Auth
+- npm run dev: start the custom server in development
+- npm run build: create the production build
+- npm run start: run the production server
+- npm run lint: lint the codebase
+- npm run test:auth: run auth unit tests
+- npm run test:e2e-auth: run auth end-to-end tests
 
-* POST /api/auth/signup
-* POST /api/auth/login
+## Caching behavior
 
-### Mess & Bookings
-
-* GET /api/mess
-* POST /api/mess/[id]/booking
-* PATCH /api/mess/[id]/booking
-
-### Items
-
-* GET /api/items
-* POST /api/items
-* PATCH /api/items/[id]
-
-### Utilities
-
-* POST /api/checkUniqueUsername
-
-## NPM Scripts
-
-* `npm run dev`
-* `npm run build`
-* `npm run start`
-* `npm run lint`
-
-## Development Notes
-
-* Uses Zod for strict validation
-* Requires stable MongoDB connection
-* Framer Motion transitions
-* Toastify notifications
+- Redis caches are keyed by tenant and user identifiers where applicable.
+- TTL is 18 hours for cached reads.
+- Cache invalidation occurs on mutating operations.
 
 ## Contributing
 
-1. Fork the repository
-2. Create a branch:
-
-```
-git checkout -b feature/my-feature
-```
-
-3. Commit and push changes
-4. Open a pull request
-
-
-Feel Free to contribute 😊.
-
+1. Create a branch
+2. Make your changes
+3. Open a pull request with a clear description of updates
