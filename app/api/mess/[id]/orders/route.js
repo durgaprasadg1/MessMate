@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import supabase from "@/lib/supabaseClient";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import {
+  deleteCacheKeys,
+  getJsonCache,
+  setJsonCache,
+} from "../../../../lib/redis";
+
+const TTL_SECONDS = 60 * 60 * 18;
 
 export async function GET(request, { params }) {
   try {
@@ -18,24 +25,28 @@ export async function GET(request, { params }) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
 
+    const tenantId = request.headers.get("x-tenant-id") || "public";
+    const cacheKey = `tenant:${tenantId}:mess:${messId}:orders`;
+    const cached = await getJsonCache(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached, { status: 200 });
+    }
+
     const { data: orders, error } = await supabase
       .from("order")
-      .select(
-        "*, consumer:consumer_id(id, username, email)"
-      )
+      .select("*, consumer:consumer_id(id, username, email)")
       .eq("mess_id", messId)
       .order("created_at", { ascending: false });
     if (error) throw error;
 
     if (!orders.length) {
-      return NextResponse.json(
-        {
-          message: "No orders found for this Mess",
-          orders: [],
-          messOwnerId: mess.ownerId,
-        },
-        { status: 200 }
-      );
+      const payload = {
+        message: "No orders found for this Mess",
+        orders: [],
+        messOwnerId: mess.ownerId,
+      };
+      await setJsonCache(cacheKey, payload, TTL_SECONDS);
+      return NextResponse.json(payload, { status: 200 });
     }
 
     const plainOrders = orders.map((o) => ({
@@ -59,15 +70,14 @@ export async function GET(request, { params }) {
       createdAt: o.created_at ? o.created_at : null,
     }));
 
-    return NextResponse.json(
-      { orders: plainOrders, messOwnerId: mess.owner_id, messId },
-      { status: 200 }
-    );
+    const payload = { orders: plainOrders, messOwnerId: mess.owner_id, messId };
+    await setJsonCache(cacheKey, payload, TTL_SECONDS);
+    return NextResponse.json(payload, { status: 200 });
   } catch (err) {
     console.error("GET /api/mess/[id]/orders error:", err);
     return NextResponse.json(
       { message: "Server error", error: err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -102,7 +112,7 @@ export async function DELETE(request, { params }) {
     if (!completed.length) {
       return NextResponse.json(
         { message: "No completed or failed orders to delete", deleted: 0 },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -110,15 +120,18 @@ export async function DELETE(request, { params }) {
 
     await supabase.from("order").delete().in("id", ids);
 
+    const tenantId = request.headers.get("x-tenant-id") || "public";
+    await deleteCacheKeys([`tenant:${tenantId}:mess:${messId}:orders`]);
+
     return NextResponse.json(
       { message: "Deleted completed or failed orders", deleted: ids.length },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (err) {
     console.error("DELETE /api/mess/[id]/orders error:", err);
     return NextResponse.json(
       { message: "Server error", error: err.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

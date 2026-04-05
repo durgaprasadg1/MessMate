@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import supabase from "@/lib/supabaseClient";
+import { getJsonCache, setJsonCache } from "../../../../lib/redis";
+
+const TTL_SECONDS = 60 * 60 * 18;
 
 export async function GET(req, { params }) {
   try {
@@ -15,6 +18,13 @@ export async function GET(req, { params }) {
 
     if (session.user.id !== id) {
       return NextResponse.json({ error: "Access Denied" }, { status: 403 });
+    }
+
+    const tenantId = req.headers.get("x-tenant-id") || "public";
+    const cacheKey = `tenant:${tenantId}:owner:${id}:messes`;
+    const cached = await getJsonCache(cacheKey);
+    if (cached) {
+      return NextResponse.json({ messes: cached }, { status: 200 });
     }
 
     const { data: owner, error } = await supabase
@@ -48,12 +58,14 @@ export async function GET(req, { params }) {
         createdAt: m.created_at,
       })) || [];
 
+    await setJsonCache(cacheKey, shaped, TTL_SECONDS);
+
     return NextResponse.json({ messes: shaped });
   } catch (err) {
     console.error("ERROR in /api/owner/[id]/mess-details:", err);
     return NextResponse.json(
       { error: "Server Error", details: err?.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

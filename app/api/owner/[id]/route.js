@@ -1,9 +1,21 @@
 import { NextResponse } from "next/server";
 import supabase from "@/lib/supabaseClient";
+import { getJsonCache, setJsonCache } from "../../../../lib/redis";
+
+const TTL_SECONDS = 60 * 60 * 18;
 
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
+    const tenantId = request.headers.get("x-tenant-id") || "public";
+    const cacheKey = `tenant:${tenantId}:owner:${id}:profile`;
+    const cached = await getJsonCache(cacheKey);
+    if (cached) {
+      return NextResponse.json(
+        { owner: cached, message: "owner found" },
+        { status: 200 },
+      );
+    }
 
     const { data: owner, error } = await supabase
       .from("owner")
@@ -16,9 +28,11 @@ export async function GET(request, { params }) {
       return NextResponse.json({ message: "owner not found" }, { status: 404 });
     }
 
+    await setJsonCache(cacheKey, owner, TTL_SECONDS);
+
     return NextResponse.json(
       { owner, message: "owner found" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     console.error("Error fetching owner:", error);

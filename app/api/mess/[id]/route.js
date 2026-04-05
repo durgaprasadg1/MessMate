@@ -2,15 +2,29 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import supabase from "@/lib/supabaseClient";
+import {
+  deleteCacheKeys,
+  getJsonCache,
+  setJsonCache,
+} from "../../../../lib/redis";
+
+const TTL_SECONDS = 60 * 60 * 18;
 
 export async function GET(request, { params }) {
   try {
     const { id } = (await params) || {};
+    const tenantId = request.headers.get("x-tenant-id") || "public";
+    const cacheKey = `tenant:${tenantId}:mess:${id}`;
+    const cached = await getJsonCache(cacheKey);
+
+    if (cached) {
+      return NextResponse.json(cached, { status: 200 });
+    }
 
     const { data: mess } = await supabase
       .from("mess")
       .select(
-        "*, alerts:message(*), vegMenuRef:veg_menu_ref_id(*), nonVegMenuRef:non_veg_menu_ref_id(*), reviews:review(*, author:author_id(*))"
+        "*, alerts:message(*), vegMenuRef:veg_menu_ref_id(*), nonVegMenuRef:non_veg_menu_ref_id(*), reviews:review(*, author:author_id(*))",
       )
       .eq("id", id)
       .single();
@@ -18,23 +32,17 @@ export async function GET(request, { params }) {
     if (!mess) {
       console.warn("[API GET /mess/:id] Mess not found for id:", id);
       const debug = request.nextUrl.searchParams.get("debug") === "1";
+
       if (debug) {
-        const count = await Mess.countDocuments();
-        const sample = await Mess.find({}, { _id: 1 }).limit(5);
         return NextResponse.json(
           {
             message: "Mess not found",
             id,
-            collectionCount: count,
-            sampleIds: sample.map((d) => String(d._id)),
-            dbName: process.env.MONGODB_DBNAME || "messmate",
-            uriHost:
-              (process.env.MONGODB_URI || "").split("@").pop()?.split("/")[0] ||
-              null,
           },
           { status: 404 },
         );
       }
+
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
 
@@ -70,6 +78,8 @@ export async function GET(request, { params }) {
       reviews: mess.reviews,
     };
 
+    await setJsonCache(cacheKey, shaped, TTL_SECONDS);
+
     console.log("[API GET /mess/:id] Found mess:", mess.id, mess.name);
     return NextResponse.json(shaped, { status: 200 });
   } catch (error) {
@@ -84,6 +94,7 @@ export async function GET(request, { params }) {
 export async function PATCH(request, { params }) {
   try {
     const { id } = (await params) || {};
+    const tenantId = request.headers.get("x-tenant-id") || "public";
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -103,6 +114,7 @@ export async function PATCH(request, { params }) {
         { status: 403 },
       );
     }
+
     const { data: updatedMess, error } = await supabase
       .from("mess")
       .update({ is_open: !mess.is_open })
@@ -111,9 +123,14 @@ export async function PATCH(request, { params }) {
       .single();
     if (error) throw error;
 
+    await deleteCacheKeys([
+      `tenant:${tenantId}:mess:${id}`,
+      `tenant:${tenantId}:messes:all`,
+    ]);
+
     return NextResponse.json(
       {
-        message: updatedMess.isOpen ? "Mess Opened" : "Mess Closed",
+        message: updatedMess.is_open ? "Mess Opened" : "Mess Closed",
         mess: updatedMess,
       },
       { status: 200 },
@@ -130,11 +147,23 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = (await params) || {};
-    await supabase.from("mess").delete().eq("id", id);
+    const tenantId = request.headers.get("x-tenant-id") || "public";
+    const { data: deletedMess, error } = await supabase
+      .from("mess")
+      .delete()
+      .eq("id", id)
+      .select("id")
+      .maybeSingle();
+    if (error) throw error;
 
     if (!deletedMess) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
+
+    await deleteCacheKeys([
+      `tenant:${tenantId}:mess:${id}`,
+      `tenant:${tenantId}:messes:all`,
+    ]);
 
     return NextResponse.json(
       { message: "Mess Deleted Successfully" },
