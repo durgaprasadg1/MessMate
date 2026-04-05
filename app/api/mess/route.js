@@ -1,10 +1,26 @@
 import { NextResponse } from "next/server";
 import supabase from "@/lib/supabaseClient";
+import { getJsonCache, setJsonCache } from "../../../lib/redis";
 
-export async function GET() {
+const TTL_SECONDS = 60 * 60 * 18;
+
+export async function GET(request) {
   try {
-    const { data: messes, error } = await supabase.from("mess").select("*");
+    const tenantId = request.headers.get("x-tenant-id") || "public";
+    const cacheKey = `tenant:${tenantId}:messes:all`;
+    const cached = await getJsonCache(cacheKey);
+
+    if (cached !== null) {
+      return NextResponse.json(cached, { status: 200 });
+    }
+
+    const { data: messes, error } = await supabase
+      .from("mess")
+      .select(
+        "id,name,owner_name,owner_id,phone_number,category,is_open,is_verified,is_blocked,is_limited,adhar_number,lat,lon,veg_menu,non_veg_menu,veg_price,non_veg_price,image_url,certificate_url,created_at"
+      );
     if (error) throw error;
+
     const shaped =
       messes?.map((m) => ({
         _id: m.id,
@@ -28,6 +44,9 @@ export async function GET() {
         certificate: { url: m.certificate_url },
         createdAt: m.created_at,
       })) || [];
+
+    await setJsonCache(cacheKey, shaped, TTL_SECONDS);
+
     return NextResponse.json(shaped, { status: 200 });
   } catch (error) {
     console.log("Error fetching mess data:", error);
@@ -36,9 +55,7 @@ export async function GET() {
         success: false,
         message: "Failed to fetch mess data",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-
-

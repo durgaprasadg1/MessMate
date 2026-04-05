@@ -1,6 +1,16 @@
 import supabase from "@/lib/supabaseClient";
+import { getJsonCache, setJsonCache } from "../../../../lib/redis";
+
+const TTL_SECONDS = 60 * 60 * 18;
 
 export async function GET() {
+  const tenantId = "public";
+  const cacheKey = `tenant:${tenantId}:admin:dashboard`;
+  const cached = await getJsonCache(cacheKey);
+  if (cached) {
+    return Response.json(cached);
+  }
+
   const { data: totalUsersAgg } = await supabase
     .from("consumer")
     .select("id", { count: "exact", head: true });
@@ -28,7 +38,7 @@ export async function GET() {
     .order("created_at", { ascending: false })
     .limit(5);
 
-  return Response.json({
+  const payload = {
     stats: {
       totalUsers,
       totalMesses,
@@ -41,5 +51,9 @@ export async function GET() {
       joined: c.createdAt,
     })),
     pendingMesses,
-  });
+  };
+
+  await setJsonCache(cacheKey, payload, TTL_SECONDS);
+
+  return Response.json(payload);
 }

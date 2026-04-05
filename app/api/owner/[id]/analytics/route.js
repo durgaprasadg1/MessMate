@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import supabase from "@/lib/supabaseClient";
+import { getJsonCache, setJsonCache } from "@/lib/redis";
+
+const TTL_SECONDS = 60 * 60 * 18;
 
 export async function GET(request, { params }) {
   try {
@@ -14,17 +17,21 @@ export async function GET(request, { params }) {
     if (!session || !session.user?.isOwner) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-    
+
+    const tenantId = request.headers.get("x-tenant-id") || "public";
+    const cacheKey = `tenant:${tenantId}:mess:${messId}:analytics`;
+    const cached = await getJsonCache(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached, { status: 200 });
+    }
+
     const { data: messExists } = await supabase
       .from("mess")
       .select("id")
       .eq("id", messId)
       .single();
     if (!messExists) {
-      return NextResponse.json(
-        { message: "Mess not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
 
     const messIds = [messId];
@@ -43,11 +50,11 @@ export async function GET(request, { params }) {
 
     const totalMeals = monthlyOrders.reduce(
       (sum, o) => sum + (o.noOfPlate || 1),
-      0
+      0,
     );
     const totalRevenueRaw = monthlyOrders.reduce(
       (sum, o) => sum + (o.totalPrice || 0),
-      0
+      0,
     );
 
     const { data: recentReviews = [] } = await supabase
@@ -62,7 +69,7 @@ export async function GET(request, { params }) {
             (
               recentReviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
               recentReviews.length
-            ).toFixed(1)
+            ).toFixed(1),
           )
         : 0;
 
@@ -82,7 +89,7 @@ export async function GET(request, { params }) {
     const churnRate =
       totalOrdersThisMonth > 0
         ? parseFloat(
-            ((cancelledOrders / totalOrdersThisMonth) * 100).toFixed(1)
+            ((cancelledOrders / totalOrdersThisMonth) * 100).toFixed(1),
           )
         : 0;
 
@@ -112,7 +119,7 @@ export async function GET(request, { params }) {
       ([date, meals]) => ({
         date,
         meals,
-      })
+      }),
     );
 
     const { data: allOrders = [] } = await supabase
@@ -207,29 +214,30 @@ export async function GET(request, { params }) {
           : 0;
       return { date, wastage: parseFloat(wastagePercent) };
     });
- 
-    return NextResponse.json(
-      {
-        summaryCards: {
-          totalMeals,
-          totalRevenue: totalRevenueRaw / 100,
-          avgRating,
-          cancellations: cancelledOrders,
-          churnRate,
-        },
-        dailyMealsTrend,
-        peakTimeSlots,
-        negativeReviews: negativeReviewsData,
-        platePerformance,
-        wastageData,
+
+    const payload = {
+      summaryCards: {
+        totalMeals,
+        totalRevenue: totalRevenueRaw / 100,
+        avgRating,
+        cancellations: cancelledOrders,
+        churnRate,
       },
-      { status: 200 }
-    );
+      dailyMealsTrend,
+      peakTimeSlots,
+      negativeReviews: negativeReviewsData,
+      platePerformance,
+      wastageData,
+    };
+
+    await setJsonCache(cacheKey, payload, TTL_SECONDS);
+
+    return NextResponse.json(payload, { status: 200 });
   } catch (error) {
     console.error("Analytics API error:", error);
     return NextResponse.json(
       { message: "Server error", error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
