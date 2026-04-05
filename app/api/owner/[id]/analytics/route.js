@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import supabase from "@/lib/supabaseClient";
-import { getJsonCache, setJsonCache } from "../../../../lib/redis";
+import { getJsonCache, setJsonCache } from "@/lib/redis";
 
 const TTL_SECONDS = 60 * 60 * 18;
 

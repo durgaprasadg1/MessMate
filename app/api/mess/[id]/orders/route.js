@@ -6,7 +6,7 @@ import {
   deleteCacheKeys,
   getJsonCache,
   setJsonCache,
-} from "../../../../lib/redis";
+} from "@/lib/redis";
 
 const TTL_SECONDS = 60 * 60 * 18;
 
