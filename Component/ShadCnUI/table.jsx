@@ -22,7 +22,33 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export function DataTable({ columns, data }) {
+const palettes = {
+  emerald: {
+    headerRow: "bg-gradient-to-r from-emerald-50 to-teal-50",
+    headerText: "text-emerald-900",
+    card: "rounded-2xl border border-emerald-100 shadow-sm bg-white",
+    hoverRow: "hover:bg-emerald-50/60",
+    input: "rounded-xl border border-emerald-100 bg-white shadow-sm focus-visible:ring-2 focus-visible:ring-emerald-200",
+    select:
+      "h-9 rounded-lg border border-emerald-100 bg-white px-3 text-sm text-stone-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-200",
+    pageBtn: "border border-emerald-100 text-emerald-800 hover:bg-emerald-50",
+    meta: "text-stone-500",
+  },
+  stone: {
+    headerRow: "bg-stone-100",
+    headerText: "text-stone-900",
+    card: "rounded-2xl border border-stone-200 shadow-sm bg-white",
+    hoverRow: "hover:bg-stone-50",
+    input: "rounded-xl border border-stone-200 bg-white shadow-sm focus-visible:ring-2 focus-visible:ring-stone-300",
+    select:
+      "h-9 rounded-lg border border-stone-200 bg-white px-3 text-sm text-stone-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-stone-300",
+    pageBtn: "border border-stone-200 text-stone-800 hover:bg-stone-100",
+    meta: "text-stone-500",
+  },
+};
+
+export function DataTable({ columns, data, colorVariant = "emerald" }) {
+  const theme = palettes[colorVariant] || palettes.emerald;
   const [globalFilter, setGlobalFilter] = useState("");
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [sorting, setSorting] = useState([]);
@@ -52,14 +78,14 @@ export function DataTable({ columns, data }) {
             placeholder="Search..."
             value={globalFilter}
             onChange={(e) => setGlobalFilter(e.target.value)}
-            className="w-full"
+            className={`w-full ${theme.input}`}
           />
         </div>
         <div className="flex items-center gap-2">
           <label className="text-sm text-muted-foreground">Rows</label>
           <select
             aria-label="Rows per page"
-            className="h-8 rounded border border-input bg-background px-2 text-sm text-black"
+            className={theme.select}
             value={pagination.pageSize}
             onChange={(e) =>
               setPagination((p) => ({
@@ -78,11 +104,11 @@ export function DataTable({ columns, data }) {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-md border ">
+      <div className={`overflow-hidden ${theme.card}`}>
         <Table>
           <TableHeader> 
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-gray-700 hover:bg-gray-600">
+              <TableRow key={headerGroup.id} className={theme.headerRow}>
                 {headerGroup.headers.map((header) => {
                   const canSort = header.column.getCanSort();
                   const sortState = header.column.getIsSorted();
@@ -90,7 +116,7 @@ export function DataTable({ columns, data }) {
                     <TableHead key={header.id}>
                       {header.isPlaceholder ? null : (
                         <button
-                          className="flex items-center gap-2 text-white"
+                          className={`flex items-center gap-2 ${theme.headerText} font-semibold`}
                           onClick={() =>
                             canSort && header.column.toggleSorting()
                           }
@@ -124,6 +150,7 @@ export function DataTable({ columns, data }) {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  className={theme.hoverRow}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -150,7 +177,7 @@ export function DataTable({ columns, data }) {
       </div>
 
       <div className="flex items-center justify-between py-4">
-        <div className="text-sm text-muted-foreground">
+        <div className={`text-sm ${theme.meta}`}>
           Showing{" "}
           {table.getState().pagination.pageIndex *
             table.getState().pagination.pageSize +
@@ -163,13 +190,13 @@ export function DataTable({ columns, data }) {
           )}{" "}
           of {table.getFilteredRowModel().rows.length}
         </div>
-        <div className="flex items-center gap-2 text-white">
+        <div className="flex items-center gap-2 text-stone-700">
           <Button
             variant="outline"
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="text-black"
+            className={theme.pageBtn}
           >
             Prev
           </Button>
@@ -182,7 +209,7 @@ export function DataTable({ columns, data }) {
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="text-black"
+            className={theme.pageBtn}
           >
             Next
           </Button>

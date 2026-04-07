@@ -69,22 +69,23 @@ const LoginComponent = () => {
   if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col md:pl-[25vw] transition-[padding] duration-0 ease-linear">
       <Navbar />
 
-      <div className="flex flex-col items-center justify-center grow  mt-20">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-6 sm:p-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-4">
-            Welcome Back 👋
-          </h1>
+      <div className="flex flex-col items-center justify-center grow p-6 sm:p-10 relative z-10 w-full mt-16 md:mt-0">
+        <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100/60 p-8 sm:p-10 backdrop-blur-xl">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight leading-tight">
+              Welcome Back <span className="inline-block animate-wave">👋</span>
+            </h1>
+            <p className="text-slate-500 mt-3 font-medium">
+              Log in to your MessMate dashboard
+            </p>
+          </div>
 
-          <p className="text-gray-600 text-center mb-6 sm:mb-8 text-sm sm:text-base">
-            Login to your MessMate account
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <Label labelName="Email" />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semisemibold text-slate-400 uppercase tracking-widest pl-1">Email</label>
               <input
                 type="email"
                 name="email"
@@ -92,71 +93,77 @@ const LoginComponent = () => {
                 onChange={handleChange}
                 placeholder="Enter your email"
                 required
-                className="w-full px-4 py-3 border rounded-xl text-sm sm:text-base 
-                focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-700
+                focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 focus:bg-white transition-all placeholder:text-slate-400"
               />
             </div>
 
-            <div className="relative">
-              <Label labelName="Password" />
-              <input
-                type={show ? "text" : "password"}
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Enter your password"
-                minLength={8}
-                required
-                className="w-full px-4 py-3 border rounded-xl text-sm sm:text-base
-                focus:outline-none focus:ring-2 focus:ring-gray-400"
-              />
-              <button
-                type="button"
-                onClick={() => setShow(!show)}
-                className="absolute right-3 top-8 text-gray-500"
-              >
-                {show ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
+            <div className="space-y-1.5 relative">
+              <div className="flex justify-between items-end">
+                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest pl-1">Password</label>
+                 <button
+                   type="button"
+                   onClick={() => router.push("/forgot-password")}
+                   className="text-orange-500 hover:text-orange-600 font-semibold text-[11px] mb-1 hover:underline tracking-wide rounded"
+                 >
+                   Forgot your password?
+                 </button>
+              </div>
+              <div className="relative">
+                <input
+                  type={show ? "text" : "password"}
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                  minLength={8}
+                  required
+                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-700
+                  focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 focus:bg-white transition-all placeholder:text-slate-400 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShow(!show)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  {show ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
-
-            <button
-              type="button"
-              onClick={() => router.push("/forgot-password")}
-              className="text-gray-600 hover:underline text-sm mb-1"
-            >
-              Forgot password?
-            </button>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gray-600 hover:bg-black text-white py-3 rounded
-              font-semibold transition-all duration-200"
+              className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white py-4 rounded-2xl
+              font-semibold shadow-lg shadow-orange-500/30 transition-all duration-200 mt-2 rounded"
             >
-              {loading ? "Logging in..." : "Login"}
+              {loading ? "Logging in..." : "Login to account"}
             </button>
           </form>
 
-          <p className="text-center text-gray-500 text-sm mt-4">
-            
-            <button
-              type="button"
-              onClick={() => router.push("/signup")}
-              className="ml-1 text-gray-800 font-semibold hover:underline"
-            >
-              Create a <b>consumer</b> account
-            </button>
-          </p>
+          <div className="mt-10 border-t border-slate-100 pt-6 space-y-3">
+             <p className="text-center text-slate-500 text-xs font-medium">
+               New to MessMate? 
+               <button
+                 type="button"
+                 onClick={() => router.push("/signup")}
+                 className="ml-1.5 text-orange-500 font-semibold hover:underline rounded"
+               >
+                 Create Consumer Account
+               </button>
+             </p>
 
-          <p className="text-center text-gray-500 text-sm mt-2">
-            <button
-              type="button"
-              onClick={() => router.push("/register-owner")}
-              className="ml-1 text-gray-800 font-semibold hover:underline"
-            >
-              Create an <b>owner</b> account 
-            </button>
-          </p>
+             <p className="text-center text-slate-500 text-xs font-medium">
+               Are you a vendor?
+               <button
+                 type="button"
+                 onClick={() => router.push("/register-owner")}
+                 className="ml-1.5 text-orange-500 font-semibold hover:underline rounded"
+               >
+                 Register Mess Owner
+               </button>
+             </p>
+          </div>
         </div>
       </div>
     </div>

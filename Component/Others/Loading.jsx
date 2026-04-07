@@ -4,11 +4,10 @@ const Loading = () => {
   const {data : session} = useSession();
   const isOwner = session?.user?.isOwner;
   return (
-    <div className={isOwner ? "bg-gray-950 flex flex-col items-center justify-center min-h-screen  " : "flex flex-col items-center justify-center min-h-screen"}>
-      
+    <div className="flex flex-col items-center justify-center py-10">
 
       <div className="relative flex items-center justify-center">
-        <div className="w-16 h-16 border-4 border-orange-300 border-t-transparent rounded-full animate-spin"> 
+        <div className={isOwner ? "w-12 h-12 border-4 border-emerald-400/70 border-t-transparent rounded-full animate-spin" : "w-12 h-12 border-4 border-orange-300/70 border-t-transparent rounded-full animate-spin"}> 
           
         </div>
       </div>

@@ -109,7 +109,7 @@ export default function OrdersPage() {
         header: "Order",
         enableSorting: false,
         cell: ({ row }) => (
-          <span className="font-mono text-xs text-white">
+          <span className="font-mono text-xs text-emerald-900">
             {String(row.original._id).slice(0, 8)}
           </span>
         ),
@@ -121,21 +121,21 @@ export default function OrdersPage() {
           (row.consumer && (row.consumer.username || row.consumer.email)) ||
           "Unknown",
         cell: ({ getValue }) => (
-          <span className="text-white">{getValue()}</span>
+          <span className="text-emerald-900">{getValue()}</span>
         ),
       },
       {
         accessorKey: "selectedDishName",
         header: "Dish",
         cell: ({ getValue }) => (
-          <span className="text-white">{getValue() || "-"}</span>
+          <span className="text-emerald-900">{getValue() || "-"}</span>
         ),
       },
       {
         accessorKey: "noOfPlate",
         header: "Plates",
         cell: ({ getValue }) => (
-          <span className="block text-center text-white font-semibold">
+          <span className="block text-center text-emerald-900 font-semibold">
             {getValue() ?? 0}
           </span>
         ),
@@ -145,8 +145,8 @@ export default function OrdersPage() {
         header: "Amount",
         accessorFn: (row) => (row.totalPrice || 0) / 100,
         cell: ({ getValue }) => (
-          <span className="block text-right text-white font-semibold">
-            ₹{(getValue() || 0).toFixed(2)}
+          <span className="block text-right text-emerald-900 font-semibold">
+            Rs. {(getValue() || 0).toFixed(2)}
           </span>
         ),
       },
@@ -165,13 +165,13 @@ export default function OrdersPage() {
           let classes =
             "inline-block px-2 py-1 rounded-full text-xs font-semibold ";
           if (status === "completed") {
-            classes += "bg-green-600 text-white";
+            classes += "bg-emerald-100 text-emerald-800";
           } else if (status === "refunded" || isCancelled) {
-            classes += "bg-red-600 text-white";
+            classes += "bg-rose-100 text-rose-700";
           } else if (status === "paid") {
-            classes += "bg-yellow-500 text-black";
+            classes += "bg-amber-100 text-amber-800";
           } else {
-            classes += "bg-gray-600 text-white";
+            classes += "bg-stone-200 text-stone-800";
           }
 
           return <span className={classes}>{label}</span>;
@@ -183,7 +183,7 @@ export default function OrdersPage() {
         cell: ({ getValue }) => {
           const val = getValue();
           return (
-            <span className="whitespace-nowrap text-white">
+            <span className="whitespace-nowrap text-emerald-900">
               {val ? new Date(val).toLocaleString() : "-"}
             </span>
           );
@@ -196,7 +196,7 @@ export default function OrdersPage() {
         cell: ({ row }) => {
           const o = row.original;
           return (
-            <OrderActionOwner 
+            <OrderActionOwner
               messId={String(id)}
               orderId={String(o._id)}
               messOwnerId={messOwnerId ? String(messOwnerId) : ""}
@@ -226,19 +226,27 @@ export default function OrdersPage() {
   if (loading) return <LoadingComponent />;
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="role-shell text-emerald-900">
       <OwnerNavbar />
 
-      <div className="p-5 max-w-7xl mx-auto pt-20 sm:pt-24">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-            Orders for this Mess
-          </h2>
+      <div className="role-container space-y-4">
+        <div className="role-section p-5 sm:p-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
+              Live Orders
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-emerald-900">
+              Orders for this Mess
+            </h2>
+            <p className="text-sm text-emerald-700 mt-1">
+              Recent orders first, clean pastel table, quick bulk cleanup.
+            </p>
+          </div>
 
           {isOwner && data.length > 0 && (
             <button
               onClick={handleClickOfDelete}
-              className="px-4 py-2 rounded text-sm bg-red-600 text-white hover:bg-red-700 transition-colors font-medium"
+              className="px-4 py-2 rounded-lg text-sm bg-rose-100 text-rose-700 hover:bg-rose-200 transition-colors font-semibold border border-rose-200"
             >
               Delete All Completed Orders
             </button>
@@ -246,21 +254,18 @@ export default function OrdersPage() {
         </div>
 
         {data.length === 0 ? (
-          <div className="p-6 bg-gray-800 rounded-lg shadow-xl text-gray-400 text-center">
+          <div className="role-section p-6 text-emerald-700 text-center">
             No orders yet.
           </div>
         ) : (
           <>
-          <div className="p-6 bg-gray-800 rounded-lg shadow-xl text-gray-400 text-center">
-            Delete the completed orders at the end of the day to keep your order list clean and
-            organized.
-            <br />
-            दिन के अंत में पूर्ण किए गए ऑर्डर डिलीट कर दें ताकि आपकी ऑर्डर सूची साफ़ और व्यवस्थित रहे।
-          </div>
-          <div className="mt-6">
-            <DataTable columns={columns} data={data} />
-
-          </div>
+            <div className="role-section p-6 text-emerald-800 text-center">
+              Delete completed orders at the end of each day to keep your queue
+              clean and focused.
+            </div>
+            <div className="mt-2">
+              <DataTable columns={columns} data={data} />
+            </div>
           </>
         )}
       </div>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import Loading from "@/Component/Others/Loading";
-import Label from "../Helper/Label";
+
 export default function MessMenuComponent({
   messId,
   initial = null,
@@ -157,7 +157,7 @@ export default function MessMenuComponent({
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      await res.json();
 
       if (!res.ok) toast.error("Failed");
       toast.success("Menu saved");
@@ -170,23 +170,26 @@ export default function MessMenuComponent({
       setLoading(false);
     }
   }
-  if (loading) return;
-  <div className="min-h-screen flex items-center justify-center bg-gray-950">
-    <Loading />
-  </div>;
+
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-emerald-50">
+        <Loading />
+      </div>
+    );
 
   return (
-    <div className="bg-gray-900 p-4 sm:p-6 rounded-lg shadow-sm">
+    <div className="bg-white/80 backdrop-blur border border-emerald-100 p-4 sm:p-6 rounded-2xl shadow-lg shadow-emerald-100">
       {category !== "veg" && (
         <div className="mb-6">
-          <div className="flex flex-wrap gap-2 sm:gap-3 p-2 bg-gray-800 rounded-lg">
+          <div className="flex flex-wrap gap-2 sm:gap-3 p-2 bg-emerald-50 rounded-xl border border-emerald-100">
             <button
               type="button"
               onClick={() => setMenutype("vegMenu")}
-              className={`flex-1 min-w-[120px] px-4 py-3 rounded font-semibold transition-all duration-200 ${
+              className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${
                 menutype === "vegMenu"
-                  ? "bg-green-600 text-white shadow-lg"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200"
+                  : "bg-white text-emerald-700 border border-emerald-100 hover:bg-emerald-50"
               }`}
             >
               🥗 Veg Menu
@@ -194,10 +197,10 @@ export default function MessMenuComponent({
             <button
               type="button"
               onClick={() => setMenutype("nonVegMenu")}
-              className={`flex-1 min-w-[120px] px-4 py-3 rounded font-semibold transition-all duration-200 ${
+              className={`flex-1 min-w-[120px] px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${
                 menutype === "nonVegMenu"
-                  ? "bg-red-600 text-white shadow-lg"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  ? "bg-rose-500 text-white shadow-lg shadow-rose-200"
+                  : "bg-white text-rose-700 border border-rose-100 hover:bg-rose-50"
               }`}
             >
               🍗 Non-Veg Menu
@@ -208,12 +211,17 @@ export default function MessMenuComponent({
 
       <form onSubmit={handleSubmit}>
         <div className="mb-6">
-          <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-            <label htmlFor="mealTime" className="block text-sm font-medium text-white"  >Meal Time</label>
+          <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+            <label
+              htmlFor="mealTime"
+              className="block text-sm font-semibold text-emerald-900"
+            >
+              Meal Time
+            </label>
             <select
               value={mealTime}
               onChange={(e) => setMealTime(e.target.value)}
-              className="mt-2 block w-full border border-gray-600 bg-gray-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="mt-2 block w-full border border-emerald-100 bg-white text-emerald-900 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-emerald-200 focus:border-transparent"
             >
               <option value="lunch">🌞 Lunch</option>
               <option value="dinner">🌙 Dinner</option>
@@ -223,12 +231,12 @@ export default function MessMenuComponent({
 
         <div className="space-y-4">
           {dishes.length === 0 && (
-            <div className="text-center py-8 bg-gray-800 rounded-lg border border-dashed border-gray-600">
-              <p className="text-gray-400 mb-3">No dishes added yet</p>
+            <div className="text-center py-8 bg-emerald-50 rounded-xl border border-dashed border-emerald-200">
+              <p className="text-emerald-700 mb-3">No dishes added yet</p>
               <button
                 type="button"
                 onClick={() => addDish()}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition"
               >
                 Add Your First Dish
               </button>
@@ -238,26 +246,36 @@ export default function MessMenuComponent({
           {dishes.map((dish, di) => (
             <div
               key={di}
-              className="border border-gray-700 bg-gray-800 rounded-lg p-4 sm:p-5 shadow-md"
+              className="border border-emerald-100 bg-white rounded-2xl p-4 sm:p-5 shadow-sm"
             >
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
                 <div className="flex-1">
-                  <label htmlFor="dishName" className="block text-sm font-medium text-white"  >Dish Name</label>
+                  <label
+                    htmlFor="dishName"
+                    className="block text-sm font-semibold text-emerald-900"
+                  >
+                    Dish Name
+                  </label>
                   <input
                     value={dish.name}
                     onChange={(e) => updateDish(di, { name: e.target.value })}
-                    className="mt-2 block w-full border border-gray-600 bg-gray-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="mt-2 block w-full border border-emerald-100 bg-white text-emerald-900 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-emerald-200 focus:border-transparent"
                     placeholder="e.g., South Indian Thali"
                     required
                   />
                 </div>
                 <div className="w-full sm:w-32">
-                  <label htmlFor="price" className="block text-sm font-medium text-white"  >Price (₹)</label>
+                  <label
+                    htmlFor="price"
+                    className="block text-sm font-semibold text-emerald-900"
+                  >
+                    Price (₹)
+                  </label>
                   <input
                     type="number"
                     value={dish.price ?? ""}
                     onChange={(e) => updateDish(di, { price: e.target.value })}
-                    className="mt-2 block w-full border border-gray-600 bg-gray-700 text-white rounded px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="mt-2 block w-full border border-emerald-100 bg-white text-emerald-900 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-emerald-200 focus:border-transparent"
                     placeholder="0"
                   />
                 </div>
@@ -265,10 +283,12 @@ export default function MessMenuComponent({
 
               <div className="mt-3 space-y-2">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-white"  >Menu Items</label>
+                  <label className="block text-sm font-semibold text-emerald-900">
+                    Menu Items
+                  </label>
                   <button
                     type="button"
-                    className="text-xs sm:text-sm px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                    className="text-xs sm:text-sm px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-lg border border-emerald-200 hover:bg-emerald-200 transition"
                     onClick={() => addItem(di)}
                   >
                     + Add Item
@@ -278,7 +298,7 @@ export default function MessMenuComponent({
                 {dish.items.map((item, ii) => (
                   <div
                     key={ii}
-                    className="flex flex-col sm:flex-row gap-2 items-start sm:items-center bg-gray-700 p-2 rounded border border-gray-600"
+                    className="flex flex-col sm:flex-row gap-2 items-start sm:items-center bg-emerald-50 p-2 rounded-xl border border-emerald-100"
                   >
                     <input
                       value={item.name}
@@ -298,7 +318,7 @@ export default function MessMenuComponent({
                           )
                         )
                       }
-                      className="flex-1 min-w-0 border border-gray-500 bg-gray-800 text-white rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 min-w-0 border border-emerald-100 bg-white text-emerald-900 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-emerald-200"
                       placeholder="Item name (e.g., Rice)"
                       required
                     />
@@ -321,12 +341,12 @@ export default function MessMenuComponent({
                           )
                         )
                       }
-                      className="w-full sm:w-24 border border-gray-500 bg-gray-800 text-white rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+                      className="w-full sm:w-24 border border-emerald-100 bg-white text-emerald-900 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-emerald-200"
                       placeholder="Price"
                     />
 
                     <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <label className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-300 whitespace-nowrap cursor-pointer">
+                      <label className="flex items-center gap-1.5 text-xs sm:text-sm text-emerald-800 whitespace-nowrap cursor-pointer">
                         <input
                           type="checkbox"
                           checked={!!item.isLimited}
@@ -349,9 +369,9 @@ export default function MessMenuComponent({
                               )
                             )
                           }
-                          className="w-4 h-4 rounded border-gray-500 bg-gray-800 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
+                          className="w-4 h-4 rounded border-emerald-200 bg-white text-emerald-600 focus:ring-2 focus:ring-emerald-200 focus:ring-offset-0 cursor-pointer mt-0.5"
                         />
-                        {"        "}Limited
+                        Limited
                       </label>
 
                       {item.isLimited && (
@@ -377,7 +397,7 @@ export default function MessMenuComponent({
                               )
                             )
                           }
-                          className="w-16 border border-gray-500 bg-gray-800 text-white rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500"
+                          className="w-16 border border-emerald-100 bg-white text-emerald-900 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-emerald-200"
                           placeholder="Qty"
                         />
                       )}
@@ -385,7 +405,7 @@ export default function MessMenuComponent({
 
                     <button
                       type="button"
-                      className="text-xs sm:text-sm px-2 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition whitespace-nowrap w-full sm:w-auto"
+                      className="text-xs sm:text-sm px-2 py-1.5 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 transition whitespace-nowrap w-full sm:w-auto"
                       onClick={() => removeItem(di, ii)}
                     >
                       Remove
@@ -397,7 +417,7 @@ export default function MessMenuComponent({
               <div className="text-right mt-4">
                 <button
                   type="button"
-                  className="text-sm px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                  className="text-sm px-4 py-2 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 transition"
                   onClick={() => removeDish(di)}
                 >
                   🗑️ Remove Dish
@@ -407,23 +427,23 @@ export default function MessMenuComponent({
           ))}
         </div>
 
-        <div className="mt-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center bg-gray-800 p-4 rounded-lg border border-gray-700">
-          <label className="inline-flex items-center gap-2 text-gray-300 cursor-pointer">
+        <div className="mt-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+          <label className="inline-flex items-center gap-2 text-emerald-800 cursor-pointer">
             <input
               type="checkbox"
               checked={replaceWholeMenu}
               onChange={(e) => setReplaceWholeMenu(e.target.checked)}
-              className="w-4 h-4 rounded  border-gray-500 bg-gray-800 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer mt-2"
+              className="w-4 h-4 rounded border-emerald-200 bg-white text-emerald-600 focus:ring-2 focus:ring-emerald-200 focus:ring-offset-0 cursor-pointer mt-1"
             />
-            <span className="text-sm ">
-              {"           "}Replace entire {menutype === "vegMenu" ? "Veg" : "Non-Veg"} menu
+            <span className="text-sm">
+              Replace entire {menutype === "vegMenu" ? "Veg" : "Non-Veg"} menu
             </span>
           </label>
 
           <div className="flex gap-2 sm:ml-auto">
             <button
               type="button"
-              className="flex-1 sm:flex-none px-4 py-2.5 text-white bg-blue-600 hover:bg-blue-700 border-2 border-blue-600 rounded transition duration-300 font-medium"
+              className="flex-1 sm:flex-none px-4 py-2.5 text-emerald-800 bg-white border border-emerald-200 rounded-xl hover:bg-emerald-100 transition duration-300 font-medium shadow-sm"
               onClick={() => addDish()}
             >
               ➕ Add Dish
@@ -432,7 +452,7 @@ export default function MessMenuComponent({
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 sm:flex-none px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded transition-all duration-300 border-2 border-green-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 sm:flex-none px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all duration-300 shadow-md shadow-emerald-200 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading
                 ? "Saving..."

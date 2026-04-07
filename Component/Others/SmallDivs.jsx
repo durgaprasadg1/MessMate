@@ -22,14 +22,12 @@ const SmallDivs = ({ desc, count, link, delay = 0 }) => {
       }}
       whileTap={{ scale: 0.97, y: 0 }}
       onClick={() => router.push(link)}
-      className="p-4 bg-amber-300 rounded-xl shadow-md hover:cursor-pointer 
-                 transition-colors flex flex-col items-center justify-center 
-                 "
+      className="p-5 bg-white/95 border border-stone-200 rounded-2xl shadow-sm hover:shadow-md hover:cursor-pointer transition-all flex flex-col items-center justify-center"
     >
-      <p className="text-lg font-semibold text-black tracking-tight">
+      <p className="text-lg font-semibold text-stone-900 tracking-tight">
         {desc}
       </p>
-      <p className="text-3xl font-extrabold mt-1 drop-shadow-sm">
+      <p className="text-3xl font-extrabold mt-1 text-stone-800">
         {count}
       </p>
     </motion.div>

@@ -25,14 +25,28 @@ export default async function UpdateMenuPage({ params }) {
   const mess = await res.json();
 
   return (
-    <div className="bg-gray-800">
+    <div className="role-shell">
       <OwnerNavbar />
-      <main className="min-h-screen py-10 px-4 mt-14">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold mb-4 text-white">
-            Update Menu for {mess.name}
-          </h2>
-          <MessMenuComponent messId={id} mess={mess} category={mess.category} />
+      <main className="role-container">
+        <div className="space-y-4">
+          <div className="role-section p-5 sm:p-7">
+            <p className="text-sm uppercase tracking-[0.2em] text-emerald-600 font-semibold">
+              Menu & Pricing
+            </p>
+            <h2 className="text-3xl font-extrabold text-emerald-900 mt-2">
+              Update Menu for {mess.name}
+            </h2>
+            <p className="text-sm text-emerald-700 mt-2">
+              Keep your diners excited with a fresh, clear menu. Use the tabs
+              below to switch between Veg and Non-Veg.
+            </p>
+          </div>
+
+          <MessMenuComponent
+            messId={id}
+            mess={mess}
+            category={mess.category}
+          />
         </div>
       </main>
     </div>

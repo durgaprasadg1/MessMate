@@ -211,11 +211,11 @@ const NewMessForm = () => {
   }
 
   return (
-    <div className="bg-gray-800 min-h-screen">
+    <div className="bg-[#F4F7F4] min-h-screen md:pl-[280px] pt-16 md:pt-0">
       <OwnerNavbar />
       <div className="min-h-screen py-6 sm:py-8 md:py-12 px-3 sm:px-4 md:px-6">
-        <div className="max-w-2xl mx-auto bg-gray-700 rounded-xl sm:rounded-2xl text-white shadow-lg p-4 sm:p-5 md:p-6">
-          <h3 className="text-xl sm:text-2xl font-bold text-orange-600 mb-3 flex items-center gap-2">
+        <div className="max-w-2xl mx-auto bg-white rounded-xl sm:rounded-2xl text-stone-800 shadow-md p-4 sm:p-5 md:p-6 border border-stone-200/60">
+          <h3 className="text-xl sm:text-2xl font-bold text-emerald-700 mb-3 flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5 sm:h-6 sm:w-6"
@@ -232,7 +232,7 @@ const NewMessForm = () => {
             </svg>
             Add New Mess
           </h3>
-          <p className="text-center text-gray-600 text-xs sm:text-sm mt-3 italic bg-yellow-100 border border-yellow-300 px-3 sm:px-4 py-2 rounded-lg shadow-sm">
+          <p className="text-center text-stone-600 text-xs sm:text-sm mt-3 italic bg-amber-50 border border-amber-200 px-3 sm:px-4 py-2 rounded-lg shadow-sm">
             ⚠️ Please add your mess details{" "}
             <span className="font-semibold">
               only when you are physically present at the mess location
@@ -245,7 +245,7 @@ const NewMessForm = () => {
             </span>
             .
           </p>
-          <p className="text-center text-gray-600 text-xs sm:text-sm mt-3 italic bg-yellow-100 border border-yellow-300 px-3 sm:px-4 py-2 rounded-lg shadow-sm">
+          <p className="text-center text-stone-600 text-xs sm:text-sm mt-3 italic bg-amber-50 border border-amber-200 px-3 sm:px-4 py-2 rounded-lg shadow-sm">
             ⚠️ कृपया अपने मेस की जानकारी तभी जोड़ें{" "}
             <span className="font-semibold">
               जब आप वास्तव में मेस की लोकेशन पर मौजूद हों,
@@ -282,31 +282,31 @@ const NewMessForm = () => {
             className="space-y-4"
           >
             <div>
-              <label className="block font-medium text-white">Mess Name</label>
+              <label className="block font-medium text-stone-700">Mess Name</label>
               <input
                 name="name"
                 value={form.name}
                 onChange={handleChange}
                 required
-                className="mt-1 w-full border rounded-md px-3 py-2"
+                className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 placeholder="e.g., Kakunchi Mess"
               />
             </div>
 
             <div>
-              <label className="block font-medium text-white">
+              <label className="block font-medium text-stone-700">
                 Tagline / Description
               </label>
               <input
                 name="description"
                 value={form.description}
                 onChange={handleChange}
-                className="mt-1 w-full border rounded-md px-3 py-2"
+                className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 placeholder="Short tagline"
               />
             </div>
             <div>
-              <label className="block font-medium text-white">
+              <label className="block font-medium text-stone-700">
                 Owner Email
               </label>
               <input
@@ -314,23 +314,23 @@ const NewMessForm = () => {
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                className="mt-1 w-full border rounded-md px-3 py-2"
+                className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 placeholder="abc@example.com"
               />
             </div>
             <div>
-              <label className="block font-medium text-white">Owner UPI</label>
+              <label className="block font-medium text-stone-700">Owner UPI</label>
               <input
                 type="text"
                 name="upi"
                 value={form.upi}
                 onChange={handleChange}
-                className="mt-1 w-full border rounded-md px-3 py-2"
+                className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 placeholder="abc@bank"
               />
             </div>
             <div>
-              <label className="block font-medium text-white">
+              <label className="block font-medium text-stone-700">
                 Monthly Mess Fee
               </label>
               <input
@@ -338,13 +338,13 @@ const NewMessForm = () => {
                 name="monthlyMessFee"
                 value={form.monthlyMessFee}
                 onChange={handleChange}
-                className="mt-1 w-full border rounded-md px-3 py-2"
+                className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 placeholder="1800"
               />
             </div>
 
             <div>
-              <label className="block font-medium text-white">
+              <label className="block font-medium text-stone-700">
                 Monthly Mess Duration
               </label>
               <select
@@ -353,7 +353,7 @@ const NewMessForm = () => {
                 type="number"
                 value={form.monthlyMessDuration}
                 onChange={handleChange}
-                className="mt-1 w-full border rounded-md px-3 py-2 "
+                className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 "
               >
                 <option className="text-black" value={0}>
                   Select Duration
@@ -371,26 +371,26 @@ const NewMessForm = () => {
             </div>
 
             <div>
-              <label className="block font-medium text-white">Address</label>
+              <label className="block font-medium text-stone-700">Address</label>
               <input
                 name="address"
                 value={form.address}
                 onChange={handleChange}
                 required
-                className="mt-1 w-full border rounded-md px-3 py-2"
+                className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 placeholder="Full address"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block font-medium text-white">Category</label>
+                <label className="block font-medium text-stone-700">Category</label>
                 <select
                   name="category"
                   value={form.category}
                   onChange={handleChange}
                   required
-                  className="mt-1 w-full border rounded-md px-3 py-2 "
+                  className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 "
                 >
                   <option className="text-black" value="">
                     Select Category
@@ -408,12 +408,12 @@ const NewMessForm = () => {
               </div>
 
               <div>
-                <label className="block font-medium text-white">Limits</label>
+                <label className="block font-medium text-stone-700">Limits</label>
                 <select
                   name="limits"
                   value={form.limits}
                   onChange={handleChange}
-                  className="mt-1 w-full border rounded-md px-3 py-2"
+                  className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 >
                   <option className="text-black" value="true">
                     Limited
@@ -427,7 +427,7 @@ const NewMessForm = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block font-medium text-white">
+                <label className="block font-medium text-stone-700">
                   Owner Name
                 </label>
                 <input
@@ -436,13 +436,13 @@ const NewMessForm = () => {
                   onChange={handleChange}
                   minLength={3}
                   required
-                  className="mt-1 w-full border rounded-md px-3 py-2"
+                  className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   placeholder="Owner full name"
                 />
               </div>
 
               <div>
-                <label className="block font-medium text-white">
+                <label className="block font-medium text-stone-700">
                   Owner's Aadhaar Number
                 </label>
                 <input
@@ -451,14 +451,14 @@ const NewMessForm = () => {
                   onChange={handleChange}
                   pattern="\d{12}"
                   required
-                  className="mt-1 w-full border rounded-md px-3 py-2"
+                  className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   placeholder="987654321098"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block font-medium text-white">
+              <label className="block font-medium text-stone-700">
                 Phone Number
               </label>
               <input
@@ -467,7 +467,7 @@ const NewMessForm = () => {
                 onChange={handleChange}
                 pattern="\d{10}"
                 required
-                className="mt-1 w-full border rounded-md px-3 py-2"
+                className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 placeholder="98765412335"
               />
             </div>
@@ -503,7 +503,7 @@ const NewMessForm = () => {
             </div>
             {locationDenied && (
               <button
-                className="bg-gray-600 p-2 rounded w-full mb-2 text-white"
+                className="bg-stone-200 p-2 rounded w-full mb-2 text-stone-700 hover:bg-stone-300 transition-colors"
                 onClick={() => retryLocation()}
               >
                 Give Your Mess Location
@@ -515,7 +515,7 @@ const NewMessForm = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gray-600 hover:bg-black text-white py-2 rounded font-semibold"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded font-semibold transition-colors"
                 >
                   {loading ? "Submitting..." : "Add Mess"}
                 </button>

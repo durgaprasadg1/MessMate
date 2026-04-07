@@ -4,9 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Loading from "../Others/Loading";
-import Label from "../Helper/Label";
 import { useSession } from "next-auth/react";
-
+import OwnerNavbar from "../Owner/OwnerNavbar";
 export default function EditUserInfoPage({ messID }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -74,101 +73,126 @@ export default function EditUserInfoPage({ messID }) {
   if (loading) return <Loading />;
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-800 p-6">
-
-      <div className="w-full max-w-md bg-gray-200 shadow-lg rounded-2xl p-8">
-        <h2 className="text-2xl  font-semibold mb-6 text-center">
-          Edit Mess Info
-        </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label htmlFor="name" className="block text-gray-700 font-semibold mb-2">Name</label>
-            <input
-              type="text"
-              name="name"
-              value={messData.name}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-2 focus:ring focus:ring-gray-400"
-              required
-            />
+    <div className="role-shell flex items-start justify-center">
+      <OwnerNavbar />
+      <div className="role-container">
+        <div className="role-section w-full max-w-3xl p-8 space-y-6 mx-auto">
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
+              Mess Profile
+            </p>
+            <h2 className="text-3xl font-extrabold text-emerald-900 mt-1">
+              Edit Mess Info
+            </h2>
+            <p className="text-sm text-emerald-700 mt-2">
+              Keep your listing consistent and trustworthy. Soft, clear inputs
+              guide you through every field.
+            </p>
           </div>
 
-          <div>
-            <label htmlFor="description" className="block text-gray-700 font-semibold mb-2">Description</label>
-            <textarea
-              name="description"
-              value={messData.description}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-2 focus:ring focus:ring-gray-400"
-              rows={3}
-              required
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-emerald-900">
+                Name
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={messData.name}
+                onChange={handleChange}
+                className="w-full border border-emerald-100 rounded-xl px-3 py-2.5 bg-white text-emerald-900 focus:ring-2 focus:ring-emerald-200 focus:border-transparent"
+                required
+              />
+            </div>
 
-          <div>
-            <label htmlFor="address" className="block text-gray-700 font-semibold mb-2">Address</label>
-            <input
-              type="text"
-              name="address"
-              value={messData.address}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-2 focus:ring focus:ring-gray-400"
-              required
-            />
-          </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-emerald-900">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={messData.description}
+                onChange={handleChange}
+                className="w-full border border-emerald-100 rounded-xl px-3 py-2.5 bg-white text-emerald-900 focus:ring-2 focus:ring-emerald-200 focus:border-transparent"
+                rows={3}
+                required
+              />
+            </div>
 
-          <div>
-            <label htmlFor="phone" className="block text-gray-700 font-semibold mb-2">Phone Number</label>
-            <input
-              type="tel"
-              name="phone"
-              value={messData.phoneNumber}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-2 focus:ring focus:ring-gray-400"
-              required
-            />
-          </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-emerald-900">
+                Address
+              </label>
+              <input
+                type="text"
+                name="address"
+                value={messData.address}
+                onChange={handleChange}
+                className="w-full border border-emerald-100 rounded-xl px-3 py-2.5 bg-white text-emerald-900 focus:ring-2 focus:ring-emerald-200 focus:border-transparent"
+                required
+              />
+            </div>
 
-          <div>
-            <label htmlFor="category" className="block text-gray-700 font-semibold mb-2">Category</label>
-            <select
-              name="category"
-              value={messData.category}
-              onChange={handleChange}
-              required
-              className="mt-1 w-full border rounded-md px-3 py-2"
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-emerald-900">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={messData.phoneNumber}
+                onChange={handleChange}
+                className="w-full border border-emerald-100 rounded-xl px-3 py-2.5 bg-white text-emerald-900 focus:ring-2 focus:ring-emerald-200 focus:border-transparent"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-emerald-900">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={messData.category}
+                  onChange={handleChange}
+                  required
+                  className="w-full border border-emerald-100 rounded-xl px-3 py-2.5 bg-white text-emerald-900 focus:ring-2 focus:ring-emerald-200 focus:border-transparent"
+                >
+                  <option value="">Select Category</option>
+                  <option value="Veg">Veg</option>
+                  <option value="Non-Veg">Non-Veg</option>
+                  <option value="Both">Both (Veg + Non-Veg)</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-emerald-900">
+                  Limits
+                </label>
+                <select
+                  name="limits"
+                  value={messData.limits}
+                  onChange={handleChange}
+                  required
+                  className="w-full border border-emerald-100 rounded-xl px-3 py-2.5 bg-white text-emerald-900 focus:ring-2 focus:ring-emerald-200 focus:border-transparent"
+                >
+                  <option value="">Select Limit</option>
+                  <option value="Limited">Limited</option>
+                  <option value="Unlimited">Unlimited</option>
+                </select>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-semibold transition duration-300 shadow-md shadow-emerald-200 disabled:opacity-60"
             >
-              <option value="">Select Category</option>
-              <option value="Veg">Veg</option>
-              <option value="Non-Veg">Non-Veg</option>
-              <option value="Both">Both (Veg + Non-Veg)</option>
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="limits" className="block text-gray-700 font-semibold mb-2">Limits</label>
-            <select
-              name="limits"
-              value={messData.limits}
-              onChange={handleChange}
-              required
-              className="mt-1 w-full border rounded-md px-3 py-2"
-            >
-              <option value="">Select Limit</option>
-              <option value="Limited">Limited</option>
-              <option value="Unlimited">Unlimited</option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gray-600 hover:bg-black text-white py-2 rounded font-semibold transition duration-300"
-          >
-            {loading ? "Updating..." : "Update Info"}
-          </button>
-        </form>
+              {loading ? "Updating..." : "Update Info"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

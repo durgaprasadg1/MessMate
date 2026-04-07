@@ -2,8 +2,9 @@
 
 import { useMemo, useState, useEffect } from "react";
 import Navbar from "../Others/Navbar";
-import ButtonComponent from "../Others/Button";
 import Loading from "@/Component/Others/Loading";
+import Link from "next/link";
+import { Star, MapPin, Heart, ArrowRight } from "lucide-react";
 
 export default function ConsumerAllMesses({
   messes = [],
@@ -44,25 +45,18 @@ export default function ConsumerAllMesses({
     if (!lat1 || !lon1 || !lat2 || !lon2) return null;
     const R = 6371000;
     const toRad = (v) => (v * Math.PI) / 180;
-
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
-
     const a =
       Math.sin(dLat / 2) ** 2 +
       Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-
     return R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
   const filteredBySearch = useMemo(() => {
     if (passedFiltered && Array.isArray(passedFiltered)) return passedFiltered;
-
-    // Ensure messes is an array
     const messesArray = Array.isArray(messes) ? messes : [];
-
     if (!searchQuery.trim()) return messesArray;
-
     const q = searchQuery.toLowerCase();
 
     return messesArray.filter((m) =>
@@ -76,7 +70,6 @@ export default function ConsumerAllMesses({
     const searchResults = Array.isArray(filteredBySearch)
       ? filteredBySearch
       : [];
-
     const baseList = searchResults.filter((m) => {
       const isVerified = m.isVerified !== false; 
       const isNotBlocked = m.isBlocked !== true; 
@@ -84,7 +77,6 @@ export default function ConsumerAllMesses({
     });
 
     if (!radius || !userLocation) return baseList;
-
     return baseList.filter((m) => {
       const d = distanceInMeters(
         userLocation.lat,
@@ -96,8 +88,28 @@ export default function ConsumerAllMesses({
     });
   }, [filteredBySearch, radius, userLocation]);
 
+  // Helper function to extract cheapest and most expensive dishes
+  const getDishExtremes = (menu) => {
+    if (!menu) return { cheapest: null, expensive: null };
+    let items = [];
+    if (Array.isArray(menu)) items = menu;
+    else if (menu.dishes && Array.isArray(menu.dishes)) items = menu.dishes;
+    else return { cheapest: null, expensive: null };
+
+    const pricedItems = items.filter(
+      (d) => typeof d === 'object' && d !== null && d.price != null && !isNaN(parseFloat(d.price))
+    );
+    if (pricedItems.length === 0) return { cheapest: null, expensive: null };
+
+    pricedItems.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+    return {
+      cheapest: pricedItems[0],
+      expensive: pricedItems[pricedItems.length - 1],
+    };
+  };
+
   return (
-    <>
+    <div className="min-h-screen bg-slate-50 md:pl-[25vw] flex flex-col transition-[padding] duration-0 ease-linear">
       <Navbar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -105,27 +117,32 @@ export default function ConsumerAllMesses({
         setRadius={setRadius}
       />
 
-      <main className="py-8 px-4 mt-15">
-        <h2 className="text-center mb-3">Find the best messes around you!</h2>
+      <main className="flex-1 py-10 px-6 max-w-screen-2xl mx-auto w-full">
+        {/* Header Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-extrabold text-slate-800">
+            Find the perfect mess...
+          </h1>
+          <p className="text-sm text-slate-500 mt-2">
+            <span className="font-semibold text-orange-600">{visibleMesses.length} messes</span> found near your location
+          </p>
+        </div>
 
         {locationLoading && (
-          <div className="flex justify-center mb-4">
+          <div className="flex justify-center my-12">
             <Loading />
           </div>
         )}
 
         {!locationLoading && locationDenied && (
-          <div className="flex justify-center mb-4 text-center">
-            <div className="p-2 rounded w-full sm:w-96 text-red-600 bg-red-50">
-              Location access denied — showing all messes.
-              <br />
-              Allow location access to search nearby messes.
-            </div>
+          <div className="mb-6 p-4 rounded-xl text-orange-800 bg-orange-100 border border-orange-200 shadow-sm max-w-2xl text-sm font-medium">
+            Location access denied — showing all messes regardless of distance.
+            Allow location access to find messes nearby!
           </div>
         )}
 
         {!locationLoading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto">
             {visibleMesses.map((mess) => {
               const dist = userLocation
                 ? distanceInMeters(
@@ -136,136 +153,168 @@ export default function ConsumerAllMesses({
                   )
                 : null;
 
+              const vegExtremes = getDishExtremes(mess.vegMenu);
+              const nonVegExtremes = getDishExtremes(mess.nonVegMenu);
+
               return (
                 <article
                   key={mess._id}
-                  className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-amber-200"
+                  className="group bg-white rounded-xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.12)] border border-slate-200 transition-all duration-300 overflow-hidden flex flex-col sm:flex-row h-auto sm:min-h-[240px]"
                 >
-                  <div className="relative h-56 overflow-hidden">
+                  {/* Left Side: Image */}
+                  <div className="relative w-full sm:w-[320px] h-56 sm:h-auto shrink-0 overflow-hidden">
                     <img
                       src={
-                        mess.image?.url || "https://via.placeholder.com/800x500"
+                        mess.image?.url || "https://via.placeholder.com/600x400"
                       }
                       alt={mess.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 absolute inset-0"
                     />
-
-                    <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent"></div>
-
-                    <div className="absolute top-4 right-4">
+                    
+                    {/* Status Badge */}
+                    <div className="absolute top-3 left-3">
                       <span
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg backdrop-blur-sm ${
+                        className={`px-3 py-1 rounded-md text-[10px] font-bold tracking-widest shadow-sm uppercase ${
                           mess.isOpen
-                            ? "bg-green-500/90 text-white"
-                            : "bg-red-500/90 text-white"
+                            ? "bg-white text-emerald-600"
+                            : "bg-white text-rose-600"
                         }`}
                       >
-                        {mess.isOpen ? "● Open Now" : "● Closed"}
+                        {mess.isOpen ? "Open Now" : "Closed"}
                       </span>
                     </div>
 
-                    {dist !== null && (
-                      <div className="absolute bottom-4 left-4">
-                        <span className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white/90 text-gray-800 shadow-lg backdrop-blur-sm flex items-center gap-1">
-                          <svg
-                            className="w-3 h-3"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          {dist >= 1000
-                            ? `${(dist / 1000).toFixed(1)} km`
-                            : `${Math.round(dist)} m`}
-                        </span>
-                      </div>
-                    )}
+                    <div className="absolute bottom-3 left-3 bg-black/50 backdrop-blur-md px-2 py-1 rounded text-xs text-white uppercase tracking-wider font-semibold">
+                       {mess.category === "both" ? "Veg + Non-Veg" : mess.category}
+                    </div>
                   </div>
 
-                  <div className="p-5">
-                    <div className="mb-3">
-                      <h2 className="text-xl font-bold text-gray-900 mb-1 line-clamp-1 group-hover:text-amber-600 transition-colors">
+                  {/* Main Data Content */}
+                  <div className="p-5 flex-1 flex flex-col justify-between">
+                    <div>
+                      {/* Top Meta info */}
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase border border-slate-200 px-2 py-0.5 rounded">
+                            Mess Category
+                          </span>
+                          <div className="flex text-emerald-500 gap-0.5">
+                             <Star size={12} fill="currentColor" />
+                             <Star size={12} fill="currentColor" />
+                             <Star size={12} fill="currentColor" />
+                             <Star size={12} fill="currentColor" />
+                             <Star size={12} fill="currentColor" />
+                          </div>
+                        </div>
+
+                        {/* Save to Favorites toggle moved to top right */}
+                        <div className="text-slate-300 hover:text-rose-500 cursor-pointer transition-colors" title="Save to favorites">
+                          <Heart size={20} />
+                        </div>
+                      </div>
+
+                      {/* Name & Location */}
+                      <h2 className="text-xl font-extrabold text-slate-800 line-clamp-2 leading-tight hover:text-orange-600 transition-colors cursor-pointer pr-4">
                         {mess.name}
                       </h2>
 
-                      <div className="flex items-center gap-2 text-sm">
-                        <span
-                          className={`px-2.5 py-1 rounded-md font-medium ${
-                            mess.category === "both"
-                              ? "bg-purple-100 text-purple-700"
-                              : mess.category?.toLowerCase() === "veg"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {mess.category === "both"
-                            ? "🥗 Veg + Non-Veg"
-                            : mess.category?.toLowerCase() === "veg"
-                              ? "🌱 Vegetarian"
-                              : "🍗 Non-Veg"}
+                      <div className="mt-1.5 flex items-center text-xs text-slate-500 gap-1.5">
+                        <MapPin size={14} className="text-orange-500 shrink-0" />
+                        <span className="font-medium text-slate-700 line-clamp-1">
+                          {mess.address?.split(",").slice(0, 2).join(",") || "Location available"}
                         </span>
                       </div>
-                    </div>
 
-                    <p className="text-gray-600 text-sm leading-relaxed mb-1 line-clamp-2 min-h-10">
-                      {mess.description ||
-                        "Delicious meals served fresh daily."}
-                    </p>
+                      {dist !== null && (
+                        <div className="mt-1 flex items-center text-xs text-slate-500 gap-1.5 ml-[22px]">
+                           <strong className="text-orange-600 font-semibold">
+                             {dist >= 1000
+                             ? `${(dist / 1000).toFixed(1)} km`
+                             : `${Math.round(dist)} m`}
+                           </strong>
+                           <span>from your location</span>
+                        </div>
+                      )}
 
-                    <div className="flex items-start gap-2 mb-1 text-gray-500 text-sm">
-                      <svg
-                        className="w-4 h-4 mt-0.5 shrink-0"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <span className="line-clamp-1">
-                        {mess.address?.split(",").slice(0, 2).join(",") ||
-                          "Location available"}
-                      </span>
-                    </div>
+                      {/* Dynamic Dish Extreams Display */}
+                      {(vegExtremes.cheapest || nonVegExtremes.cheapest || mess.vegPrice || mess.nonVegPrice) && (
+                         <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                           {/* Veg Section */}
+                           {(vegExtremes.cheapest || mess.vegPrice) && (
+                             <div className="bg-green-50/60 p-3 rounded-lg border border-green-100/50">
+                               <div className="text-[10px] font-bold text-green-700 uppercase mb-1.5 flex items-center gap-1.5">
+                                 <span className="w-2 h-2 rounded-full bg-green-500"></span> Veg Menu
+                               </div>
+                               {vegExtremes.cheapest ? (
+                                 <div className="flex justify-between items-end text-xs mb-1">
+                                    <span className="text-slate-600 truncate pr-2" title={vegExtremes.cheapest.name || vegExtremes.cheapest.dishName}>
+                                      Budget: <span className="font-medium">{vegExtremes.cheapest.name || vegExtremes.cheapest.dishName || 'Dish'}</span>
+                                    </span>
+                                    <span className="font-bold text-slate-800 shrink-0">₹{vegExtremes.cheapest.price}</span>
+                                 </div>
+                               ) : mess.vegPrice ? (
+                                 <div className="flex justify-between items-end text-xs mb-1">
+                                    <span className="text-slate-600 truncate pr-2">Base Pricing per Meal</span>
+                                    <span className="font-bold text-slate-800 shrink-0">₹{mess.vegPrice}</span>
+                                 </div>
+                               ) : null}
 
-                    <div className="border-t border-gray-100 mb-4"></div>
+                               {vegExtremes.expensive && vegExtremes.expensive !== vegExtremes.cheapest && (
+                                 <div className="flex justify-between items-end text-xs">
+                                    <span className="text-slate-600 truncate pr-2" title={vegExtremes.expensive.name || vegExtremes.expensive.dishName}>
+                                      Premium: <span className="font-medium">{vegExtremes.expensive.name || vegExtremes.expensive.dishName || 'Dish'}</span>
+                                    </span>
+                                    <span className="font-bold text-slate-800 shrink-0">₹{vegExtremes.expensive.price}</span>
+                                 </div>
+                               )}
+                             </div>
+                           )}
 
-                    <div className="flex gap-3">
-                      <ButtonComponent
-                        data="View Details"
-                        link={`/mess/${mess._id}`}
-                      />
+                           {/* Non-Veg Section */}
+                           {(nonVegExtremes.cheapest || mess.nonVegPrice) && (
+                             <div className="bg-rose-50/60 p-3 rounded-lg border border-rose-100/50">
+                               <div className="text-[10px] font-bold text-rose-700 uppercase mb-1.5 flex items-center gap-1.5">
+                                 <span className="w-2 h-2 rounded-full bg-rose-500"></span> Non-Veg Menu
+                               </div>
+                               {nonVegExtremes.cheapest ? (
+                                 <div className="flex justify-between items-end text-xs mb-1">
+                                    <span className="text-slate-600 truncate pr-2" title={nonVegExtremes.cheapest.name || nonVegExtremes.cheapest.dishName}>
+                                      Budget: <span className="font-medium">{nonVegExtremes.cheapest.name || nonVegExtremes.cheapest.dishName || 'Dish'}</span>
+                                    </span>
+                                    <span className="font-bold text-slate-800 shrink-0">₹{nonVegExtremes.cheapest.price}</span>
+                                 </div>
+                               ) : mess.nonVegPrice ? (
+                                 <div className="flex justify-between items-end text-xs mb-1">
+                                    <span className="text-slate-600 truncate pr-2">Base Pricing per Meal</span>
+                                    <span className="font-bold text-slate-800 shrink-0">₹{mess.nonVegPrice}</span>
+                                 </div>
+                               ) : null}
 
-                      <button
-                        className="flex-1 bg-linear-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-medium py-2.5 px-4 rounded transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm"
-                        onClick={() =>
-                          window.open(
-                            `https://www.google.com/maps?q=${mess.lat},${mess.lon}`,
-                            "_blank",
-                          )
-                        }
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Map
-                      </button>
+                               {nonVegExtremes.expensive && nonVegExtremes.expensive !== nonVegExtremes.cheapest && (
+                                 <div className="flex justify-between items-end text-xs">
+                                    <span className="text-slate-600 truncate pr-2" title={nonVegExtremes.expensive.name || nonVegExtremes.expensive.dishName}>
+                                      Premium: <span className="font-medium">{nonVegExtremes.expensive.name || nonVegExtremes.expensive.dishName || 'Dish'}</span>
+                                    </span>
+                                    <span className="font-bold text-slate-800 shrink-0">₹{nonVegExtremes.expensive.price}</span>
+                                 </div>
+                               )}
+                             </div>
+                           )}
+                         </div>
+                      )}
                     </div>
                   </div>
+
+                  {/* Right Action Bar (Only Button) */}
+                  <div className="p-4 border-t sm:border-t-0 sm:border-l border-slate-100 flex flex-col justify-center shrink-0 sm:w-[180px] bg-white">
+                    <Link href={`/mess/${mess._id}`} className="w-full !no-underline block">
+                      <button className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-bold py-3.5 px-4 rounded text-sm transition-colors shadow-sm flex items-center justify-center gap-2 group">
+                        View Details
+                        <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                      </button>
+                    </Link>
+                  </div>
+
                 </article>
               );
             })}
@@ -273,11 +322,13 @@ export default function ConsumerAllMesses({
         )}
 
         {!locationLoading && visibleMesses.length === 0 && (
-          <p className="text-center text-gray-600 mt-10 text-xl">
-            No messes found for your filters.
-          </p>
+          <div className="text-center bg-white p-12 rounded-2xl border border-slate-100 shadow-sm mt-10">
+            <p className="text-slate-600 font-medium text-lg">
+              No messes found matching your criteria.
+            </p>
+          </div>
         )}
       </main>
-    </>
+    </div>
   );
 }
