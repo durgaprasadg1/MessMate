@@ -1,290 +1,420 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Loading from "@/Component/Others/Loading";
 import Navbar from "@/Component/Others/Navbar";
 import InfoRow from "@/Component/Others/InfoRow";
-import MessMenuComponent from "../../../../Component/IndividualMess/MenuComponent";
+import MessMenuComponent from "@/Component/IndividualMess/MenuComponent";
+
+const getSafeDate = (value) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const formatDate = (value) => {
+  const date = getSafeDate(value);
+  return date ? date.toLocaleDateString("en-GB") : "N/A";
+};
+
+const normalizeMess = (mess = {}) => ({
+  ...mess,
+  name: mess?.name || "Unknown Mess",
+  lat: mess?.lat,
+  lon: mess?.lon,
+  vegMenu: mess?.vegMenu || mess?.veg_menu || [],
+  nonVegMenu: mess?.nonVegMenu || mess?.non_veg_menu || [],
+  monthlyMessDuration: Number(
+    mess?.monthlyMessDuration ?? mess?.monthly_mess_duration ?? 30,
+  ),
+});
+
+const normalizeSubscription = (entry = {}) => {
+  const mess = normalizeMess(entry?.mess || {});
+
+  return {
+    id: entry?.id || entry?._id || "",
+    name: entry?.name || "Not Provided",
+    phone: entry?.phone || "Not Provided",
+    emergencyContact:
+      entry?.emergencyContact || entry?.emergency_contact || "Not Provided",
+    gender: entry?.gender || "Not Provided",
+    college: entry?.college || "Not Provided",
+    address: entry?.address || "Not Provided",
+    duration: entry?.duration || "Not Provided",
+    foodPreference:
+      entry?.foodPreference || entry?.food_preference || "Not Specified",
+    paymentMode: (
+      entry?.paymentMode ||
+      entry?.payment_mode ||
+      ""
+    ).toLowerCase(),
+    paymentVerified: Boolean(entry?.paymentVerified ?? entry?.payment_verified),
+    isAllowed: Boolean(entry?.isAllowed ?? entry?.is_allowed),
+    joiningDate:
+      entry?.joiningDate ||
+      entry?.joining_date ||
+      entry?.createdAt ||
+      entry?.created_at ||
+      null,
+    createdAt: entry?.createdAt || entry?.created_at || null,
+    totalAmount: Number(entry?.totalAmount ?? entry?.total_amount ?? 0),
+    razorpayPaymentId:
+      entry?.razorpayPaymentId || entry?.razorpay_payment_id || "",
+    razorpayOrderId: entry?.razorpayOrderId || entry?.razorpay_order_id || "",
+    messDuration: Number(
+      entry?.messDuration ??
+        entry?.mess_duration ??
+        mess?.monthlyMessDuration ??
+        mess?.monthly_mess_duration ??
+        30,
+    ),
+    mess,
+  };
+};
+
+const getFoodPreferenceLabel = (foodPreference) => {
+  const value = (foodPreference || "").toLowerCase();
+
+  if (value === "both") return "Veg + Non-Veg";
+  if (value === "veg") return "Vegetarian";
+  if (value === "nonveg" || value === "non-veg") return "Non-Vegetarian";
+
+  return foodPreference || "Not Specified";
+};
+
 export default function ConsumerMonthlyMess() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const { consumerid: userId } = useParams();
 
   const [allSubscriptions, setAllSubscriptions] = useState([]);
+  const [selectedSubscriptionId, setSelectedSubscriptionId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
     }
-  }, [status]);
+  }, [status, router]);
 
-  const getMonthlyMessData = async () => {
+  const getMonthlyMessData = useCallback(async () => {
+    if (!userId) {
+      setAllSubscriptions([]);
+      setSelectedSubscriptionId(null);
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(`/api/consumer/${userId}/monthly-mess`);
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
-        if (data.monthlyMess && data.monthlyMess.length > 0) {
-          setAllSubscriptions(data.monthlyMess);
+        const normalized = Array.isArray(data.monthlyMess)
+          ? data.monthlyMess.map(normalizeSubscription)
+          : [];
+
+        setAllSubscriptions(normalized);
+        if (normalized.length > 0) {
+          setSelectedSubscriptionId((current) =>
+            current && normalized.some((sub) => sub.id === current)
+              ? current
+              : normalized[0].id,
+          );
         } else {
           setAllSubscriptions([]);
+          setSelectedSubscriptionId(null);
         }
       } else {
         setAllSubscriptions([]);
+        setSelectedSubscriptionId(null);
       }
-    } catch (err) {
+    } catch {
       setAllSubscriptions([]);
+      setSelectedSubscriptionId(null);
     } finally {
       setLoading(false);
-
     }
-  };
-
-  useEffect(() => {
-    if (userId) getMonthlyMessData();
   }, [userId]);
 
-  if (loading)
-    return (
-      <div className="flex justify-center mt-20">
-        <Loading />
-      </div>
-    );
+  useEffect(() => {
+    getMonthlyMessData();
+  }, [getMonthlyMessData]);
 
-  if (!allSubscriptions || allSubscriptions.length === 0)
-    return (
-      <div className="flex justify-center mt-20">
-        <Navbar />
-        <div className="text-center mt-20 text-gray-700 text-lg">
-          You are not registered for any Monthly mess.
-        </div>
-      </div>
-    );
+  const activeSubscription = allSubscriptions.find(
+    (sub) => sub.id === selectedSubscriptionId,
+  );
+
+  const activeJoiningDate = getSafeDate(activeSubscription?.joiningDate);
+  const activeExpiryDate = activeJoiningDate
+    ? new Date(
+        activeJoiningDate.getTime() +
+          Number(activeSubscription?.messDuration || 30) * 24 * 60 * 60 * 1000,
+      )
+    : null;
+
+  const isEmpty =
+    !loading && (!allSubscriptions || allSubscriptions.length === 0);
 
   return (
-    <>
+    <div className="role-shell bg-[#f4f6f8]">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-20 sm:py-24">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6">
-          My Monthly Mess Subscriptions
-        </h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {allSubscriptions.map((customerData, index) => {
-            const joiningDate = new Date(customerData?.joiningDate);
-            const expiryDate = new Date(joiningDate);
-            expiryDate.setDate(
-              joiningDate.getDate() + (customerData?.messDuration || 30)
-            );
+      <main className="role-container max-w-6xl">
+        <section className="rounded-[28px] border border-slate-200 bg-[#f8fafc] p-4 sm:p-6 shadow-[0_20px_42px_-22px_rgba(15,23,42,0.25)]">
+          <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-4 sm:gap-6">
+            <aside className="rounded-[22px] border border-slate-200 bg-white p-4 min-h-[220px] lg:min-h-[640px] shadow-sm">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-bold">
+                Memberships
+              </p>
+              <h2 className="text-lg font-extrabold text-stone-900 mt-2">
+                Your Plans
+              </h2>
 
-            return (
-              <div
-                key={customerData._id || index}
-                className="bg-white shadow-lg rounded-xl border border-gray-200 overflow-hidden"
-              >
-                <div className="p-4 sm:p-6 bg-gray-400 rounded">
-                  <h2 className="text-xl sm:text-2xl font-semibold text-black">
-                    {customerData?.mess?.name}
-                  </h2>
-                  <p className="text-black text-lg mt-1">
-                    {customerData?.duration} Meal
-                  </p>
+              {loading ? (
+                <div className="mt-6 flex items-center justify-center">
+                  <Loading />
                 </div>
+              ) : isEmpty ? (
+                <p className="mt-4 text-sm text-stone-700 leading-relaxed">
+                  No active monthly subscription found.
+                </p>
+              ) : (
+                <div className="mt-4 space-y-2">
+                  {allSubscriptions.map((subscription) => {
+                    const selected = subscription.id === activeSubscription?.id;
 
-                <div className="p-4 sm:p-6 space-y-6">
-                  <div className="p-4 border rounded-lg bg-amber-50/60">
-                    <p className="text-amber-900 font-medium text-center">
-                      Status:{" "}
-                      <span
-                        className={
-                          customerData?.isAllowed
-                            ? "text-green-700 font-semibold"
-                            : "text-yellow-600 font-semibold"
+                    return (
+                      <button
+                        key={subscription.id || subscription.mess?.name}
+                        type="button"
+                        onClick={() =>
+                          setSelectedSubscriptionId(subscription.id)
                         }
+                        className={`w-full text-left rounded-xl border px-3 py-3 transition ${
+                          selected
+                            ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+                            : "bg-slate-50 text-stone-800 border-slate-200 hover:bg-slate-100"
+                        }`}
                       >
-                        {customerData?.isAllowed
-                          ? "Approved ✓"
+                        <p className="font-semibold leading-tight">
+                          {subscription.mess?.name}
+                        </p>
+                        <p
+                          className={`text-xs mt-1 ${
+                            selected ? "text-slate-200" : "text-stone-600"
+                          }`}
+                        >
+                          {subscription.duration}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </aside>
+
+            <div className="space-y-4 sm:space-y-5">
+              <section className="rounded-[22px] border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+                {loading ? (
+                  <p className="text-sm text-stone-700">
+                    Loading plan details...
+                  </p>
+                ) : isEmpty ? (
+                  <>
+                    <p className="text-xs uppercase tracking-[0.18em] text-slate-500 font-bold">
+                      Overview
+                    </p>
+                    <h1 className="text-2xl sm:text-3xl font-black text-stone-900 mt-2">
+                      Daily Mess Dashboard
+                    </h1>
+                    <p className="text-sm text-stone-700 mt-2">
+                      Register from any mess page to start tracking your daily
+                      meals here.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-xs uppercase tracking-[0.18em] text-slate-500 font-bold">
+                      Overview
+                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mt-2">
+                      <div>
+                        <h1 className="text-2xl sm:text-3xl font-black text-stone-900 leading-tight">
+                          {activeSubscription?.mess?.name}
+                        </h1>
+                        <p className="text-sm text-stone-700 mt-1">
+                          {activeSubscription?.duration} meal plan
+                        </p>
+                      </div>
+
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${
+                          activeSubscription?.isAllowed
+                            ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                            : "bg-amber-100 text-amber-800 border border-amber-200"
+                        }`}
+                      >
+                        {activeSubscription?.isAllowed
+                          ? "Approved"
                           : "Pending Approval"}
                       </span>
-                    </p>
+                    </div>
+                  </>
+                )}
+              </section>
 
-                    <p className="text-center text-gray-600 text-sm mt-1">
-                      {customerData?.isAllowed
-                        ? "You can now avail all Monthly Mess services."
-                        : "Your request is under review by the mess owner."}
-                    </p>
+              <section className="rounded-[22px] border border-slate-200 bg-white p-4 sm:p-6 shadow-sm">
+                {loading ? (
+                  <div className="py-8 flex justify-center">
+                    <Loading />
                   </div>
+                ) : isEmpty || !activeSubscription ? (
+                  <div className="text-sm text-stone-700">
+                    Once you join a monthly mess, your profile details, menu
+                    access, and invoice will appear here.
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                      <article className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                        <h3 className="text-base font-extrabold text-stone-900 mb-3">
+                          Personal Information
+                        </h3>
+                        <div className="space-y-2">
+                          <InfoRow
+                            label="Full Name"
+                            value={activeSubscription.name}
+                          />
+                          <InfoRow
+                            label="Phone Number"
+                            value={activeSubscription.phone}
+                          />
+                          <InfoRow
+                            label="Emergency Contact"
+                            value={activeSubscription.emergencyContact}
+                          />
+                          <InfoRow
+                            label="Gender"
+                            value={activeSubscription.gender}
+                          />
+                          <InfoRow
+                            label="College / Workplace"
+                            value={activeSubscription.college}
+                          />
+                          <InfoRow
+                            label="Address"
+                            value={activeSubscription.address}
+                          />
+                        </div>
+                      </article>
 
-                  <section>
-                    <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-                      Personal Information
-                    </h3>
-
-                    <div className="mt-3 space-y-3">
-                      <InfoRow label="Full Name" value={customerData?.name} />
-                      <InfoRow
-                        label="Phone Number"
-                        value={customerData?.phone}
-                      />
-                      <InfoRow
-                        label="Emergency Contact"
-                        value={customerData?.emergencyContact || "Not Provided"}
-                      />
-                      <InfoRow label="Gender" value={customerData?.gender} />
-                      <InfoRow
-                        label="College / Workplace"
-                        value={customerData?.college || "Not Provided"}
-                      />
-                      <InfoRow label="Address" value={customerData?.address} />
-                    </div>
-                  </section>
-
-                  <section>
-                    <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-                      About Mess
-                    </h3>
-
-                    <div className="mt-3 space-y-3">
-                      <InfoRow
-                        label="Mess Name"
-                        value={customerData?.mess?.name}
-                      />
-                      <div className="flex justify-between items-center py-2 border-b">
-                        <h6 className="font-medium text-gray-700">Location:</h6>
-
-                        <button
-                          className="text-gray-900 hover:underline text-sm"
-                          onClick={() =>
-                            window.open(
-                              `https://www.google.com/maps?q=${customerData?.mess?.lat},${customerData?.mess?.lon}`,
-                              "_blank"
-                            )
-                          }
-                        >
-                          Get on Map
-                        </button>
-                      </div>
-
-                      <InfoRow
-                        label="Food Preference"
-                        value={
-                          customerData?.foodPreference?.toLowerCase() === "both"
-                            ? "Veg + Non-Veg"
-                            : customerData?.foodPreference?.toLowerCase() ===
-                              "veg"
-                            ? "Vegetarian"
-                            : customerData?.foodPreference?.toLowerCase() ===
-                                "nonveg" ||
-                              customerData?.foodPreference?.toLowerCase() ===
-                                "non-veg"
-                            ? "Non-Vegetarian"
-                            : customerData?.foodPreference || "Not Specified"
-                        }
-                      />
-                      <InfoRow
-                        label="Payment Mode"
-                        value={
-                          customerData?.paymentMode === "upi"
-                            ? "Online Transfer"
-                            : "Cash"
-                        }
-                      />
-                      <InfoRow
-                        label="Meal Duration"
-                        value={customerData?.duration}
-                      />
-                    </div>
-                  </section>
-
-                  <section>
-                    <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-                      Subscription Details
-                    </h3>
-
-                    <div className="mt-3 space-y-3">
-                      <InfoRow
-                        label="Joining Date"
-                        value={joiningDate.toLocaleDateString("en-GB")}
-                      />
-
-                      <InfoRow
-                        label="Expiry Date"
-                        value={expiryDate.toLocaleDateString("en-GB")}
-                      />
-                    </div>
-                  </section>
-
-                  {customerData?.mess && customerData?.isAllowed && (
-                    <section>
-                      <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-                        🍽️ Today's Menu
-                      </h3>
-
-                      <div className="mt-3 space-y-4">
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-center p-4">
-                          
-                          <p className=" text-blue-700 text-xl">
-                            Your subscription: {customerData.duration}
-                          </p>
+                      <article className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+                        <h3 className="text-base font-extrabold text-stone-900 mb-3">
+                          Subscription Summary
+                        </h3>
+                        <div className="space-y-2">
+                          <InfoRow
+                            label="Mess Name"
+                            value={activeSubscription.mess?.name}
+                          />
+                          <InfoRow
+                            label="Food Preference"
+                            value={getFoodPreferenceLabel(
+                              activeSubscription.foodPreference,
+                            )}
+                          />
+                          <InfoRow
+                            label="Payment Mode"
+                            value={
+                              activeSubscription.paymentMode === "upi"
+                                ? "Online Transfer"
+                                : "Cash"
+                            }
+                          />
+                          <InfoRow
+                            label="Meal Duration"
+                            value={activeSubscription.duration}
+                          />
+                          <InfoRow
+                            label="Joining Date"
+                            value={formatDate(activeSubscription.joiningDate)}
+                          />
+                          <InfoRow
+                            label="Expiry Date"
+                            value={
+                              activeExpiryDate?.toLocaleDateString("en-GB") ||
+                              "N/A"
+                            }
+                          />
                         </div>
 
-                        {((customerData.mess.vegMenu &&
-                          customerData.mess.vegMenu.length > 0) ||( customerData.mess.nonVegMenu &&
-                          customerData.mess.nonVegMenu.length > 0)) && (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                             
-                              <div className="space-y-3">
-                                <MessMenuComponent mess={customerData.mess} isOwner={false} />
-                                
-                              </div>
-                            </div>
+                        <div className="mt-4">
+                          {activeSubscription.mess?.lat &&
+                          activeSubscription.mess?.lon ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                window.open(
+                                  `https://www.google.com/maps?q=${activeSubscription.mess.lat},${activeSubscription.mess.lon}`,
+                                  "_blank",
+                                )
+                              }
+                              className="w-full rounded-lg border border-orange-200 bg-orange-50 py-2 text-sm font-semibold text-orange-800 hover:bg-orange-100"
+                            >
+                              Open Mess Location on Map
+                            </button>
+                          ) : (
+                            <p className="text-xs text-stone-600">
+                              Location coordinates are not available for this
+                              mess.
+                            </p>
                           )}
-
-                        
-
-                        {(!customerData.mess.vegMenu ||
-                          customerData.mess.vegMenu.length === 0) &&
-                          (!customerData.mess.nonVegMenu ||
-                            customerData.mess.nonVegMenu.length === 0) && (
-                            <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
-                              <p className="text-gray-600">
-                                📋 Menu not available yet
-                              </p>
-                              <p className="text-sm text-gray-500 mt-1">
-                                The mess owner hasn't uploaded today's menu.
-                              </p>
-                            </div>
-                          )}
-                      </div>
-                    </section>
-                  )}
-
-                  {!customerData?.isAllowed && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                      <p className="text-sm text-amber-900 text-center">
-                        ℹ️ Menu will be visible once your registration is
-                        approved by the mess owner.
-                      </p>
+                        </div>
+                      </article>
                     </div>
-                  )}
 
-                  {customerData?.paymentMode === "upi" &&
-                    customerData?.paymentVerified && (
-                      <section>
-                        <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
-                          Payment Invoice
+                    {activeSubscription.isAllowed ? (
+                      <article className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
+                        <h3 className="text-base font-extrabold text-emerald-900 mb-3">
+                          Today&apos;s Menu
                         </h3>
 
-                        <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-4">
-                          <div className="flex justify-between items-center mb-3">
-                            <span className="text-green-700 font-semibold text-lg">
-                              ✓ Payment Verified
-                            </span>
-                            <span className="text-green-600 font-bold text-xl">
-                              ₹{customerData?.totalAmount}
+                        {(activeSubscription.mess?.vegMenu?.length > 0 ||
+                          activeSubscription.mess?.nonVegMenu?.length > 0) && (
+                          <MessMenuComponent
+                            mess={activeSubscription.mess}
+                            isOwner={false}
+                          />
+                        )}
+
+                        {activeSubscription.mess?.vegMenu?.length === 0 &&
+                          activeSubscription.mess?.nonVegMenu?.length === 0 && (
+                            <div className="rounded-xl border border-stone-200 bg-white p-4 text-sm text-stone-700">
+                              Menu is not available yet. The mess owner has not
+                              uploaded today&apos;s items.
+                            </div>
+                          )}
+                      </article>
+                    ) : (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                        Menu will be visible once your registration is approved
+                        by the mess owner.
+                      </div>
+                    )}
+
+                    {activeSubscription.paymentMode === "upi" &&
+                      activeSubscription.paymentVerified && (
+                        <article className="rounded-2xl border border-emerald-200 bg-white p-4">
+                          <div className="flex items-center justify-between gap-2 mb-3">
+                            <h3 className="text-base font-extrabold text-emerald-900">
+                              Payment Invoice
+                            </h3>
+                            <span className="text-lg font-black text-emerald-700">
+                              ₹{activeSubscription.totalAmount}
                             </span>
                           </div>
 
@@ -293,7 +423,8 @@ export default function ConsumerMonthlyMess() {
                               label="Transaction ID"
                               value={
                                 <span className="font-mono text-xs break-all">
-                                  {customerData?.razorpayPaymentId}
+                                  {activeSubscription.razorpayPaymentId ||
+                                    "N/A"}
                                 </span>
                               }
                             />
@@ -301,38 +432,31 @@ export default function ConsumerMonthlyMess() {
                               label="Order ID"
                               value={
                                 <span className="font-mono text-xs break-all">
-                                  {customerData?.razorpayOrderId}
+                                  {activeSubscription.razorpayOrderId || "N/A"}
                                 </span>
                               }
                             />
                             <InfoRow
                               label="Payment Date"
-                              value={new Date(
-                                customerData?.createdAt ||
-                                  customerData?.joiningDate
-                              ).toLocaleDateString("en-GB")}
+                              value={formatDate(
+                                activeSubscription.createdAt ||
+                                  activeSubscription.joiningDate,
+                              )}
                             />
                             <InfoRow
                               label="Duration Paid For"
-                              value={customerData?.duration}
+                              value={activeSubscription.duration}
                             />
                           </div>
-
-                          <div className="mt-4 pt-3 border-t border-green-300">
-                            <p className="text-xs text-gray-600 text-center">
-                              This invoice can be shown to the mess owner for
-                              transparent transaction verification.
-                            </p>
-                          </div>
-                        </div>
-                      </section>
-                    )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </>
+                        </article>
+                      )}
+                  </div>
+                )}
+              </section>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
   );
 }

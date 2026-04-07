@@ -6,7 +6,7 @@ import Navbar from "@/Component/Others/Navbar";
 import Loading from "@/Component/Others/Loading";
 import FormInput from "@/Component/Others/FormInput";
 import SelectBox from "@/Component/Others/SelectBox";
-import { toast } from "react-toastify";
+import { Toaster, toast } from "sonner";
 
 const NewCustomerToMess = () => {
   const messId = useParams().id;
@@ -36,11 +36,11 @@ const NewCustomerToMess = () => {
         const messRes = await fetch(`/api/mess/${messId}`);
         if (messRes.ok) {
           const messData = await messRes.json();
-          setMess(messData.mess);
+          setMess(messData);
         }
 
         const regRes = await fetch(
-          `/api/consumer/${messId}/check-registrations`
+          `/api/consumer/${messId}/check-registrations`,
         );
         if (regRes.ok) {
           const regData = await regRes.json();
@@ -76,9 +76,7 @@ const NewCustomerToMess = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({ ...prev, [name]: value }));
-
     const errorMsg = validateField(name, value);
     setErrors((prev) => ({ ...prev, [name]: errorMsg }));
   };
@@ -93,53 +91,57 @@ const NewCustomerToMess = () => {
       document.body.appendChild(script);
     });
 
+  const getErrorMessage = async (response, fallback) => {
+    try {
+      const data = await response.json();
+      if (data?.message) return data.message;
+    } catch {
+      // Ignore parse failures and fallback to generic message.
+    }
+    return fallback;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const newErrors = {};
-
     Object.entries(formData).forEach(([key, value]) => {
       const err = validateField(key, value);
       if (err) newErrors[key] = err;
     });
-
     if (!formData.name || !formData.phone || !formData.duration) {
       toast.error("Please fill all required fields.");
       return;
     }
-
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
     const hasDay = existingRegistrations.some(
-      (reg) => reg.duration === "Day" || reg.duration === "Day + Night"
+      (reg) => reg.duration === "Day" || reg.duration === "Day + Night",
     );
     const hasNight = existingRegistrations.some(
-      (reg) => reg.duration === "Night" || reg.duration === "Day + Night"
-    );
-    const hasDayAndNight = existingRegistrations.some(
-      (reg) => reg.duration === "Day + Night"
+      (reg) => reg.duration === "Night" || reg.duration === "Day + Night",
     );
 
     if (formData.duration === "Day" && hasDay) {
       toast.error(
-        "You are already registered for Day meal time. Please cancel your existing Day registration first."
+        "You are already registered for Day meal time. Please cancel your existing Day registration first.",
       );
       return;
     }
 
     if (formData.duration === "Night" && hasNight) {
       toast.error(
-        "You are already registered for Night meal time. Please cancel your existing Night registration first."
+        "You are already registered for Night meal time. Please cancel your existing Night registration first.",
       );
       return;
     }
 
     if (formData.duration === "Day + Night" && (hasDay || hasNight)) {
       toast.error(
-        "You cannot register for Day + Night because you already have a Day or Night registration. Please cancel your existing registration first."
+        "You cannot register for Day + Night because you already have a Day or Night registration.",
       );
       return;
     }
@@ -153,26 +155,29 @@ const NewCustomerToMess = () => {
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        toast.error(data.message || "Failed to register customer.");
+        const msg = await getErrorMessage(res, "Failed to register customer.");
+        toast.error(msg);
         setLoading(false);
         return;
       }
 
+      const data = await res.json();
+
       if (formData.paymentMode === "upi" && data.order) {
         await loadScript("https://checkout.razorpay.com/v1/checkout.js");
-        const { order, key, dbOrderId, amount } = data;
+        const { order, key, dbOrderId } = data;
+        let paymentHandled = false;
 
         const options = {
-          key: key,
+          key,
           amount: order.amount,
           currency: order.currency,
           name: mess?.name || "Mess Registration",
           description: `Monthly Mess Registration - ${formData.duration}`,
           order_id: order.id,
           handler: async function (response) {
+            paymentHandled = true;
             try {
               const verifyRes = await fetch(
                 `/api/mess/${messId}/new-customer`,
@@ -185,11 +190,11 @@ const NewCustomerToMess = () => {
                     razorpay_signature: response.razorpay_signature,
                     dbOrderId,
                   }),
-                }
+                },
               );
 
-              const verifyData = await verifyRes.json();
               if (verifyRes.ok) {
+                setLoading(false);
                 toast.success("Payment successful! Registration complete.");
                 setFormData({
                   name: "",
@@ -202,11 +207,15 @@ const NewCustomerToMess = () => {
                   foodPreference: "",
                   emergencyContact: "",
                 });
-                router.back();
+                setTimeout(() => {
+                  router.back();
+                }, 700);
               } else {
-                toast.error(
-                  verifyData.message || "Payment verification failed"
+                const verifyMsg = await getErrorMessage(
+                  verifyRes,
+                  "Payment verification failed",
                 );
+                toast.error(verifyMsg);
               }
             } catch (err) {
               console.error(err);
@@ -216,16 +225,33 @@ const NewCustomerToMess = () => {
             }
           },
           modal: {
-            ondismiss: function () {
+            ondismiss: async function () {
+              if (!paymentHandled && dbOrderId) {
+                try {
+                  await fetch(`/api/mess/${messId}/new-customer`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      action: "cancel",
+                      dbOrderId,
+                    }),
+                  });
+                } catch {
+                  // Ignore cleanup failure; user has already cancelled payment.
+                }
+              }
+
               setLoading(false);
-              toast.info("Payment cancelled");
+              toast.info(
+                "Payment cancelled. No membership request was submitted.",
+              );
             },
           },
           prefill: {
             name: formData.name,
             contact: formData.phone,
           },
-          theme: { color: "#3399cc" },
+          theme: { color: "#f97316" },
         };
 
         const rzp = new window.Razorpay(options);
@@ -244,7 +270,9 @@ const NewCustomerToMess = () => {
           emergencyContact: "",
         });
         setLoading(false);
-        router.back();
+        setTimeout(() => {
+          router.back();
+        }, 700);
       }
     } catch (err) {
       console.error(err);
@@ -253,44 +281,44 @@ const NewCustomerToMess = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div
-        className="
-          fixed inset-0 
-          bg-gray-100 bg-opacity-50 backdrop-blur-sm
-          flex items-center justify-center 
-          z-50
-        "
-      >
-        <Loading />
-      </div>
-    );
-  }
-
   return (
-    <div className="w-full min-h-screen bg-gray-50">
+    <div className="role-shell bg-[#fff7f2]">
+      <Toaster position="top-center" richColors closeButton />
+      {loading && (
+        <div className="fixed inset-0 bg-white/80 flex items-center justify-center z-50">
+          <Loading />
+        </div>
+      )}
       <Navbar />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-20 sm:py-24">
-        <div className="bg-white p-4 sm:p-6 md:p-8 border rounded-lg shadow-lg">
-          <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 text-center">
+      <main className="role-container max-w-4xl">
+        <div className="role-section p-5 sm:p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">
+            Monthly Mess Registration
+          </p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 mt-1">
             New Customer Registration
           </h2>
+          <p className="text-sm text-stone-600 mt-1">
+            Join this mess for a monthly plan. Soft, clean fields keep your
+            details clear.
+          </p>
+        </div>
 
+        <div className="role-section p-5 sm:p-6">
           {mess && formData.duration && (
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-gray-700">
+            <div className="mb-4 p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
+              <p className="text-sm text-emerald-800">
                 <span className="font-semibold">Selected Duration:</span>{" "}
                 {formData.duration}
               </p>
-              <p className="text-lg font-bold text-blue-600 mt-2">
+              <p className="text-lg font-bold text-emerald-700 mt-2">
                 Amount to Pay: ₹{displayAmount}
               </p>
             </div>
           )}
 
           {existingRegistrations.length > 0 && (
-            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="mb-4 p-4 bg-amber-50 border border-amber-100 rounded-xl">
               <p className="text-sm font-semibold text-amber-900 mb-2">
                 ⚠️ Your Current Registrations:
               </p>
@@ -300,13 +328,13 @@ const NewCustomerToMess = () => {
                 </p>
               ))}
               <p className="text-xs text-amber-700 mt-2">
-                ℹ️ You can register for both Day and Night meals at different
-                messes, but cannot register for the same meal time twice.
+                ℹ️ You can register for both Day and Night at different messes,
+                but not the same meal time twice.
               </p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
             <FormInput
               label="Full Name"
               name="name"
@@ -327,13 +355,15 @@ const NewCustomerToMess = () => {
               error={errors.phone}
             />
 
-            <div>
-              <label className="block font-medium">Address</label>
+            <div className="space-y-2">
+              <label className="block font-medium text-stone-800">
+                Address
+              </label>
               <textarea
                 name="address"
                 placeholder="123 Main St, City"
                 rows={3}
-                className="w-full border p-2 rounded"
+                className="w-full border border-stone-200 p-3 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-orange-200"
                 value={formData.address}
                 onChange={handleChange}
                 required
@@ -373,14 +403,11 @@ const NewCustomerToMess = () => {
               options={(() => {
                 const hasDay = existingRegistrations.some(
                   (reg) =>
-                    reg.duration === "Day" || reg.duration === "Day + Night"
+                    reg.duration === "Day" || reg.duration === "Day + Night",
                 );
                 const hasNight = existingRegistrations.some(
                   (reg) =>
-                    reg.duration === "Night" || reg.duration === "Day + Night"
-                );
-                const hasDayAndNight = existingRegistrations.some(
-                  (reg) => reg.duration === "Day + Night"
+                    reg.duration === "Night" || reg.duration === "Day + Night",
                 );
 
                 return [
@@ -458,17 +485,17 @@ const NewCustomerToMess = () => {
             <button
               type="submit"
               disabled={loading || !formData.duration}
-              className="w-full bg-gray-600 hover:bg-black text-white p-3 sm:p-4 text-base sm:text-lg font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-2"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white p-3 sm:p-4 text-base sm:text-lg font-semibold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-2 shadow-sm"
             >
               {loading
                 ? "Processing..."
                 : formData.paymentMode === "upi"
-                ? `Pay  Online and Register`
-                : "Register with Cash Payment"}
+                  ? `Pay Online and Register`
+                  : "Register with Cash Payment"}
             </button>
           </form>
         </div>
-      </div>
+      </main>
     </div>
   );
 };

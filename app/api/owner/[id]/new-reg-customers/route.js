@@ -10,6 +10,53 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const isMembershipPaymentComplete = (registration = {}) => {
+  const mode = (
+    registration.payment_mode ||
+    registration.paymentMode ||
+    ""
+  ).toLowerCase();
+  if (mode === "cash") return true;
+  return (
+    registration.payment_verified === true ||
+    registration.paymentVerified === true ||
+    registration.payment_status === "paid" ||
+    registration.paymentStatus === "paid"
+  );
+};
+
+const normalizeRegistration = (registration = {}) => {
+  const joiningDate =
+    registration.joining_date || registration.joiningDate || null;
+  const isAllowed =
+    typeof registration.is_allowed === "boolean"
+      ? registration.is_allowed
+      : Boolean(registration.isAllowed);
+
+  return {
+    ...registration,
+    _id: registration.id,
+    id: registration.id,
+    joiningDate,
+    joining_date: joiningDate,
+    foodPreference: registration.food_preference || registration.foodPreference,
+    phoneNum: registration.phone || registration.phoneNum,
+    isAllowed,
+    is_allowed: isAllowed,
+    paymentMode: registration.payment_mode || registration.paymentMode,
+    paymentVerified:
+      registration.payment_verified === true ||
+      registration.paymentVerified === true,
+    razorpayOrderId:
+      registration.razorpay_order_id || registration.razorpayOrderId,
+    razorpayPaymentId:
+      registration.razorpay_payment_id || registration.razorpayPaymentId,
+    totalAmount: registration.total_amount ?? registration.totalAmount ?? null,
+    paymentStatus: registration.payment_status || registration.paymentStatus,
+    createdAt: registration.created_at || registration.createdAt,
+  };
+};
+
 const sendMail = async (to, subject, html) => {
   try {
     await transporter.sendMail({
@@ -35,9 +82,13 @@ export async function GET(request, { params }) {
       return NextResponse.json({ message: "Mess not found" }, { status: 404 });
     }
 
+    const validRegistrations = (mess.new_mess_customer || [])
+      .filter(isMembershipPaymentComplete)
+      .map(normalizeRegistration);
+
     return NextResponse.json(
-      { newMessCustomer: mess.new_mess_customer },
-      { status: 200 }
+      { newMessCustomer: validRegistrations },
+      { status: 200 },
     );
   } catch (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });
@@ -46,12 +97,21 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request) {
   try {
-    const { userId, joiningDate, allow, addDays } = await request.json();
+    const payload = await request.json();
+    const userId = payload.userId || payload.id || payload._id;
+    const joiningDate = payload.joiningDate || payload.joining_date;
+    const allow =
+      typeof payload.allow === "boolean"
+        ? payload.allow
+        : typeof payload.isAllowed === "boolean"
+          ? payload.isAllowed
+          : undefined;
+    const addDays = payload.addDays ?? payload.add_days;
 
     if (!userId) {
       return NextResponse.json(
         { message: "User ID required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -70,7 +130,10 @@ export async function PATCH(request) {
       ? user.customers
       : user.customers?.ids || [];
     const consumerId =
-      Array.isArray(customerIds) && customerIds.length ? customerIds[0] : null;
+      user.consumer_id ||
+      (Array.isArray(customerIds) && customerIds.length
+        ? customerIds[0]
+        : null);
     const { data: consumer } =
       consumerId &&
       (await supabase
@@ -80,17 +143,17 @@ export async function PATCH(request) {
         .single());
 
     if (joiningDate) {
-      updateFields.joiningDate = new Date(joiningDate);
+      updateFields.joining_date = new Date(joiningDate).toISOString();
     }
 
     if (typeof allow === "boolean") {
-      updateFields.isAllowed = allow;
+      updateFields.is_allowed = allow;
 
       const email = consumer?.email;
       const name = consumer?.username || "User";
       const messName = user.mess?.name;
 
-      if (allow) {
+      if (allow && email) {
         await sendMail(
           email,
           "Mess Registration Approved - MessMate",
@@ -122,9 +185,9 @@ export async function PATCH(request) {
                 <b>MessMate Support Team</b>
               </p>
             </div>
-          </div>`
+          </div>`,
         );
-      } else {
+      } else if (email) {
         await sendMail(
           email,
           "Mess Registration Updated - MessMate",
@@ -156,27 +219,30 @@ export async function PATCH(request) {
             </p>
           </div>
         </div>
-        `
+        `,
         );
       }
     }
 
     if (addDays && !isNaN(addDays)) {
       const extra = Number(addDays);
-      const current = new Date(user.joiningDate);
+      const current = new Date(
+        user.joining_date || user.joiningDate || new Date().toISOString(),
+      );
       const updated = new Date(current);
       updated.setDate(updated.getDate() + extra);
 
-      updateFields.joiningDate = updated;
+      updateFields.joining_date = updated.toISOString();
 
       const email = consumer?.email;
       const name = consumer?.username || "User";
       const messName = user.mess?.name;
 
-      await sendMail(
-        email,
-        "Mess Duration Extended - MessMate",
-        `
+      if (email) {
+        await sendMail(
+          email,
+          "Mess Duration Extended - MessMate",
+          `
         <div style="font-family: Arial; padding: 22px; background: #f7f7f7;">
           <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px;">
             <h2>Your Monthly Mess Service Has Been Extended</h2>
@@ -204,8 +270,9 @@ export async function PATCH(request) {
             </p>
           </div>
         </div>
-        `
-      );
+        `,
+        );
+      }
     }
 
     const { data: updated, error: updErr } = await supabase
@@ -218,17 +285,17 @@ export async function PATCH(request) {
 
     return NextResponse.json(
       { message: "Updated successfully", updated },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });
   }
 }
 
-export async function DELETE(request, { params }) {
+export async function DELETE(request) {
   try {
-    const { id: messId } = await params;
-    const { userId } = await request.json();
+    const payload = await request.json();
+    const userId = payload.userId || payload.id || payload._id;
 
     if (!userId) {
       return NextResponse.json({ message: "User ID missing" }, { status: 400 });
@@ -295,13 +362,13 @@ export async function DELETE(request, { params }) {
             </p>
           </div>
         </div>
-        `
+        `,
       );
     }
 
     return NextResponse.json(
       { message: "User deleted successfully" },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error) {
     return NextResponse.json({ message: error.message }, { status: 500 });

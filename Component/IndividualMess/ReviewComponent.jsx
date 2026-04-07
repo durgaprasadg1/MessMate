@@ -7,10 +7,7 @@ import Link from "next/link";
 import Loading from "../Others/Loading";
 const ReviewSection = ({
   messID,
-  showJoinMonthly = false,
-  joinMonthlyHref = "",
-  monthlyFee = 0,
-  monthlyDuration = 30,
+  
 }) => {
   const { data: session } = useSession();
   const isConsumer =
@@ -102,14 +99,7 @@ const ReviewSection = ({
           {loading ? "Submitting..." : "Submit Review"}
         </button>
 
-        {showJoinMonthly && isConsumer && joinMonthlyHref && (
-          <Link
-            href={joinMonthlyHref}
-            className="block w-full py-3 text-center bg-emerald-600 text-white rounded fw-semibold hover:bg-emerald-700 transition-all no-underline!"
-          >
-            Join Monthly Mess - ₹{monthlyFee} / {monthlyDuration} days
-          </Link>
-        )}
+        
       </form>
     </div>
   );

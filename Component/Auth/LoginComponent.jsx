@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import Loading from "../Others/Loading";
 import Navbar from "../Others/Navbar";
 import { Eye, EyeOff } from "lucide-react";
-import Label from "../Helper/Label";
+import AuthOrbitPanel from "./AuthOrbitPanel";
 
 const LoginComponent = () => {
   const { data: session, status } = useSession();
@@ -50,14 +50,14 @@ const LoginComponent = () => {
       if (result?.error) {
         toast.error("Invalid credentials or internet issue");
       } else {
-          toast.success("Login successful");
-          if (session?.user?.isAdmin) {
-            router.push("/admin");
-          } else if (session?.user?.isOwner) {
-            router.push("/owner");
-          } else {
-            router.push("/mess");
-          }
+        toast.success("Login successful");
+        if (session?.user?.isAdmin) {
+          router.push("/admin");
+        } else if (session?.user?.isOwner) {
+          router.push("/owner");
+        } else {
+          router.push("/mess");
+        }
       }
     } catch {
       toast.error("Server issue. Try again later.");
@@ -69,100 +69,116 @@ const LoginComponent = () => {
   if (loading) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col md:pl-[25vw] transition-[padding] duration-0 ease-linear">
+    <div className="min-h-screen bg-linear-to-br from-orange-100/70 via-[#fff7ef] to-orange-50 flex flex-col md:pl-[25vw] transition-[padding] duration-0 ease-linear">
       <Navbar />
 
-      <div className="flex flex-col items-center justify-center grow p-6 sm:p-10 relative z-10 w-full mt-16 md:mt-0">
-        <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100/60 p-8 sm:p-10 backdrop-blur-xl">
-          <div className="text-center mb-10">
-            <h1 className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight leading-tight">
-              Welcome Back <span className="inline-block animate-wave">👋</span>
-            </h1>
-            <p className="text-slate-500 mt-3 font-medium">
-              Log in to your MessMate dashboard
-            </p>
-          </div>
+      <div className="w-full grow p-4 sm:p-6 lg:p-8 mt-16 md:mt-0">
+        <div className="mx-auto w-full max-w-6xl rounded-[2.25rem] border border-orange-200/70 bg-[#fff7ef] p-3 sm:p-4 shadow-[0_26px_60px_-36px_rgba(194,65,12,0.55)]">
+          <div className="grid min-h-[480px] grid-cols-1 gap-4 lg:grid-cols-2">
+            <AuthOrbitPanel
+              title=""
+              subtitle=""
+            />
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semisemibold text-slate-400 uppercase tracking-widest pl-1">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                placeholder="Enter your email"
-                required
-                className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-700
-                focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 focus:bg-white transition-all placeholder:text-slate-400"
-              />
-            </div>
-
-            <div className="space-y-1.5 relative">
-              <div className="flex justify-between items-end">
-                 <label className="text-xs font-semibold text-slate-400 uppercase tracking-widest pl-1">Password</label>
-                 <button
-                   type="button"
-                   onClick={() => router.push("/forgot-password")}
-                   className="text-orange-500 hover:text-orange-600 font-semibold text-[11px] mb-1 hover:underline tracking-wide rounded"
-                 >
-                   Forgot your password?
-                 </button>
+            <div className="rounded-4xl border border-orange-100 bg-white p-6 sm:p-8 lg:p-10 flex flex-col justify-center">
+              <div className="mb-8">
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-orange-500">
+                  Login
+                </p>
+                <h1 className="mt-2 text-3xl sm:text-4xl font-black text-stone-900 leading-tight">
+                  Login to your account
+                </h1>
+                <p className="mt-2 text-sm text-stone-600">
+                  Access your MessMate dashboard in one step.
+                </p>
               </div>
-              <div className="relative">
-                <input
-                  type={show ? "text" : "password"}
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="Enter your password"
-                  minLength={8}
-                  required
-                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-700
-                  focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 focus:bg-white transition-all placeholder:text-slate-400 pr-12"
-                />
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="">
+                  <label className="text-[11px] font-semibold uppercase tracking-[0.13em] text-orange-500 pl-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={form.email}
+                    onChange={handleChange}
+                    placeholder="Enter your email"
+                    required
+                    className="w-full px-4 py-3.5 rounded-2xl border border-orange-200 bg-orange-50/35 text-sm font-medium text-stone-800
+                    focus:outline-none focus:ring-2 focus:ring-orange-400/35 focus:border-orange-400 transition-all placeholder:text-stone-400"
+                  />
+                </div>
+
+                <div className="relative">
+                  <div className="flex justify-between items-end">
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.13em] text-orange-500 pl-1">
+                      Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => router.push("/forgot-password")}
+                      className="text-orange-600 hover:text-orange-700 font-semibold text-[11px] mb-1 hover:underline tracking-wide"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <input
+                      type={show ? "text" : "password"}
+                      name="password"
+                      value={form.password}
+                      onChange={handleChange}
+                      placeholder="Enter your password"
+                      minLength={8}
+                      required
+                      className="w-full px-4 py-3.5 rounded-2xl border border-orange-200 bg-orange-50/35 text-sm font-medium text-stone-800
+                      focus:outline-none focus:ring-2 focus:ring-orange-400/35 focus:border-orange-400 transition-all placeholder:text-stone-400 pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShow(!show)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-700 transition-colors"
+                    >
+                      {show ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
                 <button
-                  type="button"
-                  onClick={() => setShow(!show)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white py-3.5 rounded font-bold tracking-wide shadow-lg shadow-orange-500/30 transition-all duration-200 mt-1"
                 >
-                  {show ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {loading ? "Logging in..." : "Login"}
                 </button>
+              </form>
+
+              <div className="mt-1 border-t border-orange-100  space-y-1">
+                <p className="text-center text-stone-600 text-sm font-medium">
+                  New to MessMate? {' '}
+                  <button
+                    type="button"
+                    onClick={() => router.push("/signup")}
+                    className="ml-1.5 text-orange-600 font-bold hover:underline"
+                  >
+                    Create Consumer Account
+                  </button>
+                </p>
+
+                <p className="text-center text-stone-600 text-sm font-medium">
+                  Are you a vendor? {" "}
+                  <button
+                    type="button"
+                    onClick={() => router.push("/register-owner")}
+                    className="ml-1.5 text-orange-600 font-bold hover:underline"
+                  >
+                    Register Mess Owner
+                  </button>
+                </p>
               </div>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white py-4 rounded-2xl
-              font-semibold shadow-lg shadow-orange-500/30 transition-all duration-200 mt-2 rounded"
-            >
-              {loading ? "Logging in..." : "Login to account"}
-            </button>
-          </form>
-
-          <div className="mt-10 border-t border-slate-100 pt-6 space-y-3">
-             <p className="text-center text-slate-500 text-xs font-medium">
-               New to MessMate? 
-               <button
-                 type="button"
-                 onClick={() => router.push("/signup")}
-                 className="ml-1.5 text-orange-500 font-semibold hover:underline rounded"
-               >
-                 Create Consumer Account
-               </button>
-             </p>
-
-             <p className="text-center text-slate-500 text-xs font-medium">
-               Are you a vendor?
-               <button
-                 type="button"
-                 onClick={() => router.push("/register-owner")}
-                 className="ml-1.5 text-orange-500 font-semibold hover:underline rounded"
-               >
-                 Register Mess Owner
-               </button>
-             </p>
           </div>
         </div>
       </div>

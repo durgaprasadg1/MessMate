@@ -19,6 +19,7 @@ export default function AdminLandingPage() {
     pendingCount: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const { data: session, status } = useSession();
   const [recentSignups, setRecentSignups] = useState([]);
@@ -37,16 +38,21 @@ export default function AdminLandingPage() {
         const res = await fetch("/api/admin/get-all-data", { cache: "no-store" });
         if (!res.ok) {
           console.error("Failed to fetch admin data:", res.status);
+          setError(true);
           return;
         }
         const text = await res.text();
-        if (!text) return;
+        if (!text) {
+          setError(true);
+          return;
+        }
         const data = JSON.parse(text);
         setStats(data.stats || { totalUsers: 0, totalMesses: 0, pendingCount: 0 });
         setRecentSignups(data.recentSignups || []);
         setPendingMesses(data.pendingMesses || []);
       } catch (err) {
         console.error("Failed to fetch admin data:", err);
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -92,6 +98,11 @@ export default function AdminLandingPage() {
         {loading ? (
           <div className="mt-6 flex justify-center">
             <Loader2 className="w-10 h-10 animate-spin text-stone-800" />
+          </div>
+        ) : error ? (
+          <div className="role-section p-6 mt-4 text-stone-700">
+            <p className="text-lg font-semibold text-rose-700">Unable to load admin data.</p>
+            <p className="text-sm text-stone-600 mt-1">Please try again or refresh. If the issue persists, check the admin API.</p>
           </div>
         ) : (
           <>

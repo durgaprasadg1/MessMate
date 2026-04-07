@@ -17,7 +17,12 @@ export async function GET(request, { params }) {
     const cacheKey = `tenant:${tenantId}:mess:${id}`;
     const cached = await getJsonCache(cacheKey);
 
-    if (cached !== null) {
+    const hasMonthlyShape =
+      cached &&
+      Object.prototype.hasOwnProperty.call(cached, "monthlyMessFee") &&
+      Object.prototype.hasOwnProperty.call(cached, "monthlyMessDuration");
+
+    if (cached !== null && hasMonthlyShape) {
       const response = NextResponse.json(cached, { status: 200 });
       response.headers.set("x-redis-cache", "HIT");
       response.headers.set("x-redis-key", cacheKey);
@@ -55,6 +60,8 @@ export async function GET(request, { params }) {
       description: mess.description,
       email: mess.email,
       upi: mess.upi,
+      monthlyMessFee: Number(mess.monthly_mess_fee || 0),
+      monthlyMessDuration: Number(mess.monthly_mess_duration || 30),
       address: mess.address,
       mealTime: mess.meal_time,
       vegMenu: mess.veg_menu,
@@ -80,7 +87,7 @@ export async function GET(request, { params }) {
       alerts: mess.alerts,
       reviews: mess.reviews,
     };
-    console.log("shaped : ")
+
     await setJsonCache(cacheKey, shaped, TTL_SECONDS);
 
     const response = NextResponse.json(shaped, { status: 200 });

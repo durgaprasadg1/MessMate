@@ -116,8 +116,8 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
               <Clock size={20} />
               <span>Order History</span>
             </button>
-            {consumerData.haveMonthlyMess && (
-              <Link href={`/consumer/${session?.user?.id}/daily-mess`} onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl transition bg-orange-400 !text-white shadow-sm hover:bg-orange-500 font-medium !no-underline">
+            {!consumerData.haveMonthlyMess && (
+              <Link href={`/consumer/${session?.user?.id}/daily-mess`} onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl transition bg-orange-200 !text-white shadow-sm hover:bg-orange-300 font-medium !no-underline">
                 <LayoutDashboard size={20} />
                 <span>Your Daily Mess</span>
               </Link>

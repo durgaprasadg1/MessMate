@@ -10,13 +10,13 @@ import {
   Rocket,
 } from "lucide-react";
 import OwnerNavbar from "../../Component/Owner/OwnerNavbar";
+import Footer from "@/Component/Others/Footer";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 export default function OwnerLandingPage() {
   const router = useRouter();
   const { data: session } = useSession();
-  const isOwner = session?.user?.isOwner;
 
   if (!session || session?.user?.isOwner === false) {
     return (
@@ -77,7 +77,7 @@ export default function OwnerLandingPage() {
     <div className="min-h-screen bg-[#F4F7F4] flex flex-col md:pl-[280px] pt-16 md:pt-0">
       <OwnerNavbar />
       <main className="grow">
-        <section className="relative overflow-hidden bg-gradient-to-b from-[#F4F7F4] to-emerald-50/40 py-12 sm:py-20 md:py-24 lg:py-32 px-4 sm:px-6">
+        <section className="relative overflow-hidden bg-linear-to-b from-[#F4F7F4] to-emerald-50/40 py-12 sm:py-20 md:py-24 lg:py-32 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto text-center">
             <motion.h1
               initial={{ opacity: 0, y: -20 }}
@@ -171,16 +171,7 @@ export default function OwnerLandingPage() {
         </section>
       </main>
 
-      <footer className="bg-white border-t border-stone-200 text-stone-500 py-6 text-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-sm">
-            &copy; 2025 MessMate Pro. All Rights Reserved.
-          </p>
-          <p className="text-xs mt-1">
-            Developed for Mess Owners by MessMate Team.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
