@@ -16,7 +16,7 @@ export default function MessDetails({ mess }) {
   const [isOpen, setIsOpen] = useState(!!mess.isOpen);
   const isConsumer =
     session && !session.user?.isOwner && !session.user?.isAdmin;
-  const showMonthlyJoinCta = isConsumer && Number(mess.monthlyMessFee) > 0;
+  const showMonthlyJoinCta = Number(mess.monthlyMessFee) > 0;
 
   useEffect(() => {
     const handler = (e) => {
@@ -33,6 +33,7 @@ export default function MessDetails({ mess }) {
     return () => window.removeEventListener("messStatusUpdate", handler);
   }, [mess._id]);
 
+  console.log("Mess : ", mess)
   return (
     <div className="min-h-screen py-8 px-4 sm:px-8 mt-16 md:mt-0 bg-slate-50 md:pl-[25vw] flex flex-col transition-[padding] duration-0 ease-linear">
       <div className="max-w-6xl mx-auto w-full flex flex-col gap-8 mt-6 pb-20">
@@ -143,44 +144,37 @@ export default function MessDetails({ mess }) {
             </div>
 
             {/* Bottom Actions / Join Monthly */}
-            <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
               <div className="flex items-center gap-2 text-sm text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full font-medium">
                 <Info size={14} className="text-slate-400" />
                 {mess.isLimited ? "Limited Serving" : "Unlimited Thali"}
               </div>
 
-              {mess.monthlyMessFee > 0 && (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-white border border-orange-200 shadow-sm rounded-xl py-3 px-4 shrink-0 sm:w-auto w-full justify-between">
-                  <div className="flex flex-col text-right">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              {Number(mess.monthlyMessFee) > 0 && (
+                <div className="w-full lg:w-auto flex flex-col gap-3 bg-[#ffe5e0] border border-rose-100 shadow-sm rounded-xl py-3 px-4 shrink-0 sm:min-w-[280px]">
+                  <div className="flex flex-col text-left">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-rose-500">
                       Monthly Plan
                     </span>
-                    <span className="text-lg font-black text-slate-800 leading-none">
+                    <span className="text-2xl font-black text-stone-900 leading-tight">
                       ₹{mess.monthlyMessFee}
                     </span>
-                    <span className="text-[11px] text-slate-500 mt-1">
+                    <span className="text-[12px] text-stone-600 mt-1">
                       Duration: {mess.monthlyMessDuration || 30} days
                     </span>
                   </div>
-                  {isConsumer ? (
-                    <Link
-                      href={`/mess/${mess._id}/new-customer`}
-                      className="no-underline! shrink-0"
-                    >
-                      <button className="bg-orange-500 text-white shadow-md text-sm font-bold px-5 py-2.5 rounded-lg hover:bg-orange-600 active:bg-orange-700 transition w-full sm:w-auto">
-                        Join Monthly Mess
-                      </button>
-                    </Link>
-                  ) : (
-                    <button
-                      onClick={() =>
-                        (window.location.href = `/login?redirect=/mess/${mess._id}/new-customer`)
-                      }
-                      className="bg-slate-900 text-white shadow-md text-sm font-bold px-5 py-2.5 rounded-lg hover:bg-slate-800 transition w-full sm:w-auto"
-                    >
-                      Login to Join
+                  <Link
+                    href={
+                      isConsumer
+                        ? `/mess/${mess._id}/new-customer`
+                        : `/login?redirect=/mess/${mess._id}/new-customer`
+                    }
+                    className="no-underline! shrink-0"
+                  >
+                    <button className="w-full bg-[#f3b2a8] text-stone-900 shadow-sm text-sm font-bold px-5 py-2.5 rounded-lg hover:bg-[#eda59a] active:bg-[#e28d7e] transition">
+                      {isConsumer ? "Join Monthly Mess" : "Login to Join"}
                     </button>
-                  )}
+                  </Link>
                 </div>
               )}
             </div>
@@ -205,20 +199,14 @@ export default function MessDetails({ mess }) {
               <div className="mt-4 w-full lg:w-1/2 bg-white rounded-3xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] border border-slate-200 overflow-hidden p-6 sm:p-8">
                 <ReviewSection
                   messID={mess._id}
-                  showJoinMonthly={showMonthlyJoinCta}
-                  joinMonthlyHref={`/mess/${mess._id}/new-customer`}
-                  monthlyFee={mess.monthlyMessFee}
-                  monthlyDuration={mess.monthlyMessDuration || 30}
+                 
                 />
               </div>
             </div>
           ) : (
             <ReviewSection
               messID={mess._id}
-              showJoinMonthly={showMonthlyJoinCta}
-              joinMonthlyHref={`/mess/${mess._id}/new-customer`}
-              monthlyFee={mess.monthlyMessFee}
-              monthlyDuration={mess.monthlyMessDuration || 30}
+              
             />
           )}
 

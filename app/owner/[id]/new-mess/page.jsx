@@ -22,8 +22,8 @@ const NewMessForm = () => {
     ownerName: "",
     adharNumber: "",
     phoneNumber: "",
-    monthlyMessFee: "",
-    monthlyMessDuration: "",
+    monthlyMessFee: "500",
+    monthlyMessDuration: "30",
     lat: "",
     lon: "",
   });
@@ -114,6 +114,15 @@ const NewMessForm = () => {
     if (!emailRegex.test(form.email)) {
       setLoading(false);
       const msg = "Invalid Email";
+      toast.error(msg);
+      setMessage(`❌ ${msg}`);
+      return;
+    }
+
+    const feeNumber = Number(form.monthlyMessFee);
+    if (Number.isNaN(feeNumber) || feeNumber < 500) {
+      setLoading(false);
+      const msg = "Monthly fee must be at least ₹500";
       toast.error(msg);
       setMessage(`❌ ${msg}`);
       return;
@@ -334,12 +343,13 @@ const NewMessForm = () => {
                 Monthly Mess Fee
               </label>
               <input
-                type="text"
+                type="number"
                 name="monthlyMessFee"
                 value={form.monthlyMessFee}
                 onChange={handleChange}
                 className="mt-1 w-full border border-stone-200 rounded-md px-3 py-2 bg-[#F4F7F4] text-stone-800 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 placeholder="1800"
+                min="500"
               />
             </div>
 

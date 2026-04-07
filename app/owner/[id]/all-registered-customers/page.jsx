@@ -38,26 +38,67 @@ export default function YourMessRegisteredUser() {
 
       if (!res.ok) return setUsers([]);
 
-      const processed = data?.newMessCustomer?.map((user) => {
-        const today = new Date();
-        const joining = new Date(user.joiningDate);
-        const passedDays = Math.floor(
-          (today - joining) / (1000 * 60 * 60 * 24)
-        );
+      const processed = (data?.newMessCustomer || []).map((user) => {
+        const userId = user?._id || user?.id || null;
+        const joiningDateRaw = user?.joiningDate || user?.joining_date;
+        const joiningDateParsed = joiningDateRaw
+          ? new Date(joiningDateRaw)
+          : null;
+        const hasValidJoiningDate =
+          joiningDateParsed && !Number.isNaN(joiningDateParsed.getTime());
 
-        const totalDuration = user?.messDuration || 30;
+        const durationRaw = user?.messDuration ?? user?.mess_duration;
+        const parsedDuration = Number(durationRaw);
+        const totalDuration =
+          Number.isFinite(parsedDuration) && parsedDuration > 0
+            ? parsedDuration
+            : 30;
+
+        const passedDays = hasValidJoiningDate
+          ? Math.floor(
+              (Date.now() - joiningDateParsed.getTime()) /
+                (1000 * 60 * 60 * 24),
+            )
+          : 0;
         const remainingDays = Math.max(totalDuration - passedDays, 0);
+
+        const isAllowed =
+          typeof user?.isAllowed === "boolean"
+            ? user.isAllowed
+            : Boolean(user?.is_allowed);
 
         return {
           ...user,
+          _id: userId,
+          id: userId,
+          phoneNum: user?.phoneNum || user?.phone || "N/A",
+          foodPreference:
+            user?.foodPreference || user?.food_preference || "N/A",
+          joiningDate: joiningDateRaw || null,
+          joiningDateFormatted: hasValidJoiningDate
+            ? joiningDateParsed.toLocaleDateString("en-IN", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : "N/A",
+          isAllowed,
+          paymentMode: (
+            user?.paymentMode ||
+            user?.payment_mode ||
+            ""
+          ).toLowerCase(),
+          paymentVerified:
+            user?.paymentVerified === true || user?.payment_verified === true,
+          totalAmount: user?.totalAmount ?? user?.total_amount ?? 0,
+          razorpayPaymentId:
+            user?.razorpayPaymentId || user?.razorpay_payment_id || "N/A",
+          razorpayOrderId:
+            user?.razorpayOrderId || user?.razorpay_order_id || "N/A",
+          createdAt: user?.createdAt || user?.created_at || null,
           remainingDays,
           highlight:
             remainingDays === 0 ? "over" : remainingDays < 5 ? "low" : "normal",
-          joiningDateFormatted: joining.toLocaleDateString("en-IN", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }),
         };
       });
 
@@ -83,7 +124,11 @@ export default function YourMessRegisteredUser() {
 
   const openDateModal = (userId, joiningDate) => {
     setSelectedUser(userId);
-    const formatted = new Date(joiningDate).toISOString().split("T")[0];
+    const parsed = joiningDate ? new Date(joiningDate) : null;
+    const formatted =
+      parsed && !Number.isNaN(parsed.getTime())
+        ? parsed.toISOString().split("T")[0]
+        : "";
     setNewJoiningDate(formatted);
     setShowDateModal(true);
   };
@@ -244,37 +289,57 @@ export default function YourMessRegisteredUser() {
       {
         accessorKey: "remainingDays",
         header: "Left",
-        cell: ({ row }) => (
-          <span
-            className={
-              row.original.highlight === "over"
-                ? "text-rose-700 font-bold"
-                : row.original.highlight === "low"
-                ? "text-amber-700 font-semibold"
-                : "text-emerald-700 font-semibold"
-            }
-          >
-            {row.original.remainingDays}
-          </span>
-        ),
+        cell: ({ row }) => {
+          const remaining = Number.isFinite(row.original.remainingDays)
+            ? row.original.remainingDays
+            : "N/A";
+
+          return (
+            <span
+              className={
+                row.original.highlight === "over"
+                  ? "text-rose-700 font-bold"
+                  : row.original.highlight === "low"
+                    ? "text-amber-700 font-semibold"
+                    : "text-emerald-700 font-semibold"
+              }
+            >
+              {remaining}
+            </span>
+          );
+        },
       },
       {
         accessorKey: "paymentMode",
         header: "Payment",
-        cell: ({ row }) => (
-          <div className="flex flex-col gap-1">
-           
-            {row.original.paymentMode === "upi" &&
-              row.original.paymentVerified && (
+        cell: ({ row }) => {
+          const mode = (row.original.paymentMode || "").toLowerCase();
+          const isVerified = row.original.paymentVerified === true;
+          const isUpiPaid = mode === "upi" && isVerified;
+
+          return (
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-stone-700 font-medium">
+                {mode === "cash"
+                  ? "Cash (one-to-one)"
+                  : mode === "upi"
+                    ? isVerified
+                      ? "Online paid"
+                      : "Online pending"
+                    : "N/A"}
+              </span>
+
+              {isUpiPaid && (
                 <button
                   onClick={() => showInvoiceModalFunc(row.original)}
                   className="px-2 py-0.5 text-xs rounded bg-teal-600 hover:bg-teal-700 text-white"
                 >
-                  {row.original.paymentMode === "upi" ? "Online : " : "Cash : "} View Invoice
+                  View Invoice
                 </button>
               )}
-          </div>
-        ),
+            </div>
+          );
+        },
       },
       {
         accessorKey: "isAllowed",
@@ -294,48 +359,52 @@ export default function YourMessRegisteredUser() {
       {
         id: "actions",
         header: "Actions",
-        cell: ({ row }) => (
-          <div className="flex gap-2 text-white">
-            <button
-              onClick={() =>
-                openDateModal(row.original._id, row.original.joiningDate)
-              }
-              className="px-3 py-1 text-xs rounded bg-teal-500 hover:bg-teal-600 text-white"
-            >
-              Update Date
-            </button>
+        cell: ({ row }) => {
+          const userId = row.original._id || row.original.id;
 
-            <button
-              onClick={() => openAddDaysModal(row.original._id)}
-              className="px-3 py-1 text-xs rounded bg-amber-500 text-black hover:bg-amber-600"
-            >
-              Add Days
-            </button>
+          return (
+            <div className="flex gap-2 text-white">
+              <button
+                onClick={() => openDateModal(userId, row.original.joiningDate)}
+                className="px-3 py-1 text-xs rounded bg-teal-500 hover:bg-teal-600 text-white"
+                disabled={!userId}
+              >
+                Update Date
+              </button>
 
-            <button
-              onClick={() =>
-                toggleAllow(row.original._id, row.original.isAllowed)
-              }
-              className={`px-3 py-1 text-xs rounded ${
-                row.original.isAllowed
-                  ? "bg-slate-500 hover:bg-slate-600"
-                : "bg-emerald-600 hover:bg-emerald-700"
-              }`}
-            >
-              {row.original.isAllowed ? "Disallow" : "Allow"}
-            </button>
+              <button
+                onClick={() => openAddDaysModal(userId)}
+                className="px-3 py-1 text-xs rounded bg-amber-500 text-black hover:bg-amber-600"
+                disabled={!userId}
+              >
+                Add Days
+              </button>
 
-            <button
-              onClick={() => deleteUser(row.original._id)}
-              className="px-3 py-1 text-xs rounded bg-rose-600 hover:bg-rose-700 text-white"
-            >
-              Delete
-            </button>
-          </div>
-        ),
+              <button
+                onClick={() => toggleAllow(userId, row.original.isAllowed)}
+                className={`px-3 py-1 text-xs rounded ${
+                  row.original.isAllowed
+                    ? "bg-slate-500 hover:bg-slate-600"
+                    : "bg-emerald-600 hover:bg-emerald-700"
+                }`}
+                disabled={!userId}
+              >
+                {row.original.isAllowed ? "Disallow" : "Allow"}
+              </button>
+
+              <button
+                onClick={() => deleteUser(userId)}
+                className="px-3 py-1 text-xs rounded bg-rose-600 hover:bg-rose-700 text-white"
+                disabled={!userId}
+              >
+                Delete
+              </button>
+            </div>
+          );
+        },
       },
     ],
-    [showInvoiceModalFunc]
+    [showInvoiceModalFunc],
   );
 
   if (loading) return <Loading />;
@@ -468,7 +537,7 @@ export default function YourMessRegisteredUser() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Phone:</span>
                 <span className="font-semibold text-gray-800">
-                  {selectedInvoice.phone}
+                  {selectedInvoice.phoneNum || selectedInvoice.phone || "N/A"}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -504,9 +573,15 @@ export default function YourMessRegisteredUser() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Registration Date:</span>
                 <span className="font-semibold text-gray-800">
-                  {new Date(
-                    selectedInvoice.createdAt || selectedInvoice.joiningDate
-                  ).toLocaleDateString()}
+                  {(() => {
+                    const rawDate =
+                      selectedInvoice.createdAt || selectedInvoice.joiningDate;
+                    if (!rawDate) return "N/A";
+                    const parsedDate = new Date(rawDate);
+                    return Number.isNaN(parsedDate.getTime())
+                      ? "N/A"
+                      : parsedDate.toLocaleDateString();
+                  })()}
                 </span>
               </div>
             </div>
