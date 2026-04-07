@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import supabase from "@/lib/supabaseClient";
+import { deleteCacheKeys } from "@/lib/redis";
 
 export async function DELETE(request, { params }) {
   try {
     const { id, revId } = await params;
+    const tenantId = request.headers.get("x-tenant-id") || "public";
     const session = await getServerSession(authOptions);
     if (!session)
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -40,7 +42,13 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    await supabase.from("review").delete().eq("id", revId);
+    const { data: deletedReview, error } = await supabase
+      .from("review")
+      .delete()
+      .eq("id", revId)
+      .select("id")
+      .maybeSingle();
+    if (error) throw error;
     if (!deletedReview) {
       return NextResponse.json(
         { message: "Review not found" },
@@ -48,7 +56,7 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // No denormalized array to maintain when using Supabase JSON; nothing else to do.
+    await deleteCacheKeys([`tenant:${tenantId}:mess:${id}`]);
 
     return NextResponse.json(
       { message: "Review Deleted Successfully" },

@@ -29,7 +29,7 @@ export async function GET(request, { params }) {
     const tenantId = request.headers.get("x-tenant-id") || "public";
     const cacheKey = `tenant:${tenantId}:consumer:${consumerid}:monthly-mess`;
     const cached = await getJsonCache(cacheKey);
-    if (cached) {
+    if (cached !== null) {
       return NextResponse.json({ monthlyMess: cached }, { status: 200 });
     }
     const { data: records = [] } = await supabase

@@ -7,7 +7,7 @@ export async function GET() {
   const tenantId = "public";
   const cacheKey = `tenant:${tenantId}:admin:dashboard`;
   const cached = await getJsonCache(cacheKey);
-  if (cached) {
+  if (cached !== null) {
     return Response.json(cached);
   }
 

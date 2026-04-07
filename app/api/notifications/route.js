@@ -20,7 +20,7 @@ export async function GET(request) {
     const tenantId = request.headers.get("x-tenant-id") || "public";
     const cacheKey = `tenant:${tenantId}:notifications:${session.user.id}`;
     const cached = await getJsonCache(cacheKey);
-    if (cached) {
+    if (cached !== null) {
       return NextResponse.json(cached, { status: 200 });
     }
 
