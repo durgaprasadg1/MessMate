@@ -9,7 +9,7 @@ export async function GET() {
     const tenantId = "public";
     const cacheKey = `tenant:${tenantId}:consumers:all`;
     const cached = await getJsonCache(cacheKey);
-    if (cached) {
+    if (cached !== null) {
       return NextResponse.json(cached, { status: 200 });
     }
 

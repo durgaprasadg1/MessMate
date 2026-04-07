@@ -11,7 +11,10 @@ export async function GET(request) {
     const cached = await getJsonCache(cacheKey);
 
     if (cached !== null) {
-      return NextResponse.json(cached, { status: 200 });
+      const response = NextResponse.json(cached, { status: 200 });
+      response.headers.set("x-redis-cache", "HIT");
+      response.headers.set("x-redis-key", cacheKey);
+      return response;
     }
 
     const { data: messes, error } = await supabase
@@ -47,7 +50,10 @@ export async function GET(request) {
 
     await setJsonCache(cacheKey, shaped, TTL_SECONDS);
 
-    return NextResponse.json(shaped, { status: 200 });
+    const response = NextResponse.json(shaped, { status: 200 });
+    response.headers.set("x-redis-cache", "MISS");
+    response.headers.set("x-redis-key", cacheKey);
+    return response;
   } catch (error) {
     console.log("Error fetching mess data:", error);
     return NextResponse.json(

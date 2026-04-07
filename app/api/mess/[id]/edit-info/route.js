@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import supabase from "@/lib/supabaseClient";
+import { deleteCacheKeys } from "@/lib/redis";
 
 export async function PUT(request, { params }) {
   try {
     const { id } = await params; 
+    const tenantId = request.headers.get("x-tenant-id") || "public";
     const body = await request.json();
 
     const { name, address, phoneNumber, category, limits, description } = body;
@@ -30,6 +32,13 @@ export async function PUT(request, { params }) {
         { status: 404 }
       );
     }
+
+    await deleteCacheKeys([
+      `tenant:${tenantId}:mess:${id}`,
+      `tenant:${tenantId}:messes:all`,
+      `tenant:${tenantId}:messes:pending`,
+      `tenant:${tenantId}:owner:${updatedMess.owner_id}:messes`,
+    ]);
 
     return NextResponse.json({
       message: "Mess updated successfully",

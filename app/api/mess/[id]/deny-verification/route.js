@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import supabase from "@/lib/supabaseClient"; 
+import { deleteCacheKeys } from "@/lib/redis";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -15,6 +16,7 @@ export const runtime = "nodejs";
 export async function POST(_req, { params }) {
   try {
     const { id } = await params;
+    const tenantId = _req.headers.get("x-tenant-id") || "public";
 
     if (!id) {
       return NextResponse.json(
@@ -95,6 +97,12 @@ export async function POST(_req, { params }) {
     } catch (mailErr) {
       console.error("Failed to send denial email:", mailErr);
     }
+
+    await deleteCacheKeys([
+      `tenant:${tenantId}:mess:${id}`,
+      `tenant:${tenantId}:messes:all`,
+      `tenant:${tenantId}:messes:pending`,
+    ]);
 
     return NextResponse.json({
       message: "Mess verification denied and record deleted",

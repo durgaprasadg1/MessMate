@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import supabase from "@/lib/supabaseClient";
+import { deleteCacheKeys } from "@/lib/redis";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -13,6 +14,7 @@ const transporter = nodemailer.createTransport({
 export async function POST(req, { params }) {
   try {
     const { id } = await params;
+    const tenantId = req.headers.get("x-tenant-id") || "public";
      const { data: mess, error } = await supabase
        .from("mess")
        .select("*")
@@ -80,6 +82,12 @@ export async function POST(req, { params }) {
         .from("mess")
         .update({ is_verified: true })
         .eq("id", id);
+
+    await deleteCacheKeys([
+      `tenant:${tenantId}:mess:${id}`,
+      `tenant:${tenantId}:messes:all`,
+      `tenant:${tenantId}:messes:pending`,
+    ]);
 
     return NextResponse.json({ message: "Verified Mess" });
   } catch (error) {

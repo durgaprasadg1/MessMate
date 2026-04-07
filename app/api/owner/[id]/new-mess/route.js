@@ -5,6 +5,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
 import supabase from "@/lib/supabaseClient";
+import { deleteCacheKeys } from "@/lib/redis";
 export const runtime = "nodejs";
 
 const transporter = nodemailer.createTransport({
@@ -18,6 +19,7 @@ const transporter = nodemailer.createTransport({
 export async function POST(request, { params }) {
   try {
     const { id } = await params; 
+    const tenantId = request.headers.get("x-tenant-id") || "public";
     const session = await getServerSession(authOptions);
 
     if (!session)
@@ -196,6 +198,12 @@ export async function POST(request, { params }) {
       .select("id")
       .single();
     if (error) throw error;
+
+    await deleteCacheKeys([
+      `tenant:${tenantId}:messes:all`,
+      `tenant:${tenantId}:messes:pending`,
+      `tenant:${tenantId}:owner:${id}:messes`,
+    ]);
 
     return NextResponse.json({ id: created.id }, { status: 201 });
   } catch (error) {

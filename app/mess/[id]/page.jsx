@@ -7,7 +7,7 @@ export default async function ShowMess({ params }) {
   try {
     const { id } = (await params) || {};
     const base = getBaseUrl();
-    console.log("Base :" ,base)
+    // console.log("Base :" ,base)
     if (!id || typeof id !== "string") {
       return <MessNotFound />;
     }

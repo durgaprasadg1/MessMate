@@ -17,8 +17,11 @@ export async function GET(request, { params }) {
     const cacheKey = `tenant:${tenantId}:mess:${id}`;
     const cached = await getJsonCache(cacheKey);
 
-    if (cached) {
-      return NextResponse.json(cached, { status: 200 });
+    if (cached !== null) {
+      const response = NextResponse.json(cached, { status: 200 });
+      response.headers.set("x-redis-cache", "HIT");
+      response.headers.set("x-redis-key", cacheKey);
+      return response;
     }
 
     const { data: mess } = await supabase
@@ -77,11 +80,13 @@ export async function GET(request, { params }) {
       alerts: mess.alerts,
       reviews: mess.reviews,
     };
-
+    console.log("shaped : ")
     await setJsonCache(cacheKey, shaped, TTL_SECONDS);
 
-    console.log("[API GET /mess/:id] Found mess:", mess.id, mess.name);
-    return NextResponse.json(shaped, { status: 200 });
+    const response = NextResponse.json(shaped, { status: 200 });
+    response.headers.set("x-redis-cache", "MISS");
+    response.headers.set("x-redis-key", cacheKey);
+    return response;
   } catch (error) {
     console.error("[API GET /mess/:id] Error fetching mess by ID:", error);
     return NextResponse.json(
