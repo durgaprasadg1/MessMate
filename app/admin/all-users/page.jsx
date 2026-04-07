@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import AdminNavbar from "@/Component/Admin/AdminNavbar";
+import AdminSidebar from "@/Component/Admin/AdminSidebar";
 import NotFound from "../../not-found";
 import { DataTable } from "../../../Component/ShadCnUI/table";
 import { toast } from "react-toastify";
@@ -25,7 +25,9 @@ export default function AllUsersPage() {
           return;
         }
 
-        const data = await res.json();
+        const text = await res.text();
+        if (!text) throw new Error("Empty response");
+        const data = JSON.parse(text);
         setUsers(data || []);
       } catch (err) {
         console.error(err);
@@ -96,7 +98,7 @@ export default function AllUsersPage() {
       accessorKey: "username",
       header: "Name",
       cell: ({ row }) => (
-        <span className="font-medium text-white text-sm sm:text-base">
+        <span className="font-medium text-stone-900 text-sm sm:text-base">
           {row.original.username}
         </span>
       ),
@@ -105,7 +107,7 @@ export default function AllUsersPage() {
       accessorKey: "email",
       header: "Email",
       cell: ({ row }) => (
-        <span className="font-medium text-white text-sm sm:text-base">
+        <span className="font-medium text-stone-900 text-sm sm:text-base">
           {row.original.email}
         </span>
       ),
@@ -114,7 +116,7 @@ export default function AllUsersPage() {
       accessorKey: "phone",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="font-medium text-white text-sm sm:text-base">
+        <span className="font-medium text-stone-900 text-sm sm:text-base">
           {row.original.phone}
         </span>
       ),
@@ -123,7 +125,7 @@ export default function AllUsersPage() {
       accessorKey: "orders",
       header: "Orders",
       cell: ({ row }) => (
-        <span className="font-medium text-white text-sm sm:text-base">
+        <span className="font-medium text-stone-900 text-sm sm:text-base">
           {row.original.orders?.length || 0}
         </span>
       ),
@@ -132,7 +134,7 @@ export default function AllUsersPage() {
       accessorKey: "reviews",
       header: "Reviews",
       cell: ({ row }) => (
-        <span className="font-medium text-white text-sm sm:text-base">
+        <span className="font-medium text-stone-900 text-sm sm:text-base">
           {row.original.reviews?.length || 0}
         </span>
       ),
@@ -167,14 +169,14 @@ export default function AllUsersPage() {
             {user.reviews?.length > 0 && (
               <Link
                 href={`/consumer/${user._id}/reviews`}
-                className="text-xs px-2 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 whitespace-nowrap"
+              className="text-xs px-2 py-1 rounded bg-stone-900 text-white hover:bg-stone-800 whitespace-nowrap"
               >
                 Reviews
               </Link>
             )}
 
             <button
-              className="text-xs px-2 py-1 rounded bg-yellow-300 text-black hover:bg-yellow-400 whitespace-nowrap"
+              className="text-xs px-2 py-1 rounded bg-amber-200 text-stone-900 hover:bg-amber-300 whitespace-nowrap"
               onClick={() => handleSendWarningMail(user)}
             >
               Warn
@@ -183,8 +185,8 @@ export default function AllUsersPage() {
             <button
               className={
                 !user.isBlocked
-                  ? "text-xs px-2 py-1 rounded bg-red-300 text-black hover:bg-red-400 whitespace-nowrap"
-                  : "text-xs px-2 py-1 rounded bg-green-300 text-black hover:bg-green-400 whitespace-nowrap"
+                  ? "text-xs px-2 py-1 rounded bg-rose-100 text-rose-700 hover:bg-rose-200 whitespace-nowrap"
+                  : "text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 whitespace-nowrap"
               }
               onClick={() => handleToggleBlock(user)}
             >
@@ -200,34 +202,36 @@ export default function AllUsersPage() {
 
   if (loading)
     return (
-      <div className="min-h-screen bg-zinc-900">
-        <AdminNavbar />
-        <div className="px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
-          <Loading />
+      <div className="role-shell">
+        <AdminSidebar />
+        <div className="role-container">
+          <div className="role-section p-6">
+            <Loading />
+          </div>
         </div>
       </div>
     );
 
   return (
-    <div className="relative min-h-screen bg-zinc-900">
-      <AdminNavbar />
+    <div className="relative role-shell">
+      <AdminSidebar />
 
       {actionLoading && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/70">
           <Loading />
         </div>
       )}
 
-      <main className="max-w-6xl mx-auto p-3 sm:p-4 md:p-6">
-        <h1 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-white">
+      <main className="role-container">
+        <h1 className="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-stone-900">
           All Users
         </h1>
 
         {users.length === 0 ? (
-          <p className="text-gray-400 text-sm sm:text-base">No users found.</p>
+          <p className="text-stone-500 text-sm sm:text-base">No users found.</p>
         ) : (
           <div className="overflow-x-auto">
-            <DataTable columns={columns} data={users} />
+            <DataTable columns={columns} data={users} colorVariant="stone" />
           </div>
         )}
       </main>

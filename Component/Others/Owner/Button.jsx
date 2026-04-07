@@ -17,7 +17,7 @@ const ButtonComponent = ({ data, link }) => {
   return (
     <div>
       <Button
-        className={session?.user?.isOwner  ? "bg-gray-800 text-white font-medium hover:bg-gray-900 transition-colors duration-300 rounded" : " bg-gray-600 text-white font-medium hover:bg-black transition-colors duration-300 rounded"}
+        className="bg-emerald-50 text-emerald-700 font-medium hover:bg-emerald-100 transition-colors duration-300 rounded border border-emerald-200"
         onClick={() => handleClick(link)}
       > 
         {data}

@@ -7,6 +7,7 @@ export default async function ShowMess({ params }) {
   try {
     const { id } = (await params) || {};
     const base = getBaseUrl();
+    // console.log("Base :" ,base)
     if (!id || typeof id !== "string") {
       return <MessNotFound />;
     }
@@ -28,7 +29,7 @@ export default async function ShowMess({ params }) {
     }
     const mess = await res.json();
     return (
-      <div>
+      <div className="md:pl-[20vw]">
         <Navbar />
         <MessDetails mess={mess} />
       </div>

@@ -3,9 +3,18 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import Loading from "../Others/Loading";
-const ReviewSection = ({ messID }) => {
+const ReviewSection = ({
+  messID,
+  showJoinMonthly = false,
+  joinMonthlyHref = "",
+  monthlyFee = 0,
+  monthlyDuration = 30,
+}) => {
   const { data: session } = useSession();
+  const isConsumer =
+    !!session && !session.user?.isOwner && !session.user?.isAdmin;
 
   const router = useRouter();
   const [rating, setRating] = useState(0);
@@ -55,12 +64,12 @@ const ReviewSection = ({ messID }) => {
   if (loading) return <Loading />;
 
   return (
-    <div className="w-full p-6 min-h-9 bg-gray-100 rounded-2xl shadow-md mt-6 ">
+    <div className="w-full p-6 min-h-9 bg-orange-50 rounded-2xl shadow-md mt-6 ">
       <h2 className="text-2xl font-bold text-gray-800 text-center mb-4">
         Share Your Experience
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 fw-semibold">
         <div className="flex justify-center mb-2">
           {[1, 2, 3, 4, 5].map((star) => (
             <span
@@ -77,7 +86,6 @@ const ReviewSection = ({ messID }) => {
           ))}
         </div>
 
-        {/* 📝 Review Text */}
         <textarea
           value={reviewText}
           onChange={(e) => setReviewText(e.target.value)}
@@ -86,17 +94,23 @@ const ReviewSection = ({ messID }) => {
           className="w-full border-2 border-gray-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-gray-400"
         ></textarea>
 
-        {/* 🔘 Submit Button */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-3 bg-gray-600 text-white rounded font-semibold hover:bg-black transition-all"
+          className="w-full py-3 bg-orange-500  text-white rounded fw-semibold hover:bg-orange-600 transition-all"
         >
           {loading ? "Submitting..." : "Submit Review"}
         </button>
-      </form>
 
-      
+        {showJoinMonthly && isConsumer && joinMonthlyHref && (
+          <Link
+            href={joinMonthlyHref}
+            className="block w-full py-3 text-center bg-emerald-600 text-white rounded fw-semibold hover:bg-emerald-700 transition-all no-underline!"
+          >
+            Join Monthly Mess - ₹{monthlyFee} / {monthlyDuration} days
+          </Link>
+        )}
+      </form>
     </div>
   );
 };

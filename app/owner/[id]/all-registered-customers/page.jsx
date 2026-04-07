@@ -198,21 +198,23 @@ export default function YourMessRegisteredUser() {
         accessorKey: "name",
         header: "Name",
         cell: ({ row }) => (
-          <span className="font-semibold text-white">{row.original.name}</span>
+          <span className="font-semibold text-emerald-900">
+            {row.original.name}
+          </span>
         ),
       },
       {
         accessorKey: "phone",
         header: "Phone",
         cell: ({ row }) => (
-          <span className="text-white">{row.original.phoneNum}</span>
+          <span className="text-emerald-900">{row.original.phoneNum}</span>
         ),
       },
       {
         accessorKey: "foodPreference",
         header: "Food",
         cell: ({ row }) => (
-          <span className="text-white">
+          <span className="text-emerald-900">
             {row.original.foodPreference === "Both"
               ? "Veg + Non-Veg"
               : row.original.foodPreference}
@@ -223,7 +225,7 @@ export default function YourMessRegisteredUser() {
         accessorKey: "duration",
         header: "Meal",
         cell: ({ row }) => (
-          <span className="text-white">
+          <span className="text-emerald-900">
             {row.original.duration === "daynight"
               ? "Day & Night"
               : row.original.duration}
@@ -234,7 +236,7 @@ export default function YourMessRegisteredUser() {
         accessorKey: "joiningDateFormatted",
         header: "Joining",
         cell: ({ row }) => (
-          <span className="text-white">
+          <span className="text-emerald-900">
             {row.original.joiningDateFormatted}
           </span>
         ),
@@ -246,10 +248,10 @@ export default function YourMessRegisteredUser() {
           <span
             className={
               row.original.highlight === "over"
-                ? "text-red-700 font-bold"
+                ? "text-rose-700 font-bold"
                 : row.original.highlight === "low"
-                ? "text-red-400 font-semibold"
-                : "text-green-400 font-semibold"
+                ? "text-amber-700 font-semibold"
+                : "text-emerald-700 font-semibold"
             }
           >
             {row.original.remainingDays}
@@ -266,7 +268,7 @@ export default function YourMessRegisteredUser() {
               row.original.paymentVerified && (
                 <button
                   onClick={() => showInvoiceModalFunc(row.original)}
-                  className="px-2 py-0.5 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white"
+                  className="px-2 py-0.5 text-xs rounded bg-teal-600 hover:bg-teal-700 text-white"
                 >
                   {row.original.paymentMode === "upi" ? "Online : " : "Cash : "} View Invoice
                 </button>
@@ -281,8 +283,8 @@ export default function YourMessRegisteredUser() {
           <span
             className={
               row.original.isAllowed
-                ? "text-green-400 font-semibold"
-                : "text-red-500 font-semibold"
+                ? "text-emerald-700 font-semibold"
+                : "text-rose-600 font-semibold"
             }
           >
             {row.original.isAllowed ? "Yes" : "No"}
@@ -298,14 +300,14 @@ export default function YourMessRegisteredUser() {
               onClick={() =>
                 openDateModal(row.original._id, row.original.joiningDate)
               }
-              className="px-3 py-1 text-xs rounded bg-blue-500 hover:bg-blue-600"
+              className="px-3 py-1 text-xs rounded bg-teal-500 hover:bg-teal-600 text-white"
             >
               Update Date
             </button>
 
             <button
               onClick={() => openAddDaysModal(row.original._id)}
-              className="px-3 py-1 text-xs rounded bg-yellow-500 text-black hover:bg-yellow-600"
+              className="px-3 py-1 text-xs rounded bg-amber-500 text-black hover:bg-amber-600"
             >
               Add Days
             </button>
@@ -316,8 +318,8 @@ export default function YourMessRegisteredUser() {
               }
               className={`px-3 py-1 text-xs rounded ${
                 row.original.isAllowed
-                  ? "bg-purple-600 hover:bg-purple-700"
-                  : "bg-green-600 hover:bg-green-700"
+                  ? "bg-slate-500 hover:bg-slate-600"
+                : "bg-emerald-600 hover:bg-emerald-700"
               }`}
             >
               {row.original.isAllowed ? "Disallow" : "Allow"}
@@ -325,7 +327,7 @@ export default function YourMessRegisteredUser() {
 
             <button
               onClick={() => deleteUser(row.original._id)}
-              className="px-3 py-1 text-xs rounded bg-red-600 hover:bg-red-700"
+              className="px-3 py-1 text-xs rounded bg-rose-600 hover:bg-rose-700 text-white"
             >
               Delete
             </button>
@@ -339,7 +341,7 @@ export default function YourMessRegisteredUser() {
   if (loading) return <Loading />;
 
   return (
-    <div className="relative min-h-screen bg-gray-950">
+    <div className="role-shell relative">
       <OwnerNavbar />
 
       {actionLoading && (
@@ -348,8 +350,8 @@ export default function YourMessRegisteredUser() {
         </div>
       )}
 
-      <main className="py-20 sm:py-24 px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 sm:mb-6">
+      <main className="role-container">
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-800 mb-4 sm:mb-6">
           Registered Monthly Mess Users
         </h2>
 
@@ -358,8 +360,8 @@ export default function YourMessRegisteredUser() {
             onClick={() => setFilterAllowed("allowed")}
             className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded text-sm sm:text-base font-medium ${
               filterAllowed === "allowed"
-                ? "bg-green-600 text-white"
-                : "bg-gray-700 text-gray-300"
+                ? "bg-emerald-600 text-white"
+                : "bg-white text-stone-600 border border-stone-200"
             }`}
           >
             Already Joined ({users.filter((u) => u.isAllowed === true).length})
@@ -368,8 +370,8 @@ export default function YourMessRegisteredUser() {
             onClick={() => setFilterAllowed("notallowed")}
             className={`w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded text-sm sm:text-base font-medium ${
               filterAllowed === "notallowed"
-                ? "bg-red-600 text-white"
-                : "bg-gray-700 text-gray-300"
+                ? "bg-rose-600 text-white"
+                : "bg-white text-stone-600 border border-stone-200"
             }`}
           >
             Join Them ({users.filter((u) => u.isAllowed === false).length})
@@ -377,12 +379,12 @@ export default function YourMessRegisteredUser() {
         </div>
 
         {filteredUsers.length === 0 ? (
-          <p className="text-center text-gray-400 mt-10 text-lg">
+          <p className="text-center text-stone-500 mt-10 text-lg">
             No customers found.
           </p>
         ) : (
-          <div className="overflow-x-auto rounded-lg shadow-xl -mx-4 sm:mx-0">
-            <div className="inline-block min-w-full align-middle">
+          <div className="overflow-x-auto rounded-lg shadow-xl -mx-0">
+            <div className="inline-block min-w-full align-middle role-section p-2">
               <DataTable columns={columns} data={filteredUsers} />
             </div>
           </div>
@@ -399,18 +401,18 @@ export default function YourMessRegisteredUser() {
               type="date"
               value={newJoiningDate}
               onChange={(e) => setNewJoiningDate(e.target.value)}
-              className="border border-gray-300 rounded px-3 py-2 w-full mb-4"
+              className="border border-stone-200 rounded px-3 py-2 w-full mb-4"
             />
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowDateModal(false)}
-                className="px-4 py-2 bg-gray-400 text-white rounded"
+                className="px-4 py-2 bg-stone-200 text-stone-700 rounded hover:bg-stone-300"
               >
                 Cancel
               </button>
               <button
                 onClick={saveNewDate}
-                className="px-4 py-2 bg-green-600 text-white rounded"
+                className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700"
               >
                 Save
               </button>
@@ -429,18 +431,18 @@ export default function YourMessRegisteredUser() {
               min="1"
               onChange={(e) => setDaysToAdd(e.target.value)}
               placeholder="Enter days"
-              className="border border-gray-300 rounded px-3 py-2 w-full mb-4"
+              className="border border-stone-200 rounded px-3 py-2 w-full mb-4"
             />
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowAddDaysModal(false)}
-                className="px-4 py-2 bg-gray-400 text-white rounded"
+                className="px-4 py-2 bg-stone-200 text-stone-700 rounded hover:bg-stone-300"
               >
                 Cancel
               </button>
               <button
                 onClick={saveAddedDays}
-                className="px-4 py-2 bg-yellow-500 text-black rounded"
+                className="px-4 py-2 bg-amber-500 text-black rounded hover:bg-amber-600"
               >
                 Add
               </button>
@@ -512,7 +514,7 @@ export default function YourMessRegisteredUser() {
             <div className="flex justify-end gap-3 pt-4 border-t">
               <button
                 onClick={() => setShowInvoiceModal(false)}
-                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded"
+                className="px-4 py-2 bg-stone-200 text-stone-700 rounded hover:bg-stone-300"
               >
                 Close
               </button>

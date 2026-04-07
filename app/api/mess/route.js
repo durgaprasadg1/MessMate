@@ -11,9 +11,10 @@ export async function GET(request) {
     const cached = await getJsonCache(cacheKey);
     console.log("Cached : ", cached);
     if (cached !== null) {
-      console.log("Returning from redis")
-      console.log((cached))
-      return NextResponse.json(cached, { status: 200 });
+      const response = NextResponse.json(cached, { status: 200 });
+      response.headers.set("x-redis-cache", "HIT");
+      response.headers.set("x-redis-key", cacheKey);
+      return response;
     }
 
     const { data: messes, error } = await supabase
@@ -46,20 +47,13 @@ export async function GET(request) {
         certificate: { url: m.certificate_url },
         createdAt: m.created_at,
       })) || [];
-    const cacheWriteSucceeded = await setJsonCache(
-      cacheKey,
-      shaped,
-      TTL_SECONDS
-    );
-    console.log("cacheWriteSucceeded : ", cacheWriteSucceeded);
 
-    if (cacheWriteSucceeded) {
-      console.log("Set to redis");
-    } else {
-      console.warn(`Skipped Redis cache write for ${cacheKey}`);
-    }
-    
-    return NextResponse.json(shaped, { status: 200 });
+    await setJsonCache(cacheKey, shaped, TTL_SECONDS);
+
+    const response = NextResponse.json(shaped, { status: 200 });
+    response.headers.set("x-redis-cache", "MISS");
+    response.headers.set("x-redis-key", cacheKey);
+    return response;
   } catch (error) {
     console.log("Error fetching mess data:", error);
     return NextResponse.json(

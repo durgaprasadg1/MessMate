@@ -17,7 +17,8 @@ const VerificationComponent = () => {
     try {
       const res = await fetch("/api/mess/pending", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch pending messes");
-      const data = await res.json();
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : [];
       setPendingMesses(data);
     } catch (error) {
       toast.error(error.message);
@@ -70,7 +71,7 @@ const VerificationComponent = () => {
       accessorKey: "name",
       header: "Mess Name",
       cell: ({ row }) => (
-        <span className="font-semibold text-white text-sm sm:text-base">
+        <span className="font-semibold text-stone-900 text-sm sm:text-base">
           {row.original.name}
         </span>
       ),
@@ -79,7 +80,7 @@ const VerificationComponent = () => {
       accessorKey: "ownerName",
       header: "Owner",
       cell: ({ row }) => (
-        <span className="text-white text-sm sm:text-base">
+        <span className="text-stone-900 text-sm sm:text-base">
           {row.original.ownerName}
         </span>
       ),
@@ -88,7 +89,7 @@ const VerificationComponent = () => {
       accessorKey: "phoneNumber",
       header: "Contact",
       cell: ({ row }) => (
-        <span className="text-white text-sm sm:text-base">
+        <span className="text-stone-900 text-sm sm:text-base">
           {row.original.phoneNumber}
         </span>
       ),
@@ -97,7 +98,7 @@ const VerificationComponent = () => {
       accessorKey: "category",
       header: "Category",
       cell: ({ row }) => (
-        <span className="text-white text-sm sm:text-base">
+        <span className="text-stone-900 text-sm sm:text-base">
           {formattedCategory(row.original.category)}
         </span>
       ),
@@ -107,7 +108,7 @@ const VerificationComponent = () => {
       accessorKey: "isLimited",
       header: "Limited",
       cell: ({ row }) => (
-        <span className="text-white text-sm sm:text-base">
+        <span className="text-stone-900 text-sm sm:text-base">
           {row.original.isLimited ? "Yes" : "No"}
         </span>
       ),
@@ -116,7 +117,7 @@ const VerificationComponent = () => {
       accessorKey: "createdAt",
       header: "Submitted",
       cell: ({ row }) => (
-        <span className="text-white text-sm sm:text-base">
+        <span className="text-stone-900 text-sm sm:text-base">
           {new Date(row.original.createdAt).toLocaleDateString()}
         </span>
       ),
@@ -129,12 +130,12 @@ const VerificationComponent = () => {
         return (
           <div className="flex flex-wrap gap-2">
             <Link href={mess.image?.url || "#"} target="_blank">
-              <button className="px-2 py-1 text-xs rounded bg-blue-500 text-white hover:bg-blue-600">
+              <button className="px-2 py-1 text-xs rounded bg-stone-900 text-white hover:bg-stone-800">
                 Banner
               </button>
             </Link>
             <Link href={mess.certificate?.url || "#"} target="_blank">
-              <button className="px-2 py-1 text-xs rounded bg-purple-500 text-white hover:bg-purple-600">
+              <button className="px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
                 Certificate
               </button>
             </Link>
@@ -142,7 +143,7 @@ const VerificationComponent = () => {
               href={`https://www.google.com/maps?q=${mess.lat},${mess.lon}`}
               target="_blank"
             >
-              <button className="px-2 py-1 text-xs rounded bg-gray-600 text-white hover:bg-gray-700">
+              <button className="px-2 py-1 text-xs rounded bg-stone-100 text-stone-800 hover:bg-stone-200">
                 Map
               </button>
             </Link>
@@ -159,13 +160,13 @@ const VerificationComponent = () => {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => handleVerify(mess._id)}
-              className="px-3 py-1 text-xs rounded bg-green-600 font-semibold text-white hover:bg-green-700"
+              className="px-3 py-1 text-xs rounded bg-emerald-600 font-semibold text-white hover:bg-emerald-700"
             >
               Verify
             </button>
             <button
               onClick={() => handleDeny(mess._id)}
-              className="px-3 py-1 text-xs rounded bg-red-600 font-semibold text-white hover:bg-red-700"
+              className="px-3 py-1 text-xs rounded bg-rose-500 font-semibold text-white hover:bg-rose-600"
             >
               Deny
             </button>
@@ -176,14 +177,14 @@ const VerificationComponent = () => {
   ];
 
   return (
-    <div className="relative p-3 sm:p-4 md:p-6 bg-zinc-900 min-h-screen">
+    <div className="relative p-3 sm:p-4 md:p-6 bg-transparent">
       {actionLoading && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/70">
           <Loading />
         </div>
       )}
 
-      <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 sm:mb-6 md:mb-8">
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-900 mb-4 sm:mb-6 md:mb-8">
         Mess Verification Panel
       </h1>
 
@@ -192,7 +193,7 @@ const VerificationComponent = () => {
           <Spinner />
         </div>
       ) : pendingMesses.length === 0 ? (
-        <p className="text-center text-gray-400 text-base sm:text-lg py-8 sm:py-10">
+        <p className="text-center text-stone-500 text-base sm:text-lg py-8 sm:py-10">
           No pending messes for verification.
         </p>
       ) : (
@@ -200,6 +201,7 @@ const VerificationComponent = () => {
           <DataTable
             columns={columns}
             data={pendingMesses.filter((m) => !m.isVerified)}
+            colorVariant="stone"
           />
         </div>
       )}

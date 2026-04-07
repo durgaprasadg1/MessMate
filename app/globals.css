@@ -42,6 +42,7 @@
 }
 
 :root {
+  --sidebar-width: 280px;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -74,6 +75,41 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+}
+
+@media (min-width: 768px) {
+  .md\:pl-sidebar {
+    padding-left: var(--sidebar-width, 280px);
+  }
+}
+
+/* Owner/role layout helpers to keep sidebar + content aligned */
+.role-shell {
+  min-height: 100vh;
+  padding-top: 4.5rem; /* room for fixed mobile header */
+  background: linear-gradient(135deg, #f8f9fb, #ffffff 55%, #f1f3f5);
+}
+@media (min-width: 768px) {
+  .role-shell {
+    padding-left: var(--owner-sidebar-width, var(--sidebar-width, 280px));
+    padding-top: 0;
+  }
+}
+.role-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.role-section {
+  border-radius: 18px;
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 10px 35px -18px rgba(16, 185, 129, 0.35);
 }
 
 /* Mobile-first base styles */
@@ -140,6 +176,10 @@ input[type="button"] {
   }
   body {
     @apply bg-background text-foreground;
+  }
+  a, a:hover, a:active, a:focus, a:visited {
+    color: inherit !important;
+    text-decoration: none !important;
   }
 }
 

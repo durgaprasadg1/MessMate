@@ -91,25 +91,15 @@ export default function ConsumerHistory({ params }) {
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
-    <div>
+    <div className="bg-slate-50 min-h-screen">
       <Navbar />
-      <div className="p-6 max-w-4xl mx-auto  flex items-center justify-between">
-        
-        {session && session.user && session.user.id === consumerid && (
-          <button
-            onClick={handleClear}
-            disabled={clearing}
-            className={`px-3 py-2 rounded ${
-              clearing
-                ? "bg-gray-300 text-gray-600"
-                : "bg-red-600 text-white hover:bg-red-700"
-            }`}
-          >
-            {clearing ? "Clearing..." : "Clear History"}
-          </button>
-        )}
-      </div>
-      <ConsumerHistoryUI orders={orders} consumerid={consumerid} />
+      <ConsumerHistoryUI 
+          orders={orders} 
+          consumerid={consumerid}
+          onClear={handleClear}
+          clearing={clearing}
+          showClear={session && session.user && session.user.id === consumerid && orders.length > 0}
+      />
     </div>
   );
 }

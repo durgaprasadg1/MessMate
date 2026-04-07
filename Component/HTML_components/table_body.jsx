@@ -10,21 +10,21 @@ const TableBody = ({
   const { recentSignups = [] } = useContext(tableContext) || {};
 
   return (
-    <div className="bg-amber-300 p-4 rounded-lg shadow">
-      <h3 className="text-lg font-semibold mb-3">{tableName}</h3>
+    <div className="role-section p-5">
+      <h3 className="text-lg font-semibold text-stone-900 mb-3">{tableName}</h3>
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-full text-left text-sm text-stone-800">
           <thead>
-            <tr className="text-gray-500">
-              <th className="pb-2 text-lg font-medium text-black">{heading1}</th>
-              <th className="pb-2 text-lg font-medium text-black">{heading2}</th>
-              <th className="pb-2 text-lg font-medium text-black">{heading3}</th>
+            <tr className="text-stone-500">
+              <th className="pb-2 text-sm font-semibold text-stone-700">{heading1}</th>
+              <th className="pb-2 text-sm font-semibold text-stone-700">{heading2}</th>
+              <th className="pb-2 text-sm font-semibold text-stone-700">{heading3}</th>
               
             </tr>
           </thead>
           <tbody>
             {recentSignups.map((c) => (
-              <tr key={c._id} className="border-t text-black">
+              <tr key={c._id} className="border-t border-stone-100 text-stone-800">
                 <td className="py-2">{c.username}</td>
                 <td className="py-2">{c.email}</td>
                 <td className="py-2">
@@ -34,7 +34,7 @@ const TableBody = ({
             ))}
             {recentSignups.length === 0 && (
               <tr>
-                <td colSpan={3} className="py-4 text-gray-500">
+                <td colSpan={3} className="py-4 text-stone-500">
                   No records
                 </td>
               </tr>

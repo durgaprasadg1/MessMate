@@ -163,16 +163,16 @@ export default function OrderActionOwner({
   if (loading) return <Loading />;
 
   return (
-    <div className="flex gap-2 text-black">
+    <div className="flex gap-2 text-slate-800">
       {!done ? (
         <>
           <button
             onClick={handleTake}
             disabled={disableTake}
-            className={`px-3 py-1 rounded text-white transition ${
+            className={`px-3 py-1 rounded text-white text-sm font-medium transition ${
               disableTake
-                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700"
+                ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                : "bg-emerald-600 hover:bg-emerald-700"
             }`}
           >
             {loading ? "Processing..." : takenLocal ? "Taken" : "Mark Taken"}
@@ -181,10 +181,10 @@ export default function OrderActionOwner({
           <button
             onClick={handleRefund}
             disabled={disableRefund}
-            className={`px-3 py-1 rounded text-white transition ${
+            className={`px-3 py-1 rounded text-white text-sm font-medium transition ${
               disableRefund
-                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                : "bg-red-600 hover:bg-red-700"
+                ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                : "bg-rose-600 hover:bg-rose-700"
             }`}
           >
             {loading
@@ -197,10 +197,10 @@ export default function OrderActionOwner({
           <button
             onClick={handleMarkDone}
             disabled={disableMarkDone}
-            className={`px-3 py-1 rounded text-black transition ${
+            className={`px-3 py-1 rounded text-white text-sm font-medium transition ${
               disableMarkDone
-                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
+                ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                : "bg-teal-600 hover:bg-teal-700"
             }`}
           >
             {loading
@@ -211,7 +211,7 @@ export default function OrderActionOwner({
           </button>
         </>
       ) : (
-        <div className="px-2 py-1 rounded bg-blue-50 text-blue-700">
+        <div className="px-2 py-1 rounded bg-teal-50 text-teal-700 text-sm font-medium border border-teal-200">
           Completed
         </div>
       )}

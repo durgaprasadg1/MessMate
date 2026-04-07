@@ -10,7 +10,7 @@ export async function GET(request, { params }) {
     const tenantId = request.headers.get("x-tenant-id") || "public";
     const cacheKey = `tenant:${tenantId}:admin:${id}:profile`;
     const cached = await getJsonCache(cacheKey);
-    if (cached) {
+    if (cached !== null) {
       return NextResponse.json(
         { admin: cached, message: "Admin found" },
         { status: 200 },

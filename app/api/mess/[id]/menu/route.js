@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import supabase from "@/lib/supabaseClient";
+import { deleteCacheKeys } from "@/lib/redis";
 
 export async function POST(request, { params }) {
   try {
@@ -11,6 +12,7 @@ export async function POST(request, { params }) {
     }
 
     const { id } = await params;
+    const tenantId = request.headers.get("x-tenant-id") || "public";
 
     if (!id) {
       return NextResponse.json({ message: "Mess ID missing" }, { status: 400 });
@@ -122,6 +124,11 @@ export async function POST(request, { params }) {
         })
         .eq("id", id);
     }
+
+    await deleteCacheKeys([
+      `tenant:${tenantId}:mess:${id}`,
+      `tenant:${tenantId}:messes:all`,
+    ]);
 
     return NextResponse.json(
       { message: "Menu added successfully!" },
