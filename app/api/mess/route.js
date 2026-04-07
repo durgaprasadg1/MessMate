@@ -9,8 +9,10 @@ export async function GET(request) {
     const tenantId = request.headers.get("x-tenant-id") || "public";
     const cacheKey = `tenant:${tenantId}:messes:all`;
     const cached = await getJsonCache(cacheKey);
-
+    console.log("Cached : ", cached);
     if (cached !== null) {
+      console.log("Returning from redis")
+      console.log((cached))
       return NextResponse.json(cached, { status: 200 });
     }
 
@@ -44,9 +46,19 @@ export async function GET(request) {
         certificate: { url: m.certificate_url },
         createdAt: m.created_at,
       })) || [];
+    const cacheWriteSucceeded = await setJsonCache(
+      cacheKey,
+      shaped,
+      TTL_SECONDS
+    );
+    console.log("cacheWriteSucceeded : ", cacheWriteSucceeded);
 
-    await setJsonCache(cacheKey, shaped, TTL_SECONDS);
-
+    if (cacheWriteSucceeded) {
+      console.log("Set to redis");
+    } else {
+      console.warn(`Skipped Redis cache write for ${cacheKey}`);
+    }
+    
     return NextResponse.json(shaped, { status: 200 });
   } catch (error) {
     console.log("Error fetching mess data:", error);

@@ -9,7 +9,6 @@ import MenuComponent from "./MenuComponent";
 import Link from "next/link";
 import ButtonComponent from "../Others/Button";
 export default function MessDetails({ mess }) {
-  console.log("Mess details:", mess);
   if (!mess) return null;
 
   const { data: session } = useSession();

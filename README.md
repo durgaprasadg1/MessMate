@@ -1,4 +1,3 @@
-# MessMate
 
 MessMate is a full-stack mess management platform built on the Next.js App Router. It supports consumer ordering, mess owner operations, and administrative workflows with server-side authentication, payments, notifications, analytics, and Redis-backed caching.
 
