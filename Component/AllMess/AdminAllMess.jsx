@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import AdminNavbar from "../Admin/AdminNavbar";
+import AdminSidebar from "../Admin/AdminSidebar";
 import { toast } from "react-toastify";
 import { DataTable } from "../ShadCnUI/table";
 import DialogBox from "../ShadCnUI/Dialog";
@@ -93,7 +93,7 @@ export default function AdminAllMesses({
       accessorKey: "name",
       header: "Name",
       cell: ({ row }) => (
-        <span className="font-semibold text-white text-sm sm:text-base">
+        <span className="font-semibold text-stone-900 text-sm sm:text-base">
           {row.original.name}
         </span>
       ),
@@ -102,7 +102,7 @@ export default function AdminAllMesses({
       accessorKey: "ownerName",
       header: "Owner",
       cell: ({ row }) => (
-        <span className="text-white text-sm sm:text-base">
+        <span className="text-stone-900 text-sm sm:text-base">
           {row.original.ownerName}
         </span>
       ),
@@ -111,7 +111,7 @@ export default function AdminAllMesses({
       accessorKey: "category",
       header: "Category",
       cell: ({ row }) => (
-        <span className="text-white text-sm sm:text-base">
+        <span className="text-stone-900 text-sm sm:text-base">
           {formattedCategory(row.original.category)}
         </span>
       ),
@@ -120,7 +120,7 @@ export default function AdminAllMesses({
       accessorKey: "phone",
       header: "Phone",
       cell: ({ row }) => (
-        <span className="text-white text-sm sm:text-base">
+        <span className="text-stone-900 text-sm sm:text-base">
           {row.original.phoneNumber}
         </span>
       ),
@@ -150,7 +150,7 @@ export default function AdminAllMesses({
         const mess = row.original;
 
         return (
-          <div className="flex flex-wrap gap-1.5 sm:gap-2 text-white">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 text-stone-900">
             <ButtonComponent
               data="Reviews"
               link={`/admin/all-messes/${mess._id}/reviews`}
@@ -160,7 +160,7 @@ export default function AdminAllMesses({
 
             <button
               onClick={() => handleSendWarningMail(mess.owner)}
-              className="px-2 sm:px-3 py-1 text-xs rounded bg-yellow-300 font-semibold text-black whitespace-nowrap"
+              className="px-2 sm:px-3 py-1 text-xs rounded bg-amber-200 font-semibold text-stone-900 whitespace-nowrap"
             >
               Warn
             </button>
@@ -169,8 +169,8 @@ export default function AdminAllMesses({
               onClick={() => handleBlockingOfMess(mess._id)}
               className={
                 mess.isBlocked
-                  ? "bg-green-400 px-2 sm:px-3 py-1 rounded text-white font-bold text-xs whitespace-nowrap"
-                  : "bg-red-600 px-2 sm:px-3 py-1 rounded text-white font-bold text-xs whitespace-nowrap"
+                  ? "bg-emerald-100 px-2 sm:px-3 py-1 rounded text-emerald-800 font-bold text-xs whitespace-nowrap"
+                  : "bg-rose-100 px-2 sm:px-3 py-1 rounded text-rose-700 font-bold text-xs whitespace-nowrap"
               }
             >
               {mess.isBlocked ? "Unblock" : "Block"}
@@ -178,7 +178,7 @@ export default function AdminAllMesses({
 
             <button
               onClick={() => handleDeletingOfMess(mess._id)}
-              className="px-2 sm:px-3 py-1 text-xs rounded bg-red-600 font-semibold text-white whitespace-nowrap"
+              className="px-2 sm:px-3 py-1 text-xs rounded bg-rose-200 font-semibold text-rose-800 whitespace-nowrap"
             >
               Delete
             </button>
@@ -189,22 +189,22 @@ export default function AdminAllMesses({
   ];
 
   return (
-    <div className="relative">
-      <AdminNavbar />
+    <div className="relative role-shell">
+      <AdminSidebar />
 
       {actionLoading && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/40">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/70">
           <Loading />
         </div>
       )}
 
-      <main className="py-4 sm:py-6 md:py-8 px-3 sm:px-4 bg-zinc-800 min-h-screen">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-4 sm:mb-6 md:mb-8">
+      <main className="role-container">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-900 mb-4 sm:mb-6 md:mb-8">
           All Mess Listings
         </h1>
 
         <div className="overflow-x-auto rounded-lg">
-          <DataTable columns={columns} data={visibleMesses} />
+          <DataTable columns={columns} data={visibleMesses} colorVariant="stone" />
         </div>
       </main>
     </div>

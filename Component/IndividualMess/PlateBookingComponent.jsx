@@ -151,7 +151,7 @@ export default function BookingForm({ mess }) {
               </select>
             </div>
 
-            <button className="p-3 bg-gray-700  text-white w-100 hover:bg-black rounded">
+            <button className="p-3 bg-orange-500  text-white w-100 hover:bg-orange-600 rounded">
               Confirm booking
             </button>
           </form>

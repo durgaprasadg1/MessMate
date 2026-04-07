@@ -67,7 +67,7 @@ export default function OwnedMessPage() {
 
   if (!session || !isOwner) {
     return (
-      <div className="min-h-screen bg-gray-950 pb-10">
+      <div className="role-shell pb-10">
         <OwnerNavbar />
         <div className="pt-20">
           <EmptynessShowBox
@@ -85,22 +85,22 @@ export default function OwnedMessPage() {
   const hasAnyMess = messes.length > 0;
 
   const renderDetailItem = (Icon, label, value) => (
-    <div className="flex items-center text-sm text-gray-400">
-      <Icon className="w-4 h-4 mr-2 text-indigo-400" />
-      <span className="font-semibold text-white mr-1">{label}:</span>
+    <div className="flex items-center text-sm text-stone-500">
+      <Icon className="w-4 h-4 mr-2 text-emerald-500" />
+      <span className="font-semibold text-stone-800 mr-1">{label}:</span>
       <span className="truncate">{value}</span>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-950 pb-10 sm:pb-12 md:pb-16">
+    <div className="role-shell pb-10 sm:pb-12 md:pb-16">
       <OwnerNavbar />
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-1">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
+      <div className="role-container pt-16 sm:pt-20 md:pt-24 pb-1">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-stone-800 tracking-tight mb-2">
           🍽️ Mess Management Dashboard
         </h1>
-        <p className="text-gray-400 text-xs sm:text-sm md:text-base">
+        <p className="text-stone-500 text-xs sm:text-sm md:text-base">
           View and control all aspects of your verified mess operations.
         </p>
       </div>
@@ -128,13 +128,13 @@ export default function OwnedMessPage() {
           transition={{ duration: 0.3 }}
           className="max-w-3xl mx-auto px-3 sm:px-4 mt-8 sm:mt-10"
         >
-          <div className="flex items-start p-3 sm:p-4 rounded-lg sm:rounded-xl border border-amber-500/30 bg-gray-900 shadow-xl">
+          <div className="flex items-start p-3 sm:p-4 rounded-lg sm:rounded-xl border border-amber-300 bg-amber-50 shadow-sm">
             <BarChart className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 mt-0.5 shrink-0" />
             <div className="ml-2 sm:ml-3">
-              <p className="text-base sm:text-lg font-bold text-amber-300">
+              <p className="text-base sm:text-lg font-bold text-amber-700">
                 Mess Under Verification
               </p>
-              <p className="text-xs sm:text-sm mt-1 text-amber-200">
+              <p className="text-xs sm:text-sm mt-1 text-amber-600">
                 Your registered mess is currently being reviewed. Once approved,
                 it will appear here for management. Thank you for your patience.
               </p>
@@ -156,13 +156,13 @@ export default function OwnedMessPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 mt-8 sm:mt-10 md:mt-12"
+              className="max-w-7xl mx-auto px-0 sm:px-1 md:px-2 mt-8 sm:mt-10 md:mt-12"
             >
-              <div className="bg-gray-800 border border-gray-700/70 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 shadow-2xl">
+              <div className="role-section p-4 sm:p-5 md:p-6">
                 <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 items-start">
                   <div className="space-y-4 sm:space-y-5 md:space-y-6">
-                    <div className="border-b border-gray-700 pb-3 sm:pb-4">
-                      <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white flex items-center">
+                    <div className="border-b border-stone-200 pb-3 sm:pb-4">
+                      <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-stone-800 flex items-center">
                         <Utensils className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
                         {mess.name}
                       </h2>
@@ -176,7 +176,7 @@ export default function OwnedMessPage() {
                         >
                           {mess.isOpen ? "Open Now" : "Currently Closed"}
                         </span>
-                        <span className="text-xs sm:text-sm text-gray-300">
+                        <span className="text-xs sm:text-sm text-stone-500">
                           {mess.isLimited
                             ? "Limited Service"
                             : "Unlimited Service"}
@@ -185,17 +185,13 @@ export default function OwnedMessPage() {
                     </div>
 
                     <div className="space-y-2 sm:space-y-3">
-                      <h3 className="text-base sm:text-lg font-semibold text-white">
+                      <h3 className="text-base sm:text-lg font-semibold text-stone-800">
                         Operational Details
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                         {renderDetailItem(Users, "Owner", mess.ownerName)}
                         {renderDetailItem(Phone, "Phone", mess.phoneNumber)}
-                        {renderDetailItem(
-                          CreditCard,
-                          "Aadhaar",
-                          mess.adharNumber
-                        )}
+                        
                         {renderDetailItem(
                           Utensils,
                           "Category",
@@ -206,16 +202,16 @@ export default function OwnedMessPage() {
                       </div>
                       {mess.lat && mess.lon && (
                         <div className="flex items-center pt-2">
-                          <MapPin className="w-4 h-4 mr-2 text-indigo-400 shrink-0" />
-                          <span className="font-semibold text-white mr-3">
+                          <MapPin className="w-4 h-4 mr-2 text-emerald-500 shrink-0" />
+                          <span className="font-semibold text-stone-800 mr-3">
                             Location:
                           </span>
                           <Link
                             href={`https://maps.google.com/?q=${mess.lat},${mess.lon}`}
                             target="_blank"
-                            className="text-xs font-medium text-indigo-300 hover:text-indigo-400 transition duration-150"
+                            className="text-xs font-medium text-emerald-600 hover:text-emerald-700 transition duration-150 !no-underline"
                           >
-                            <button className="flex items-center px-3 py-1 rounded bg-indigo-700/50 hover:bg-indigo-700 text-white text-xs transition duration-200">
+                            <button className="flex items-center px-3 py-1 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs transition duration-200 border border-emerald-200">
                               <MapPin className="w-3 h-3 mr-1.5" /> Open in Maps
                             </button>
                           </Link>
@@ -228,7 +224,7 @@ export default function OwnedMessPage() {
                     <div className="pt-2 space-y-2 sm:space-y-3">
                       <div className="flex flex-col gap-2 sm:gap-3">
                         <button
-                          className="flex items-center justify-center w-full py-3 sm:py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm sm:text-base transition duration-200 shadow-md touch-manipulation"
+                          className="flex items-center justify-center w-full py-3 sm:py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm sm:text-base transition duration-200 shadow-sm touch-manipulation"
                           onClick={() =>
                             handleClick(`/mess/${mess._id}/messages`)
                           }
@@ -237,7 +233,7 @@ export default function OwnedMessPage() {
                           Messages
                         </button>
                         <button
-                          className="flex items-center justify-center w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition duration-200 shadow-md"
+                          className="flex items-center justify-center w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm transition duration-200 shadow-sm"
                           onClick={() =>
                             handleClick(`/mess/${mess._id}/orders`)
                           }
@@ -247,7 +243,7 @@ export default function OwnedMessPage() {
                         </button>
                       </div>
                       <button
-                        className="flex items-center justify-center w-full py-2.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-medium text-sm transition duration-200 shadow-md"
+                        className="flex items-center justify-center w-full py-2.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium text-sm transition duration-200 shadow-sm border border-stone-200"
                         onClick={() =>
                           handleClick(`/owner/${mess._id}/analytics`)
                         }
@@ -256,7 +252,7 @@ export default function OwnedMessPage() {
                         View Performance Analytics
                       </button>
                       <button
-                        className="flex items-center justify-center mt-2 w-full py-2.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-medium text-sm transition duration-200 shadow-md"
+                        className="flex items-center justify-center mt-2 w-full py-2.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium text-sm transition duration-200 shadow-sm border border-stone-200"
                         onClick={() =>
                           handleClick(
                             `/owner/${mess._id}/all-registered-customers`
@@ -269,8 +265,8 @@ export default function OwnedMessPage() {
                     </div>
                   </div>
 
-                  <div className="h-full w-full bg-gray-900 border border-gray-700 rounded-xl p-5 shadow-inner">
-                    <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-2">
+                  <div className="h-full w-full role-section border-none shadow-none p-5 bg-white">
+                    <h3 className="text-xl font-bold text-stone-800 mb-4 border-b border-stone-100 pb-2">
                       🍽️ Current Menu
                     </h3>
                     {hasAnyMenu ? (

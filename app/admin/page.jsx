@@ -1,6 +1,6 @@
 "use client";
 
-import AdminNavbar from "@/Component/Admin/AdminNavbar";
+import AdminSidebar from "@/Component/Admin/AdminSidebar";
 import SectionPart from "@/Component/Section/SectionPartLinks";
 import SectionStats from "@/Component/Section/SectionStats";
 import { useEffect, useState } from "react";
@@ -25,32 +25,41 @@ export default function AdminLandingPage() {
   const [pendingMesses, setPendingMesses] = useState([]);
 
   useEffect(() => {
-    if (status === "loading") return;
+    if (status !== "authenticated") return;
     if (!session?.user?.isAdmin) {
       router.replace("/");
+      return;
     }
 
-    setLoading(true);
-    fetch("/api/admin/get-all-data")
-      .then((res) => res.json())
-      .then((data) => {
-        setStats(data.stats);
-        setRecentSignups(data.recentSignups);
-        setPendingMesses(data.pendingMesses);
-      })
-      .catch((err) => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/admin/get-all-data", { cache: "no-store" });
+        if (!res.ok) {
+          console.error("Failed to fetch admin data:", res.status);
+          return;
+        }
+        const text = await res.text();
+        if (!text) return;
+        const data = JSON.parse(text);
+        setStats(data.stats || { totalUsers: 0, totalMesses: 0, pendingCount: 0 });
+        setRecentSignups(data.recentSignups || []);
+        setPendingMesses(data.pendingMesses || []);
+      } catch (err) {
         console.error("Failed to fetch admin data:", err);
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchData();
   }, [session, status, router]);
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-zinc-900 flex items-center justify-center">
+      <div className="role-shell flex items-center justify-center text-stone-800">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
+          <Loader2 className="w-8 h-8 animate-spin text-stone-800" />
         </motion.div>
       </div>
     );
@@ -61,28 +70,28 @@ export default function AdminLandingPage() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="min-h-screen bg-zinc-900 text-white"
+      className="role-shell text-stone-900"
     >
-      <AdminNavbar />
+      <AdminSidebar />
 
-      <main className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6 lg:p-8">
+      <main className="role-container">
         <motion.header
           initial={{ y: -15, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="mb-6 sm:mb-8 md:mb-10 pt-3 sm:pt-4 border-b border-gray-800 pb-3 sm:pb-4"
+          className="role-section p-5 sm:p-6 border-0"
         >
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-amber-400 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-stone-900 tracking-tight">
             Admin Control Center
           </h1>
-          <p className="text-gray-400 mt-1 text-sm sm:text-base">
+          <p className="text-stone-600 mt-1 text-sm sm:text-base">
             Overview and quick access to core operational panels.
           </p>
         </motion.header>
 
         {loading ? (
-          <div className="mt-12 flex justify-center">
-            <Loader2 className="w-10 h-10 animate-spin text-amber-500" />
+          <div className="mt-6 flex justify-center">
+            <Loader2 className="w-10 h-10 animate-spin text-stone-800" />
           </div>
         ) : (
           <>
@@ -90,6 +99,7 @@ export default function AdminLandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
+              className="role-section p-5 sm:p-6"
             >
               <SectionPart />
             </motion.div>
@@ -98,9 +108,9 @@ export default function AdminLandingPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4 }}
-              className="text-2xl font-bold text-gray-200 mb-6 mt-10 flex items-center gap-2 border-b border-gray-800 pb-2"
+              className="text-2xl font-bold text-stone-900 mb-4 mt-6 flex items-center gap-2"
             >
-              <Users className="w-6 h-6 text-amber-500" />
+              <Users className="w-6 h-6 text-stone-700" />
               Platform Metrics
             </motion.h2>
 
@@ -115,6 +125,7 @@ export default function AdminLandingPage() {
                   transition: { staggerChildren: 0.15 },
                 },
               }}
+              className="role-section p-5 sm:p-6"
             >
               <SectionStats
                 totalUsers={stats.totalUsers}
@@ -130,10 +141,10 @@ export default function AdminLandingPage() {
                 initial={{ opacity: 0, x: -15 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.4 }}
-                className="mt-12"
+                className="role-section p-5 sm:p-6 mt-6"
               >
-                <h2 className="text-2xl font-bold text-gray-200 mb-6 flex items-center gap-2 border-b border-gray-800 pb-2">
-                  <Clock className="w-6 h-6 text-amber-500" />
+                <h2 className="text-2xl font-bold text-stone-900 mb-4 flex items-center gap-2">
+                  <Clock className="w-6 h-6 text-stone-700" />
                   Recent User Signups
                 </h2>
 
@@ -142,7 +153,6 @@ export default function AdminLandingPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4 }}
-                    className="bg-gray-800 border border-gray-700 rounded-lg overflow-x-auto shadow-2xl"
                   >
                     <TableBody
                       tableName=""

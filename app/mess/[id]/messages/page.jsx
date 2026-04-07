@@ -81,28 +81,38 @@ const MessageComponent = () => {
 
   return (
 
-    <div className="space-y-4  min-h-screen bg-gray-950">
+    <div className="space-y-4 role-shell">
         <OwnerNavbar />
-      <h2 className="text-xl font-semibold mt-5 ml-5 text-white"><u>Messages</u> : </h2>
+      <div className="role-container">
+        <div className="max-w-5xl mx-auto space-y-4 w-full">
+          <div className="role-section p-5 sm:p-6 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">Inbox</p>
+              <h2 className="text-2xl font-extrabold text-emerald-900 mt-1">Messages</h2>
+              <p className="text-sm text-emerald-700 mt-1">Alerts from admins stay here. Clear them when resolved.</p>
+            </div>
+            <div className="hidden sm:block text-emerald-500 text-2xl">✉️</div>
+          </div>
 
 
       {messages.length === 0 ? (
-        <div className="w-full flex items-center justify-center py-6">
-  <div className="p-3 bg-white border border-gray-200 w-full max-w-md text-center rounded-lg shadow-sm">
-    <p className="text-gray-600">No messages found.</p>
-  </div>
-</div>
+        <div className="w-full flex items-center justify-center py-10">
+          <div className="p-6 bg-white border border-emerald-100 w-full max-w-md text-center rounded-2xl shadow-md shadow-emerald-100">
+            <p className="text-emerald-800 font-semibold">No messages found.</p>
+            <p className="text-sm text-emerald-600 mt-1">Relax, everything is clear for now.</p>
+          </div>
+        </div>
 
       ) : (
-        <div className=" grid grid-cols-3 gap-4 p-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {messages.map((msg) => (
           
             <div
               key={msg._id}
-              className="border rounded flex justify-between items-center p-3  shadow-sm bg-gray-100"
+              className="border border-emerald-100 rounded-2xl flex justify-between items-start p-4 shadow-sm bg-white/90 backdrop-blur"
             >
-              <p className="font-medium">{msg.message}</p>
-              <button className="bg-emerald-500 p-2 rounded text-black border-gray-300 hover:bg-emerald-600 transition-colors duration-300 " onClick={()=> handleDelete(msg._id)} >
+              <p className="font-medium text-emerald-900 pr-3 leading-relaxed">{msg.message}</p>
+              <button className="bg-rose-100 text-rose-700 px-3 py-2 rounded-lg hover:bg-rose-200 transition-colors duration-200 text-sm font-semibold" onClick={()=> handleDelete(msg._id)} >
                 Delete
             </button>
             </div>
@@ -111,6 +121,8 @@ const MessageComponent = () => {
           ))}
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 };

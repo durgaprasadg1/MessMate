@@ -29,7 +29,7 @@ export default async function ShowMess({ params }) {
     }
     const mess = await res.json();
     return (
-      <div>
+      <div className="md:pl-[20vw]">
         <Navbar />
         <MessDetails mess={mess} />
       </div>
