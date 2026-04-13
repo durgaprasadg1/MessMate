@@ -4,14 +4,16 @@ import MessNotFound from "../../../Component/Others/MessNotFound";
 import { getBaseUrl } from "@/lib/getBaseUrl";
 
 export default async function ShowMess({ params }) {
-  try {
-    const { id } = (await params) || {};
-    const base = getBaseUrl();
-    // console.log("Base :" ,base)
-    if (!id || typeof id !== "string") {
-      return <MessNotFound />;
-    }
+  const { id } = (await params) || {};
+  const base = await getBaseUrl();
 
+  if (!id || typeof id !== "string") {
+    return <MessNotFound />;
+  }
+
+  let mess = null;
+
+  try {
     const res = await fetch(`${base}/api/mess/${encodeURIComponent(id)}`, {
       cache: "no-store",
     });
@@ -23,20 +25,21 @@ export default async function ShowMess({ params }) {
         statusText: res.statusText,
         errorData,
       });
-        
-
-      return <MessNotFound />;
+    } else {
+      mess = await res.json();
     }
-    const mess = await res.json();
-    return (
-      <div className="md:pl-[20vw]">
-        <Navbar />
-        <MessDetails mess={mess} />
-      </div>
-    );
   } catch (error) {
     console.log("error in showing a Mess :", error);
+  }
 
+  if (!mess) {
     return <MessNotFound />;
   }
+
+  return (
+    <div className="md:pl-[20vw]">
+      <Navbar />
+      <MessDetails mess={mess} />
+    </div>
+  );
 }

@@ -5,7 +5,8 @@ import { getBaseUrl } from "@/lib/getBaseUrl";
 const page = async ({ params }) => {
   let { id } = await params;
   try {
-    const res = await fetch(`${getBaseUrl()}/api/mess/${id}`, {
+    const base = await getBaseUrl();
+    const res = await fetch(`${base}/api/mess/${encodeURIComponent(id)}`, {
       cache: "no-store",
     });
     if (!res.ok) {

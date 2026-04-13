@@ -5,8 +5,10 @@ import { getBaseUrl } from "@/lib/getBaseUrl";
 export default async function UpdateMenuPage({ params }) {
   const { id } = await params;
 
-  const base = getBaseUrl();
-  const res = await fetch(`${base}/api/mess/${id}`, { cache: "no-store" });
+  const base = await getBaseUrl();
+  const res = await fetch(`${base}/api/mess/${encodeURIComponent(id)}`, {
+    cache: "no-store",
+  });
 
   if (!res.ok) {
     return (
@@ -42,11 +44,7 @@ export default async function UpdateMenuPage({ params }) {
             </p>
           </div>
 
-          <MessMenuComponent
-            messId={id}
-            mess={mess}
-            category={mess.category}
-          />
+          <MessMenuComponent messId={id} mess={mess} category={mess.category} />
         </div>
       </main>
     </div>
