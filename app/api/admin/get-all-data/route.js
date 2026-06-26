@@ -1,7 +1,7 @@
 import supabase from "@/lib/supabaseClient";
 import { getJsonCache, setJsonCache } from "../../../../lib/redis";
 
-const TTL_SECONDS = 60 * 60 * 18;
+const TTL_SECONDS = 2 * 60 ;
 
 export async function GET() {
   try {
