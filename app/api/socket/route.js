@@ -9,7 +9,8 @@ export function GET() {
     status: 204,
     headers: {
       "Cache-Control": "no-store, max-age=0",
-    },
+    },   
+
   });
 }
 

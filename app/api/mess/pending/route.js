@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import supabase from "@/lib/supabaseClient";
 import { getJsonCache, setJsonCache } from "../../../../lib/redis";
 
-const TTL_SECONDS = 60 * 60 * 18;
+const TTL_SECONDS = 60 * 2;
 
 export async function GET() {
   try {

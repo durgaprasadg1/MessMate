@@ -4,7 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import supabase from "@/lib/supabaseClient";
 import { deleteCacheKeys, getJsonCache, setJsonCache } from "@/lib/redis";
 
-const TTL_SECONDS = 60 * 60 * 18;
+const TTL_SECONDS = 2*60;
 
 export async function GET(request, { params }) {
   try {
