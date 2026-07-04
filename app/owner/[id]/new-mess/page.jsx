@@ -486,7 +486,7 @@ const NewMessForm = () => {
             <input type="hidden" name="lon" value={form.lon} />
 
             <div>
-              <label className="block font-medium text-white">
+              <label className="block font-medium text-stone-800">
                 Mess Banner (jpg, jpeg, png)
               </label>
               <input
@@ -499,7 +499,7 @@ const NewMessForm = () => {
             </div>
 
             <div>
-              <label className="block font-medium text-white">
+              <label className="block font-medium text-stone-800">
                 {" "}
                 Certificate of Verification (jpg, jpeg, png)
               </label>

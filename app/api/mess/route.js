@@ -9,7 +9,7 @@ export async function GET(request) {
     const tenantId = request.headers.get("x-tenant-id") || "public";
     const cacheKey = `tenant:${tenantId}:messes:all`;
     const cached = await getJsonCache(cacheKey);
-    console.log("Cached : ", cached);
+    // console.log("Cached : ", cached);
     if (cached !== null) {
       const response = NextResponse.json(cached, { status: 200 });
       response.headers.set("x-redis-cache", "HIT");
@@ -53,6 +53,7 @@ export async function GET(request) {
     const response = NextResponse.json(shaped, { status: 200 });
     response.headers.set("x-redis-cache", "MISS");
     response.headers.set("x-redis-key", cacheKey);
+    // console.log(`Took: ${Date.now() }ms`);
     return response;
   } catch (error) {
     console.log("Error fetching mess data:", error);

@@ -4,6 +4,7 @@ import "./globals.css";
 import Provider from "../Component/Others/Provider";
 import AnimatedLayout from "../Component/Others/AnimatedLayout";
 import Script from "next/script";
+import { SpeedInsights } from '@vercel/speed-insights/next';
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({
       >
         <Provider>
           <AnimatedLayout>{children}</AnimatedLayout>
+          <SpeedInsights />
         </Provider>
         <Script
           src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
@@ -51,6 +53,7 @@ export default function RootLayout({
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
+
       </body>
     </html>
   );

@@ -6,16 +6,19 @@ const TTL_SECONDS = 60 * 2;
 
 export async function GET(request, { params }) {
   try {
+       const start = Date.now();
+
     const { consumerid } = await params;
     const tenantId = request.headers.get("x-tenant-id") || "public";
     const cacheKey = `tenant:${tenantId}:consumer:${consumerid}:profile`;
     const cached = await getJsonCache(cacheKey);
     if (cached !== null) {
+
       return NextResponse.json(
         { consumer: cached, message: "Consumer found" },
         { status: 200 },
       );
-    }
+    } 
 
     const { data: consumer, error } = await supabase
       .from("consumer")
@@ -32,7 +35,7 @@ export async function GET(request, { params }) {
     }
 
     await setJsonCache(cacheKey, consumer, TTL_SECONDS);
-
+//  console.log(`Took: ${Date.now() - start}ms`);
     return NextResponse.json(
       { consumer, message: "Consumer found" },
       { status: 200 },
