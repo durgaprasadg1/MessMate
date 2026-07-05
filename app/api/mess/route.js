@@ -36,7 +36,7 @@ export async function GET(request) {
         isVerified: m.is_verified,
         isBlocked: m.is_blocked,
         isLimited: m.is_limited,
-        adharNumber: m.adhar_number,
+    
         lat: m.lat,
         lon: m.lon,
         vegMenu: m.veg_menu,

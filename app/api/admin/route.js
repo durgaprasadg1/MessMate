@@ -1,7 +1,7 @@
 import supabase from "@/lib/supabaseClient";
 import { getJsonCache, setJsonCache } from "../../../lib/redis";
 
-const TTL_SECONDS = 60 * 60 * 1;
+const TTL_SECONDS = 60 *2;
 
 export const dynamic = "force-dynamic";
 
