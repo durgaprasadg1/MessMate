@@ -23,8 +23,8 @@ export async function GET(request) {
         "id,name,owner_name,owner_id,phone_number,category,is_open,is_verified,is_blocked,is_limited,adhar_number,lat,lon,veg_menu,non_veg_menu,veg_price,non_veg_price,image_url,certificate_url,created_at"
       );
     if (error) throw error;
-
-    const shaped =
+      // if(error === )
+    const shaped =  
       messes?.map((m) => ({
         _id: m.id,
         name: m.name,

@@ -12,7 +12,9 @@ export async function GET() {
     .select("id")
     .limit(1);
 
+    
   if (error) {
+    console.log("Error : ", error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }
