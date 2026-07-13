@@ -27,9 +27,7 @@ const TableBody = ({
               <tr key={c._id} className="border-t border-stone-100 text-stone-800">
                 <td className="py-2">{c.username}</td>
                 <td className="py-2">{c.email}</td>
-                <td className="py-2">
-                  {new Date(c.joined).toLocaleDateString()}
-                </td>
+               
               </tr>
             ))}
             {recentSignups.length === 0 && (

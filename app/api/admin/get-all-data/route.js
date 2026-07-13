@@ -31,7 +31,7 @@ export async function GET() {
   const { data: recentSignups = [], error: recentErr } = await supabase
     .from("consumer")
     .select("id, username, email")
-    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .limit(5);
   if (recentErr) throw recentErr;
 
@@ -53,7 +53,6 @@ export async function GET() {
       id: c.id,
       username: c.username,
       email: c.email,
-      joined: c.created_at,
     })),
     pendingMesses: pendingMesses || [],
   };

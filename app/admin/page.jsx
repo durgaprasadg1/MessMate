@@ -169,7 +169,6 @@ export default function AdminLandingPage() {
                       tableName=""
                       heading1="Name"
                       heading2="Email"
-                      heading3="Joined"
                     />
                   </motion.div>
                 ) : (
