@@ -30,7 +30,7 @@ export async function GET() {
 
   const { data: recentSignups = [], error: recentErr } = await supabase
     .from("consumer")
-    .select("id, username, email, created_at")
+    .select("id, username, email")
     .order("created_at", { ascending: false })
     .limit(5);
   if (recentErr) throw recentErr;
