@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { setJsonCache } from "../../../lib/redis";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -12,6 +13,11 @@ export async function GET() {
     .select("id")
     .limit(1);
 
+    const data = {
+      "a" : 1,
+      "b" : 2
+    }
+    await setJsonCache(1, data, 60);
     
   if (error) {
     console.log("Error : ", error);
