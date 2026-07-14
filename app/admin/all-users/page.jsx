@@ -134,7 +134,7 @@ export default function AllUsersPage() {
       accessorKey: "reviews",
       header: "Reviews",
       cell: ({ row }) => (
-        <span className="font-medium text-stone-900 text-sm sm:text-base">
+        <span className="font-medium text-white text-sm sm:text-base">
           {row.original.reviews?.length || 0}
         </span>
       ),

@@ -24,7 +24,7 @@ const TableBody = ({
           </thead>
           <tbody>
             {recentSignups.map((c) => (
-              <tr key={c._id} className="border-t border-stone-100 text-stone-800">
+              <tr key={c._id || Date.now()+Math.random(1,9403430)} className="border-t border-stone-100 text-stone-800">
                 <td className="py-2">{c.username}</td>
                 <td className="py-2">{c.email}</td>
                

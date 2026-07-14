@@ -29,12 +29,14 @@ export async function POST(req, { params }) {
 
       const recipientEmail = mess.email;
       const recipientName = mess.ownerName || mess.name || "User";
+        const messName = mess.messName;
+        const dashboardLink = 'https://https://mess-mate-pi.vercel.app/'
 
     try {
       await transporter.sendMail({
         from: `"MessMate Support" <${process.env.MAIL_USER}>`,
         to: recipientEmail,
-        subject: "Verification Denied - MessMate",
+        subject: "Verification Done - MessMate",
         html: `
         <div style="font-family: Arial; padding: 20px; background: #f5f5f5;">
           <div style="background: white; padding: 20px; border-radius: 8px;">
@@ -75,7 +77,7 @@ export async function POST(req, { params }) {
       `,
       });
     } catch (mailErr) {
-      console.error("Failed to send denial email:", mailErr);
+      console.error("Failed to send aprroval email:", mailErr);
     }
 
       await supabase
