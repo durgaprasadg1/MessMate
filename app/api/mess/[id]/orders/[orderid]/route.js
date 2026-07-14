@@ -76,6 +76,11 @@ export async function PATCH(request, { params }) {
         console.error("Cancel order failed", e);
         return NextResponse.json({ message: "Server error" }, { status: 500 });
       }
+      finally{
+          const tenantId = request.headers.get("x-tenant-id") || "public";
+          await deleteCacheKeys([`tenant:${tenantId}:mess:${order.mess_id}:orders`]);
+
+      }
     }
 
     if (action === "take") {
@@ -107,6 +112,11 @@ export async function PATCH(request, { params }) {
         );
       } catch (notifErr) {
         console.error("Notification failed:", notifErr);
+      }
+      finally{
+          const tenantId = request.headers.get("x-tenant-id") || "public";
+          await deleteCacheKeys([`tenant:${tenantId}:mess:${order.mess_id}:orders`]);
+
       }
 
       return NextResponse.json(
@@ -151,6 +161,11 @@ export async function PATCH(request, { params }) {
         } catch (notifErr) {
           console.error("Notification failed:", notifErr);
         }
+        finally{
+          const tenantId = request.headers.get("x-tenant-id") || "public";
+          await deleteCacheKeys([`tenant:${tenantId}:mess:${order.mess_id}:orders`]);
+
+      }
 
         return NextResponse.json(
           { message: "Refund initiated and order marked cancelled" },
@@ -159,6 +174,11 @@ export async function PATCH(request, { params }) {
       } catch (e) {
         console.error("Refund order failed", e);
         return NextResponse.json({ message: "Server error" }, { status: 500 });
+      }
+      finally{
+          const tenantId = request.headers.get("x-tenant-id") || "public";
+          await deleteCacheKeys([`tenant:${tenantId}:mess:${order.mess_id}:orders`]);
+
       }
     }
 
@@ -192,12 +212,20 @@ export async function PATCH(request, { params }) {
       } catch (notifErr) {
         console.error("Notification failed:", notifErr);
       }
+      finally{
+          const tenantId = request.headers.get("x-tenant-id") || "public";
+          await deleteCacheKeys([`tenant:${tenantId}:mess:${order.mess_id}:orders`]);
+
+      }
 
       return NextResponse.json(
         { message: "Order marked completed" },
         { status: 200 }
       );
     }
+
+  
+    
 
     return NextResponse.json({ message: "Unknown action" }, { status: 400 });
   } catch (err) {
