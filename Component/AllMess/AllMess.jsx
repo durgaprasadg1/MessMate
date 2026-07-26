@@ -5,11 +5,15 @@ import Navbar from "../Others/Navbar";
 import Loading from "@/Component/Others/Loading";
 import Link from "next/link";
 import { Star, MapPin, Heart, ArrowRight } from "lucide-react";
+import Image from "next/image";
 
 export default function ConsumerAllMesses({
   messes = [],
   filteredMesses: passedFiltered,
 }) {
+
+  console.log(messes[0])
+  // console.log(messes)
   const [searchQuery, setSearchQuery] = useState("");
   const [radius, setRadius] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
@@ -70,11 +74,7 @@ export default function ConsumerAllMesses({
     const searchResults = Array.isArray(filteredBySearch)
       ? filteredBySearch
       : [];
-    const baseList = searchResults.filter((m) => {
-      const isVerified = m.isVerified !== false; 
-      const isNotBlocked = m.isBlocked !== true; 
-      return isVerified && isNotBlocked;
-    });
+    const baseList = searchResults;
 
     if (!radius || !userLocation) return baseList;
     return baseList.filter((m) => {
@@ -108,6 +108,7 @@ export default function ConsumerAllMesses({
     };
   };
 
+  
   return (
     <div className="min-h-screen bg-slate-50 md:pl-[25vw] flex flex-col transition-[padding] duration-0 ease-linear">
       <Navbar
@@ -159,17 +160,18 @@ export default function ConsumerAllMesses({
               return (
                 <article
                   key={mess._id}
-                  className="group bg-white rounded-xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.12)] border border-slate-200 transition-all duration-300 overflow-hidden flex flex-col sm:flex-row h-auto sm:min-h-[240px]"
+                  className="group bg-white rounded-xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.12)] border border-slate-200 transition-all duration-300 overflow-hidden flex flex-col sm:flex-row h-auto sm:min-h-60"
                 >
                   {/* Left Side: Image */}
                   <div className="relative w-full sm:w-[320px] h-56 sm:h-auto shrink-0 overflow-hidden">
-                    <img
-                      src={
-                        mess.image?.url || "https://via.placeholder.com/600x400"
-                      }
-                      alt={mess.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 absolute inset-0"
-                    />
+                    <div className="relative h-64 w-full overflow-hidden">
+                      <Image
+                        src={mess.url || ""}
+                        alt={mess.name || "Mess image"}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    </div>
                     
                     {/* Status Badge */}
                     <div className="absolute top-3 left-3">
@@ -307,7 +309,7 @@ export default function ConsumerAllMesses({
 
                   {/* Right Action Bar (Only Button) */}
                   <div className="p-4 border-t sm:border-t-0 sm:border-l border-slate-100 flex flex-col justify-center shrink-0 sm:w-[180px] bg-white">
-                    <Link href={`/mess/${mess._id}`} className="w-full !no-underline block">
+                    <Link href={`/mess/${mess._id}`} className="w-full no-underline! block">
                       <button className="w-full bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white font-bold py-3.5 px-4 rounded text-sm transition-colors shadow-sm flex items-center justify-center gap-2 group">
                         View Details
                         <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />

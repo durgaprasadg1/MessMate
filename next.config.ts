@@ -30,10 +30,21 @@ const allowedOrigins = Array.from(
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: allowedOrigins,
+
   experimental: {
     serverActions: {
       allowedOrigins,
     },
+  },
+
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/dwgf6yo6e/image/upload/**",
+      },
+    ],
   },
 };
 

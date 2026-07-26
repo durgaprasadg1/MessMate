@@ -20,8 +20,8 @@ export async function GET(request) {
     const { data: messes, error } = await supabase
       .from("mess")
       .select(
-        "id,name,owner_name,owner_id,phone_number,category,is_open,is_verified,is_blocked,is_limited")
-      .limit(1)
+        "id,name,owner_name,owner_id,phone_number,category,is_open,image_url,is_verified,is_blocked,is_limited,lat,lon",
+      )
     if (error) throw error;
       // if(error === )
     const shaped =  
@@ -36,9 +36,12 @@ export async function GET(request) {
         isVerified: m.is_verified,
         isBlocked: m.is_blocked,
         isLimited: m.is_limited,
+        url: m.image_url,
+        lat: m.lat,
+        lon: m.lon,
         
       })) || [];
-
+      console.log("Image URL:", messes[0].image_url)
     await setJsonCache(cacheKey, shaped, TTL_SECONDS);
 
     const response = NextResponse.json(shaped, { status: 200 });
