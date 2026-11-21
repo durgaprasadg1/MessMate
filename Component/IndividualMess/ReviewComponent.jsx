@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from "@/lib/apiFetch";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -34,7 +35,7 @@ const ReviewSection = ({
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/mess/${messID}/review`, {
+      const res = await apiFetch(`/api/mess/${messID}/review`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rating, text: reviewText }),

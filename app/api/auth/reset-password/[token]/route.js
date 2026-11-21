@@ -1,81 +1,39 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import bcrypt from "bcryptjs";
-import supabase from "@/lib/supabaseClient";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { badRequest } from "@/lib/server/errors/httpErrors";
+import { Limits } from "@/lib/server/security/rateLimiter";
+import { resetPasswordSchema } from "@/lib/server/validation/schemas";
+import { consumerRepository } from "@/lib/server/repositories/accounts";
+import { hashResetToken, looksLikeResetToken } from "@/lib/server/auth/resetTokenService";
+import { getPasswordService } from "@/lib/server/auth/passwordService";
+import { audit, AuditEvent } from "@/lib/server/logging/audit";
 
-export async function GET(request, { params }) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-
-    const { token } = await params;
-
-    const { data: user } = await supabase
-      .from("consumer")
-      .select("*")
-      .eq("reset_token", token)
-      .gt("reset_token_expiry", new Date().toISOString())
-      .single();
-    if (!user) {
-      return NextResponse.json({ message: "Link Expired" }, { status: 400 });
-    }
-    return NextResponse.json({ success: true, token: token }, { status: 200 });
-  } catch (error) {
-    console.log("Error In Getting the token : ", error);
-    return NextResponse.json(
-      { message: "Error While Getting Token" },
-      { status: 400 }
-    );
-  }
+async function findUserByToken(token) {
+  if (!looksLikeResetToken(token)) return null;
+  return consumerRepository.findByResetTokenHash(hashResetToken(token));
 }
 
-export async function PATCH(req, { params }) {
-  try {
-    const { token } = await params;
-    const { password } = await req.json();
+// Token is the credential, so this works for logged-out users (the previous
+// version required an active session, which defeated the purpose).
+export const GET = createRoute(
+  { name: "auth.reset-password.check", auth: "public", rateLimit: { ...Limits.resetPassword, by: "ip" } },
+  async ({ params }) => {
+    const user = await findUserByToken(params.token);
+    if (!user) throw badRequest("Link Expired");
+    return json({ success: true });
+  },
+);
 
-    if (!password) {
-      return NextResponse.json(
-        { message: "Password is required" },
-        { status: 400 }
-      );
-    }
-
-    const { data: user } = await supabase
-      .from("consumer")
-      .select("*")
-      .eq("reset_token", token)
-      .gt("reset_token_expiry", new Date().toISOString())
-      .single();
-
+export const PATCH = createRoute(
+  { name: "auth.reset-password", auth: "public", rateLimit: { ...Limits.resetPassword, by: "ip" }, body: resetPasswordSchema },
+  async ({ params, body, ip, log }) => {
+    const user = await findUserByToken(params.token);
     if (!user) {
-      return NextResponse.json(
-        { message: "Invalid or expired token" },
-        { status: 400 }
-      );
+      audit(AuditEvent.PASSWORD_RESET_FAILED, { ip }, log);
+      throw badRequest("Invalid or expired token");
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    await supabase
-      .from("consumer")
-      .update({
-        password: hashedPassword,
-        reset_token: null,
-        reset_token_expiry: null,
-      })
-      .eq("id", user.id);
-
-    return NextResponse.json(
-      { message: "Password reset successful" },
-      { status: 200 }
-    );
-  } catch (err) {
-    console.error("Reset Error:", err);
-    return NextResponse.json(
-      { message: "Internal Server Error" },
-      { status: 500 }
-    );
-  }
-}
+    await consumerRepository.resetPassword(user.id, await getPasswordService().hash(body.password));
+    audit(AuditEvent.PASSWORD_RESET_COMPLETED, { actorId: user.id, ip }, log);
+    return json({ message: "Password reset successful" });
+  },
+);

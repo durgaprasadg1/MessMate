@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useMemo, useState } from "react";
 import AdminSidebar from "../Admin/AdminSidebar";
 import { toast } from "react-toastify";
@@ -33,7 +34,7 @@ export default function AdminAllMesses({
   const handleBlockingOfMess = async (id) => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/admin/sendmsg/${id}`, {
+      const res = await apiFetch(`/api/admin/sendmsg/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
       });
@@ -55,7 +56,7 @@ export default function AdminAllMesses({
   const handleDeletingOfMess = async (id) => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/mess/${id}`, {
+      const res = await apiFetch(`/api/mess/${id}`, {
         method: "DELETE",
       });
 
@@ -73,7 +74,7 @@ export default function AdminAllMesses({
   const handleSendWarningMail = async (owner) => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/admin/warn-mess-owner/${owner}`, {
+      const res = await apiFetch(`/api/admin/warn-mess-owner/${owner}`, {
         method: "POST",
       });
 

@@ -1,6 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useEffect, useState } from "react";
 import AllMesses from "@/Component/AllMess/AllMess";
 import MessNotFound from "@/Component/Others/MessNotFound";
@@ -14,7 +15,7 @@ export default function AllMessPage() {
   useEffect(() => {
     const fetchMesses = async () => {
       try {
-        const res = await fetch("/api/mess", {
+        const res = await apiFetch("/api/mess", {
           cache: "no-store",
         });
 

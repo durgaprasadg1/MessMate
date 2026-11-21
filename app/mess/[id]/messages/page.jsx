@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useParams } from "next/navigation";
 import  { useEffect, useState } from "react";
 import Loading from "@/Component/Others/Loading";
@@ -17,7 +18,7 @@ const MessageComponent = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const res = await fetch(`/api/mess/${id}`);
+        const res = await apiFetch(`/api/mess/${id}`);
         if (!res.ok) {
           setError("Failed to fetch messages");
           return;
@@ -44,7 +45,7 @@ const MessageComponent = () => {
 
   const handleDelete = async (msgId) => {
     try {
-      const res = await fetch(`/api/admin/sendmsg/${msgId}`, {
+      const res = await apiFetch(`/api/admin/sendmsg/${msgId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

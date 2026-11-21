@@ -1,3 +1,4 @@
+import { apiFetch } from "@/lib/apiFetch";
 import {
   Dialog,
   DialogClose,
@@ -33,7 +34,7 @@ const DialogBox = ({ endpt }) => {
     setLoading(true);
 
     try {
-      const res = await fetch(endpt, {
+      const res = await apiFetch(endpt, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

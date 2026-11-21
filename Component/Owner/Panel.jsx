@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from "@/lib/apiFetch";
 import Botton from "../Others/Botton";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -14,7 +15,7 @@ const Panel = ({ mess }) => {
         toast.error("U Are Not the Owner");
         return;
       }
-      await fetch(`/api/mess/${mess._id}`, {
+      await apiFetch(`/api/mess/${mess._id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -37,7 +38,7 @@ const Panel = ({ mess }) => {
   const deleteMess = async () => {
     if (!confirm("Are you sure you want to delete this mess?")) return;
     try {
-      let res = await fetch(`/api/mess/${mess._id}`, {
+      let res = await apiFetch(`/api/mess/${mess._id}`, {
         method: "DELETE",
       });
       if (!res.ok) {

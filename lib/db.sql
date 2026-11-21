@@ -184,3 +184,11 @@ CREATE TABLE public.wastage (
   CONSTRAINT wastage_pkey PRIMARY KEY (id),
   CONSTRAINT fk_wastage_mess FOREIGN KEY (mess_id) REFERENCES public.mess(id)
 );
+
+-- ============================================================================
+-- Security hardening (see supabase/migrations/001_security_hardening.sql)
+--   * Row Level Security enabled on every table (no policies: deny for anon/authenticated)
+--   * mfa_enabled / mfa_secret / mfa_recovery_codes on admin and owner
+--   * owner.password, mess.certificate_public_id, mess.certificate_filename
+-- Run the migration file on your Supabase project; it is idempotent.
+-- ============================================================================

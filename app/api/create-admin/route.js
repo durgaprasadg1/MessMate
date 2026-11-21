@@ -1,89 +1,37 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { conflict } from "@/lib/server/errors/httpErrors";
+import { Limits } from "@/lib/server/security/rateLimiter";
+import { adminCreateSchema } from "@/lib/server/validation/schemas";
+import { getPasswordService } from "@/lib/server/auth/passwordService";
+import { isEmailTaken } from "@/lib/server/services/accountService";
 import supabase from "@/lib/supabaseClient";
+import { audit, AuditEvent } from "@/lib/server/logging/audit";
 
-export async function POST(request) {
-  try {
-    const body = await request.json();
-    const { name, email, phoneNumber, address, password } = body;
-    if (!name || !email || !password || !phoneNumber || !address) {
-      return NextResponse.json(
-        { message: "All fields are required." },
-        { status: 400 }
-      );
-    }
+/**
+ * Only an EXISTING admin can create another admin. The very first admin is
+ * seeded with `npm run seed:admin` (scripts/seed-admin.mjs) - there is no
+ * public endpoint or page that creates admins any more.
+ */
+export const POST = createRoute(
+  { name: "admin.create", auth: "admin", rateLimit: { ...Limits.admin, by: "user" }, body: adminCreateSchema },
+  async ({ body, session, log }) => {
+    if (await isEmailTaken(body.email)) throw conflict("An account with this email already exists.");
 
-    const existed = await supabase
-      .from("consumer")
-      .select("id")
-      .eq("email", email)
-      .single();
-    if (!existed.error && existed.data) {
-      return NextResponse.json(
-        { message: "A Consumer with this email already exists." },
-        { status: 409 }
-      );
-    }
-
-    const existedOwner = await supabase
-      .from("owner")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
-    if (existedOwner.data) {
-      return NextResponse.json(
-        { message: "A Owner with this email already exists." },
-        { status: 409 }
-      );
-    }
-
-    const existAdmin = await supabase
-      .from("admin")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
-    if (existAdmin.data) {
-      return NextResponse.json(
-        { message: "A Admin with this email already exists." },
-        { status: 409 }
-      );
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const { data: newUser, error } = await supabase
+    const { data, error } = await supabase
       .from("admin")
       .insert({
-        name,
-        email,
-        phone_number: phoneNumber,
-        address,
-        password: hashedPassword,
+        name: body.name,
+        email: body.email,
+        phone_number: body.phoneNumber,
+        address: body.address,
+        password: await getPasswordService().hash(body.password),
       })
       .select("id, name")
       .single();
     if (error) throw error;
+    audit(AuditEvent.ADMIN_CREATED, { actorId: session.user.id, targetId: data.id }, log);
 
-    return NextResponse.json(
-      {
-        message: "Registration successful!",
-        id: newUser.id,
-        name: newUser.name,
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    if (error.code === "PGRST116") {
-      return NextResponse.json(
-        { message: "Duplicate entry: unique constraint violated." },
-        { status: 409 }
-      );
-    }
-
-    console.error("Error during registration:", error);
-    return NextResponse.json(
-      { message: "❌ Internal server error. Please try again later." },
-      { status: 500 }
-    );
-  }
-}
+    return json({ message: "Registration successful!", id: data.id, name: data.name }, 201);
+  },
+);

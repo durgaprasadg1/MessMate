@@ -12,7 +12,6 @@ export default function ConsumerAllMesses({
   filteredMesses: passedFiltered,
 }) {
 
-  console.log(messes[0])
   // console.log(messes)
   const [searchQuery, setSearchQuery] = useState("");
   const [radius, setRadius] = useState(null);

@@ -1,10 +1,12 @@
 "use client";
+import { apiFetch } from "@/lib/apiFetch";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Loading from "../../../../Component/Others/Loading";
 import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
 import imageCompression from "browser-image-compression";
+import { checkUpload } from "@/lib/clientUploadChecks";
 import EmptynessShowBox from "@/Component/Others/EmptynessShowBox";
 import OwnerNavbar from "@/Component/Owner/OwnerNavbar";
 const NewMessForm = () => {
@@ -65,6 +67,13 @@ const NewMessForm = () => {
       setImage(null);
       return;
     }
+    const problem = checkUpload(file, "image", 20 * 1024 * 1024); // size re-checked after compression
+    if (problem) {
+      toast.error(problem);
+      e.target.value = "";
+      setImage(null);
+      return;
+    }
 
     try {
       const options = {
@@ -73,6 +82,12 @@ const NewMessForm = () => {
         useWebWorker: true,
       };
       const compressedFile = await imageCompression(file, options);
+      const tooBig = checkUpload(compressedFile, "image");
+      if (tooBig) {
+        toast.error(tooBig);
+        e.target.value = "";
+        return;
+      }
       setImage(compressedFile);
     } catch (err) {
       console.error("Image compression failed:", err);
@@ -87,6 +102,14 @@ const NewMessForm = () => {
       return;
     }
 
+    const problem = checkUpload(file, "certificate", 20 * 1024 * 1024);
+    if (problem) {
+      toast.error(problem);
+      e.target.value = "";
+      setCertificate(null);
+      return;
+    }
+
     if (file.type && file.type.startsWith("image/")) {
       try {
         const options = {
@@ -95,12 +118,24 @@ const NewMessForm = () => {
           useWebWorker: true,
         };
         const compressed = await imageCompression(file, options);
+        const tooBig = checkUpload(compressed, "certificate");
+        if (tooBig) {
+          toast.error(tooBig);
+          e.target.value = "";
+          return;
+        }
         setCertificate(compressed);
       } catch (err) {
         console.error("Certificate compression failed:", err);
         setCertificate(file);
       }
     } else {
+      const tooBig = checkUpload(file, "certificate");
+      if (tooBig) {
+        toast.error(tooBig);
+        e.target.value = "";
+        return;
+      }
       setCertificate(file);
     }
   };
@@ -154,7 +189,7 @@ const NewMessForm = () => {
       if (image) fd.append("image", image);
       if (certificate) fd.append("certificate", certificate);
 
-      const res = await fetch(`/api/owner/${session?.user?.id}/new-mess`, {
+      const res = await apiFetch(`/api/owner/${session?.user?.id}/new-mess`, {
         method: "POST",
         body: fd,
       });

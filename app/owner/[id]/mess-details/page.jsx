@@ -1,5 +1,7 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
+import { mapsUrl } from "@/lib/safeHref";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Panel from "@/Component/Owner/Panel";
@@ -34,7 +36,7 @@ export default function OwnedMessPage() {
     const fetchMesses = async () => {
       try {
         setIsFetching(true);
-        const res = await fetch(`/api/owner/${id}/mess-details`, {
+        const res = await apiFetch(`/api/owner/${id}/mess-details`, {
           cache: "no-store",
         });
 
@@ -207,8 +209,9 @@ export default function OwnedMessPage() {
                             Location:
                           </span>
                           <Link
-                            href={`https://maps.google.com/?q=${mess.lat},${mess.lon}`}
+                            href={mapsUrl(mess.lat, mess.lon, "https://maps.google.com/")}
                             target="_blank"
+                            rel="noopener noreferrer"
                             className="text-xs font-medium text-emerald-600 hover:text-emerald-700 transition duration-150 !no-underline"
                           >
                             <button className="flex items-center px-3 py-1 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs transition duration-200 border border-emerald-200">

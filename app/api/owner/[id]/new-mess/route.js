@@ -1,216 +1,116 @@
-import { NextResponse } from "next/server";
-import cloudinary from "@/lib/cloudinary";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import nodemailer from "nodemailer";
-import bcrypt from "bcryptjs";
-import supabase from "@/lib/supabaseClient";
+import { z } from "zod";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { badRequest, notFound } from "@/lib/server/errors/httpErrors";
+import { Limits } from "@/lib/server/security/rateLimiter";
+import { emailSchema, phoneSchema, upiSchema } from "@/lib/server/validation/schemas";
+import { validateUpload, IMAGE_TYPES, CERTIFICATE_TYPES } from "@/lib/server/security/uploadValidator";
+import { uploadBanner, uploadCertificate, destroyAsset } from "@/lib/server/services/cloudinaryService";
+import { getPasswordService } from "@/lib/server/auth/passwordService";
+import { ownerRepository } from "@/lib/server/repositories/accounts";
+import { messRepository } from "@/lib/server/repositories/messes";
+import { requireSelf } from "@/lib/server/auth/guards";
+import { sendMailSafe } from "@/lib/server/mail/mailer";
+import { verificationReceivedMail } from "@/lib/server/mail/templates";
 import { deleteCacheKeys } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import { audit, AuditEvent } from "@/lib/server/logging/audit";
+
 export const runtime = "nodejs";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
+const blankToUndefined = (v) => (v === "" || v === null || v === undefined ? undefined : v);
+const optionalNumber = (schema) => z.preprocess(blankToUndefined, schema);
+
+const fieldsSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  upi: upiSchema,
+  email: emailSchema,
+  description: z.string().trim().max(1000).default(""),
+  address: z.string().trim().max(300).default(""),
+  category: z.string().trim().min(1).max(30),
+  limits: z.enum(["true", "false"]).default("true"),
+  ownerName: z.string().trim().max(100).default(""),
+  adharNumber: z.string().trim().regex(/^[0-9]{12}$/, "Aadhaar must be 12 digits"),
+  phoneNumber: phoneSchema,
+  monthlyMessFee: optionalNumber(z.coerce.number().min(0).max(100000).default(0)),
+  // "0" is the UI placeholder ("Select Duration"): fall back to the 30 day default
+  monthlyMessDuration: z.preprocess((v) => (Number(v) > 0 ? v : undefined), z.coerce.number().int().min(1).max(366).default(30)),
+  lat: optionalNumber(z.coerce.number().min(-90).max(90).default(0)),
+  lon: optionalNumber(z.coerce.number().min(-180).max(180).default(0)),
 });
 
-export async function POST(request, { params }) {
-  try {
-    const { id } = await params; 
-    const tenantId = request.headers.get("x-tenant-id") || "public";
-    const session = await getServerSession(authOptions);
+export const POST = createRoute(
+  { name: "owner.new-mess", auth: "owner", uuid: ["id"], bodyType: "formData", rateLimit: { ...Limits.upload, by: "user" } },
+  async ({ params, session, body: form, log }) => {
+    requireSelf(session, params.id);
 
-    if (!session)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const parsed = fieldsSchema.safeParse(Object.fromEntries([...form.entries()].filter(([, v]) => typeof v === "string")));
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      throw badRequest(first?.message && first.path.length ? `${first.path.join(".")}: ${first.message}` : "Invalid input");
+    }
+    const f = parsed.data;
 
-    if (session.user.id !== id)
-      return NextResponse.json(
-        { error: "Permission denied" },
-        { status: 403 }
-      );
+    if (!(await ownerRepository.findById(params.id, "id"))) throw notFound("Failed to get Mess Owner");
 
-    const formData = await request.formData();
-
-    const name = formData.get("name") || "";
-    const upi = formData.get("upi") || "";
-    const email = formData.get("email") || "";
-    const description = formData.get("description") || "";
-    const address = formData.get("address") || "";
-    const category = formData.get("category") || "";
-    const limits = formData.get("limits") || "true";
-    const ownerName = formData.get("ownerName") || "";
-    const adharNumber = formData.get("adharNumber") || "";
-    const phoneNumber = formData.get("phoneNumber") || "";
-    const monthlyMessFee = Number(formData.get("monthlyMessFee") || 0);
-    const monthlyMessDuration = Number(
-      formData.get("monthlyMessDuration") || 0
-    );
-
-
-    const lat = parseFloat(formData.get("lat") || "0");
-    const lon = parseFloat(formData.get("lon") || "0");
-
-    const file = formData.get("image");
-    const certificate = formData.get("certificate");
-
-    if (!name || !upi || !email || !file || !certificate) {
-      return NextResponse.json(
-        {
-          message:
-            "Make sure you have given name and uploaded banner and certificate",
-        },
-        { status: 400 }
-      );
+    // Real validation happens HERE (size, magic bytes, allow-list, random names).
+    let banner, cert;
+    try {
+      banner = await validateUpload(form.get("image"), { allowed: IMAGE_TYPES, label: "Banner image" });
+      cert = await validateUpload(form.get("certificate"), { allowed: CERTIFICATE_TYPES, label: "Certificate" });
+    } catch (err) {
+      audit(AuditEvent.UPLOAD_REJECTED, { actorId: session.user.id, reason: err.message }, log);
+      throw err;
     }
 
-    const upiRegex = /^[\w.-]{2,}@[a-zA-Z]{2,}$/;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^[0-9]{10}$/;
-    const aadharRegex = /^[0-9]{12}$/;
+    const bannerUp = await uploadBanner(banner.buffer, banner.safeName);
+    let certUp;
+    try {
+      certUp = await uploadCertificate(cert.buffer, cert.safeName);
+    } catch (err) {
+      await destroyAsset(bannerUp.public_id);
+      throw err;
+    }
 
-    if (!emailRegex.test(email))
-      return NextResponse.json({ message: "Invalid Email" }, { status: 400 });
-
-    if (!upiRegex.test(upi))
-      return NextResponse.json({ message: "Invalid UPI" }, { status: 400 });
-
-    if (!phoneRegex.test(phoneNumber))
-      return NextResponse.json(
-        { message: "Phone must be 10 digits" },
-        { status: 400 }
-      );
-
-    if (!aadharRegex.test(adharNumber))
-      return NextResponse.json(
-        { message: "Aadhaar must be 12 digits" },
-        { status: 400 }
-      );
-
-    const bannerBuffer = Buffer.from(await file.arrayBuffer());
-    const bannerUpload = await new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream({ folder: "MessImage" }, (err, res) =>
-          err ? reject(err) : resolve(res)
-        )
-        .end(bannerBuffer);
-    });
-
-    const certBuffer = Buffer.from(await certificate.arrayBuffer());
-    const certificateUpload = await new Promise((resolve, reject) => {
-      cloudinary.uploader
-        .upload_stream({ folder: "Mess_certificate" }, (err, res) =>
-          err ? reject(err) : resolve(res)
-        )
-        .end(certBuffer);
-    });
-    const hashedAdhaarNumber = await bcrypt.hash(adharNumber, 10);
-
-    const messData = {
-      name,
-      email,
-      upi,
-      description,
-      address,
-      category,
-      isLimited: limits === "true",
-      ownerName,
-      adharNumber : hashedAdhaarNumber,
-      phoneNumber,
-      lat: isNaN(lat) ? null : lat,
-      lon: isNaN(lon) ? null : lon,
-      image: {
-        url: bannerUpload.secure_url,
-        filename: file.name,
-        public_id: bannerUpload.public_id,
-      },
-      certificate: {
-        url: certificateUpload.secure_url,
-        filename: certificate.name,
-        public_id: certificateUpload.public_id,
-      },
-      vegMenu: [],
-      nonVegMenu: [],
-      vegMenuRef: null,
-      nonVegMenuRef: null,
-      owner: id,
-      monthlyMessFee: monthlyMessFee,
-      monthlyMessDuration : monthlyMessDuration,
-    };
-
-    const { data: owner } = await supabase
-      .from("owner")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (!owner)
-      return NextResponse.json(
-        { message: "Failed to get Mess Owner" },
-        { status: 500 }
-      );
-
-    const recipientName = messData.ownerName || "User";
-
-    await transporter.sendMail({
-      from: `"MessMate Support" <${process.env.MAIL_USER}>`,
-      to: email,
-      subject: "Mess Verification Request Received - MessMate",
-      html: `
-        <h3>Hello ${recipientName},</h3>
-        <p>Your mess verification request has been received.</p>
-        <p>Our team will verify your documents within 24 hours.</p>
-        <p>We will notify you once verification is complete.</p>
-        <br />
-        <p>Regards,<br>MessMate Team</p>
-      `,
-    });
-
-    const { data: created, error } = await supabase
-      .from("mess")
-      .insert({
-        name,
-        email,
-        upi,
-        description,
-        address,
-        category,
-        is_limited: limits === "true",
-        owner_name: ownerName,
-        adhar_number: hashedAdhaarNumber,
-        phone_number: phoneNumber,
-        lat: isNaN(lat) ? 0 : lat,
-        lon: isNaN(lon) ? 0 : lon,
-        image_url: bannerUpload.secure_url,
-        image_filename: file.name,
-        image_public_id: bannerUpload.public_id,
-        certificate_url: certificateUpload.secure_url,
-        certificate_filename: certificate.name,
-        certificate_public_id: certificateUpload.public_id,
+    let created;
+    try {
+      created = await messRepository.create({
+        name: f.name,
+        email: f.email,
+        upi: f.upi,
+        description: f.description,
+        address: f.address,
+        category: f.category,
+        is_limited: f.limits === "true",
+        owner_name: f.ownerName,
+        adhar_number: await getPasswordService().hash(f.adharNumber),
+        phone_number: f.phoneNumber,
+        lat: f.lat,
+        lon: f.lon,
+        image_url: bannerUp.secure_url,
+        image_filename: banner.safeName,
+        image_public_id: bannerUp.public_id,
+        certificate_url: certUp.secure_url,
+        certificate_filename: cert.safeName,
+        certificate_public_id: certUp.public_id,
         veg_menu: [],
         non_veg_menu: [],
         veg_menu_ref_id: null,
         non_veg_menu_ref_id: null,
-        owner_id: id,
-        monthly_mess_fee: monthlyMessFee,
-        monthly_mess_duration: monthlyMessDuration,
-      })
-      .select("id")
-      .single();
-    if (error) throw error;
+        owner_id: params.id,
+        monthly_mess_fee: f.monthlyMessFee,
+        monthly_mess_duration: f.monthlyMessDuration,
+      });
+    } catch (err) {
+      await destroyAsset(bannerUp.public_id);
+      await destroyAsset(certUp.public_id, { type: "authenticated" });
+      throw err;
+    }
 
-    await deleteCacheKeys([
-      `tenant:${tenantId}:messes:all`,
-      `tenant:${tenantId}:messes:pending`,
-      `tenant:${tenantId}:owner:${id}:messes`,
-    ]);
+    await deleteCacheKeys([cacheKeys.messList(), cacheKeys.messPending(), cacheKeys.ownerMesses(params.id), cacheKeys.adminMesses()]);
+    audit(AuditEvent.MESS_CREATED, { actorId: session.user.id, targetId: created.id }, log);
+    await sendMailSafe({ to: f.email, ...verificationReceivedMail({ ownerName: f.ownerName }) }, log);
 
-    return NextResponse.json({ id: created.id }, { status: 201 });
-  } catch (error) {
-    console.error("Error creating mess:", error);
-    return NextResponse.json(
-      { error: "Failed to create mess", details: error.message },
-      { status: 500 }
-    );
-  }
-}
+    return json({ id: created.id }, 201);
+  },
+);

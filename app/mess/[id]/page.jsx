@@ -1,7 +1,10 @@
 import Navbar from "@/Component/Others/Navbar";
+import logger from "@/lib/server/logging/logger";
 import MessDetails from "../../../Component/IndividualMess/MessDetails";
 import MessNotFound from "../../../Component/Others/MessNotFound";
 import { getBaseUrl } from "@/lib/getBaseUrl";
+
+const log = logger.child({ page: "mess" });
 
 export default async function ShowMess({ params }) {
   const { id } = (await params) || {};
@@ -20,16 +23,12 @@ export default async function ShowMess({ params }) {
 
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
-      console.log("Failed to fetch mess details:", {
-        status: res.status,
-        statusText: res.statusText,
-        errorData,
-      });
+      log.warn("Failed to fetch mess details", { status: res.status });
     } else {
       mess = await res.json();
     }
   } catch (error) {
-    console.log("error in showing a Mess :", error);
+    log.error("Error showing a mess", { err: error });
   }
 
   if (!mess) {

@@ -1,103 +1,32 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import nodemailer from "nodemailer";
-import supabase from "@/lib/supabaseClient";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { notFound } from "@/lib/server/errors/httpErrors";
+import { Limits } from "@/lib/server/security/rateLimiter";
+import { consumerRepository } from "@/lib/server/repositories/accounts";
+import { toConsumerDto } from "@/lib/server/repositories/dto";
+import { deleteCacheKeys } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import { sendMailSafe } from "@/lib/server/mail/mailer";
+import { accountBlockedMail } from "@/lib/server/mail/templates";
+import { audit, AuditEvent } from "@/lib/server/logging/audit";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
-});
+export const PATCH = createRoute(
+  { name: "admin.user.block", auth: "admin", uuid: ["userid"], rateLimit: { ...Limits.admin, by: "user" }, bodyType: "none" },
+  async ({ params, session, log }) => {
+    const consumer = await consumerRepository.findById(params.userid, "id, username, email, is_blocked");
+    if (!consumer) throw notFound("consumer not found");
 
-export async function PATCH(request, { params }) {
-  try {
-    const { userid } = (await params) || {};
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json(
-        { consumerage: "Unauthorized" },
-        { status: 401 }
-      );
+    const updated = await consumerRepository.setBlocked(consumer.id, !consumer.is_blocked);
+    await deleteCacheKeys([cacheKeys.consumerProfile(consumer.id), cacheKeys.consumersAll(), cacheKeys.adminUsers()]);
+    audit(AuditEvent.USER_BLOCK_TOGGLED, { actorId: session.user.id, actorRole: "admin", targetId: consumer.id, blocked: updated.is_blocked }, log);
 
-    const { data: consumer, error } = await supabase
-      .from("consumer")
-      .select("*")
-      .eq("id", userid)
-      .single();
-    if (error) throw error;
-    if (!consumer)
-      return NextResponse.json(
-        { consumerage: "consumer not found" },
-        { status: 404 }
-      );
-
-    const { data: updatedUser, error: updErr } = await supabase
-      .from("consumer")
-      .update({ is_blocked: !consumer.is_blocked })
-      .eq("id", userid)
-      .select()
-      .single();
-    if (updErr) throw updErr;
-    if (updatedUser.isBlocked) {
-      try {
-        const recipientEmail = consumer.email;
-        const recipientName = consumer.username || "User";
-        await transporter.sendMail({
-          from: `"MessMate Support" <${process.env.MAIL_USER}>`,
-          to: recipientEmail,
-          subject: "Blocking Account  - MessMate",
-          html: `
-          <div style="font-family: Arial; padding: 20px; background: #f5f5f5;">
-            <div style="background: white; padding: 20px; border-radius: 8px;">
-              <h2>Account Access Restricted</h2>
-              <p>Hello <b>${recipientName}</b>,</p>
-              <p>
-                This is to inform you that your <b>MessMate</b> account has been
-                temporarily <b>blocked</b> due to activity that does not align with our
-                usage policies.
-              </p>
-              <p>
-                During this period, you will not be able to access certain features or
-                perform actions that are reserved for compliant users of the platform.
-              </p>
-              <p>
-                We kindly request you to review our terms of use and ensure that any
-                future activity strictly follows the guidelines and appropriate use of
-                MessMate.
-              </p>
-              <p style="margin-top: 20px;">
-                If you believe this action was taken in error or would like to request
-                a review of your account status, please contact our support team with
-                the necessary details.
-              </p>
-              <p>
-                We appreciate your understanding and cooperation.
-              </p>
-              <p>Best regards,<br/>MessMate Support</p>
-            </div>
-          </div>
-        `,
-        });
-      } catch (mailErr) {
-        console.error("Failed to send denial email:", mailErr);
-      }
+    if (updated.is_blocked) {
+      await sendMailSafe({ to: consumer.email, ...accountBlockedMail({ name: consumer.username }) }, log);
     }
 
-    return NextResponse.json(
-      {
-        message: updatedUser.isBlocked ? "User Unblocked" : "User Blocked",
-        user: updatedUser,
-      },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("PATCH error:", error);
-    return NextResponse.json(
-      { message: "Server error", error: error.message },
-      { status: 500 }
-    );
-  }
-}
+    return json({
+      message: updated.is_blocked ? "User Blocked" : "User Unblocked",
+      user: { ...toConsumerDto(updated), isBlocked: updated.is_blocked },
+    });
+  },
+);

@@ -50,3 +50,8 @@ notThis.md
 DEPLOYMENT.md
 Dockerfile
 TODOs
+# env files (never commit secrets)
+.env
+.env.*
+!.env.example
+tsconfig.tsbuildinfo

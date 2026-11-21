@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import React, { useEffect, useMemo, useState } from "react";
 import OwnerNavbar from "@/Component/Owner/OwnerNavbar";
 import { useParams, useRouter } from "next/navigation";
@@ -20,7 +21,7 @@ export default function OrdersPage() {
   useEffect(() => {
     async function fetchOrders() {
       try {
-        const res = await fetch(`/api/mess/${id}/orders`);
+        const res = await apiFetch(`/api/mess/${id}/orders`);
         const data = await res.json();
 
         if (res.ok) {
@@ -52,7 +53,7 @@ export default function OrdersPage() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/mess/${id}/orders`);
+        const res = await apiFetch(`/api/mess/${id}/orders`);
         const data = await res.json();
         if (res.ok) {
           const list = (data.orders || [])
@@ -81,7 +82,7 @@ export default function OrdersPage() {
       return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/mess/${id}/orders`, {
+      const res = await apiFetch(`/api/mess/${id}/orders`, {
         method: "DELETE",
       });
       const data = await res.json();

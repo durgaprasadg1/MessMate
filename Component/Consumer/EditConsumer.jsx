@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -18,7 +19,7 @@ export default function EditUserInfoPage({ consumerid }) {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await fetch(`/api/consumer/${consumerid}`, {
+        const res = await apiFetch(`/api/consumer/${consumerid}`, {
           cache: "no-store",
         });
 
@@ -52,7 +53,7 @@ export default function EditUserInfoPage({ consumerid }) {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/consumer/${consumerid}/edit-consumer`, {
+      const res = await apiFetch(`/api/consumer/${consumerid}/edit-consumer`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(ConsumerData),

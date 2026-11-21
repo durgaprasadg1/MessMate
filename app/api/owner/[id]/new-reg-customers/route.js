@@ -1,376 +1,110 @@
-import { NextResponse } from "next/server";
-import supabase from "@/lib/supabaseClient";
-import nodemailer from "nodemailer";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { notFound, forbidden } from "@/lib/server/errors/httpErrors";
+import { Limits } from "@/lib/server/security/rateLimiter";
+import { registrationPatchSchema, registrationDeleteSchema } from "@/lib/server/validation/schemas";
+import { registrationRepository } from "@/lib/server/repositories/registrations";
+import { consumerRepository } from "@/lib/server/repositories/accounts";
+import { requireMessOwner } from "@/lib/server/auth/guards";
+import { isMembershipPaymentComplete } from "@/lib/server/services/membership";
+import { sendMailSafe } from "@/lib/server/mail/mailer";
+import { registrationApprovedMail, registrationDisabledMail, registrationExtendedMail, registrationRemovedMail } from "@/lib/server/mail/templates";
+import { deleteCacheKeys } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import { audit, AuditEvent } from "@/lib/server/logging/audit";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
+// NOTE: `[id]` is the MESS id (the owner dashboard links here with a mess id).
+const COMMON = { auth: "owner", uuid: ["id"] };
+
+const normalize = (r) => ({
+  ...r,
+  _id: r.id,
+  joiningDate: r.joining_date,
+  foodPreference: r.food_preference,
+  phoneNum: r.phone,
+  isAllowed: Boolean(r.is_allowed),
+  paymentMode: r.payment_mode,
+  paymentVerified: r.payment_verified === true,
+  razorpayOrderId: r.razorpay_order_id,
+  totalAmount: r.total_amount ?? null,
+  paymentStatus: r.payment_status,
 });
 
-const isMembershipPaymentComplete = (registration = {}) => {
-  const mode = (
-    registration.payment_mode ||
-    registration.paymentMode ||
-    ""
-  ).toLowerCase();
-  if (mode === "cash") return true;
-  return (
-    registration.payment_verified === true ||
-    registration.paymentVerified === true ||
-    registration.payment_status === "paid" ||
-    registration.paymentStatus === "paid"
-  );
-};
-
-const normalizeRegistration = (registration = {}) => {
-  const joiningDate =
-    registration.joining_date || registration.joiningDate || null;
-  const isAllowed =
-    typeof registration.is_allowed === "boolean"
-      ? registration.is_allowed
-      : Boolean(registration.isAllowed);
-
-  return {
-    ...registration,
-    _id: registration.id,
-    id: registration.id,
-    joiningDate,
-    joining_date: joiningDate,
-    foodPreference: registration.food_preference || registration.foodPreference,
-    phoneNum: registration.phone || registration.phoneNum,
-    isAllowed,
-    is_allowed: isAllowed,
-    paymentMode: registration.payment_mode || registration.paymentMode,
-    paymentVerified:
-      registration.payment_verified === true ||
-      registration.paymentVerified === true,
-    razorpayOrderId:
-      registration.razorpay_order_id || registration.razorpayOrderId,
-    razorpayPaymentId:
-      registration.razorpay_payment_id || registration.razorpayPaymentId,
-    totalAmount: registration.total_amount ?? registration.totalAmount ?? null,
-    paymentStatus: registration.payment_status || registration.paymentStatus,
-    createdAt: registration.created_at || registration.createdAt,
-  };
-};
-
-const sendMail = async (to, subject, html) => {
-  try {
-    await transporter.sendMail({
-      from: `"MessMate Support" <${process.env.MAIL_USER}>`,
-      to,
-      subject,
-      html,
-    });
-  } catch {}
-};
-
-export async function GET(request, { params }) {
-  try {
-    const { id: messId } = await params;
-
-    const { data: mess, error } = await supabase
-      .from("mess")
-      .select("id, new_mess_customer(*)")
-      .eq("id", messId)
-      .single();
-    if (error) throw error;
-    if (!mess) {
-      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
-    }
-
-    const validRegistrations = (mess.new_mess_customer || [])
-      .filter(isMembershipPaymentComplete)
-      .map(normalizeRegistration);
-
-    return NextResponse.json(
-      { newMessCustomer: validRegistrations },
-      { status: 200 },
-    );
-  } catch (error) {
-    return NextResponse.json({ message: error.message }, { status: 500 });
-  }
+/** The registration must belong to the mess the caller owns (closes the IDOR). */
+async function loadRegistrationOfMess(messId, regId) {
+  const reg = await registrationRepository.findById(regId);
+  if (!reg || reg.mess_id !== messId) throw notFound("User not found");
+  return reg;
 }
 
-export async function PATCH(request) {
-  try {
-    const payload = await request.json();
-    const userId = payload.userId || payload.id || payload._id;
-    const joiningDate = payload.joiningDate || payload.joining_date;
-    const allow =
-      typeof payload.allow === "boolean"
-        ? payload.allow
-        : typeof payload.isAllowed === "boolean"
-          ? payload.isAllowed
-          : undefined;
-    const addDays = payload.addDays ?? payload.add_days;
+async function memberOf(reg) {
+  const ids = Array.isArray(reg.customers) ? reg.customers : reg.customers?.ids || [];
+  const consumerId = reg.consumer_id || ids[0];
+  return consumerId ? consumerRepository.findById(consumerId, "id, username, email") : null;
+}
 
-    if (!userId) {
-      return NextResponse.json(
-        { message: "User ID required" },
-        { status: 400 },
-      );
-    }
+export const GET = createRoute({ name: "owner.registrations.list", ...COMMON }, async ({ params, session }) => {
+  const mess = await requireMessOwner(session, params.id);
+  const regs = (await registrationRepository.listForMess(mess.id)).filter(isMembershipPaymentComplete).map(normalize);
+  return json({ newMessCustomer: regs });
+});
 
-    const { data: user } = await supabase
-      .from("new_mess_customer")
-      .select("*, mess(*)")
-      .eq("id", userId)
-      .single();
+export const PATCH = createRoute(
+  { name: "owner.registrations.update", ...COMMON, rateLimit: { ...Limits.mail, name: "reg-update", limit: 60, by: "user" }, body: registrationPatchSchema },
+  async ({ params, session, body, log }) => {
+    const mess = await requireMessOwner(session, params.id);
+    const regId = body.userId || body.id || body._id;
+    const reg = await loadRegistrationOfMess(mess.id, regId);
+    const member = await memberOf(reg);
 
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
-
-    let updateFields = {};
-    const customerIds = Array.isArray(user.customers)
-      ? user.customers
-      : user.customers?.ids || [];
-    const consumerId =
-      user.consumer_id ||
-      (Array.isArray(customerIds) && customerIds.length
-        ? customerIds[0]
-        : null);
-    const { data: consumer } =
-      consumerId &&
-      (await supabase
-        .from("consumer")
-        .select("*")
-        .eq("id", consumerId)
-        .single());
+    const joiningDate = body.joiningDate || body.joining_date;
+    const allow = typeof body.allow === "boolean" ? body.allow : typeof body.isAllowed === "boolean" ? body.isAllowed : undefined;
+    const addDays = body.addDays ?? body.add_days;
+    const fields = {};
 
     if (joiningDate) {
-      updateFields.joining_date = new Date(joiningDate).toISOString();
+      const d = new Date(joiningDate);
+      if (Number.isNaN(d.getTime())) throw forbidden("Invalid joining date");
+      fields.joining_date = d.toISOString();
     }
 
     if (typeof allow === "boolean") {
-      updateFields.is_allowed = allow;
-
-      const email = consumer?.email;
-      const name = consumer?.username || "User";
-      const messName = user.mess?.name;
-
-      if (allow && email) {
-        await sendMail(
-          email,
-          "Mess Registration Approved - MessMate",
-          `<div style="font-family: Arial; padding: 22px; background: #f7f7f7;">
-            <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px;">
-              <h2 style="margin-bottom: 15px;">Your Monthly Mess Registration Has Been Approved</h2>
-
-              <p>Hello <b>${name}</b>,</p>
-
-              <p>
-                We are pleased to inform you that your request to join the 
-                <b>${messName}</b> Monthly Mess has been <b>approved</b> by the mess owner.
-                Your registration is now active and you can begin using all Monthly Mess services
-                according to the plan you selected.
-              </p>
-
-              <p>
-                This approval confirms that your details have been reviewed and verified by the mess owner.
-                You are now officially added to their Monthly Mess customer list.
-              </p>
-
-              <p style="margin-top: 15px;">
-                If you have any questions regarding schedules, meal timings, holidays, or billing,
-                please feel free to reach out to the mess owner directly through the MessMate platform.
-              </p>
-
-              <p style="margin-top: 20px;">
-                Regards,<br/>
-                <b>MessMate Support Team</b>
-              </p>
-            </div>
-          </div>`,
-        );
-      } else if (email) {
-        await sendMail(
-          email,
-          "Mess Registration Updated - MessMate",
-          `
-          <div style="font-family: Arial; padding: 22px; background: #f7f7f7;">
-          <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px;">
-            <h2>Your Monthly Mess Access Has Been Updated</h2>
-
-            <p>Hello <b>${name}</b>,</p>
-
-            <p>
-              This message is to notify you that your access to the 
-              <b>${messName}</b> Monthly Mess has been <b>temporarily disabled</b> by the mess owner.
-            </p>
-
-            <p>
-              This action may have been taken due to incomplete payments, incorrect information, 
-              rule violations, or other eligibility-related reasons defined by the mess owner.
-            </p>
-
-            <p>
-              If you believe this update was made in error or require clarification, we recommend 
-              contacting the mess owner directly through MessMate for further assistance.
-            </p>
-
-            <p style="margin-top: 20px;">
-              Regards,<br/>
-              <b>MessMate Support Team</b>
-            </p>
-          </div>
-        </div>
-        `,
-        );
+      fields.is_allowed = allow;
+      if (member?.email) {
+        const mail = allow
+          ? registrationApprovedMail({ name: member.username, messName: mess.name })
+          : registrationDisabledMail({ name: member.username, messName: mess.name });
+        await sendMailSafe({ to: member.email, ...mail }, log);
       }
     }
 
-    if (addDays && !isNaN(addDays)) {
-      const extra = Number(addDays);
-      const current = new Date(
-        user.joining_date || user.joiningDate || new Date().toISOString(),
-      );
-      const updated = new Date(current);
-      updated.setDate(updated.getDate() + extra);
-
-      updateFields.joining_date = updated.toISOString();
-
-      const email = consumer?.email;
-      const name = consumer?.username || "User";
-      const messName = user.mess?.name;
-
-      if (email) {
-        await sendMail(
-          email,
-          "Mess Duration Extended - MessMate",
-          `
-        <div style="font-family: Arial; padding: 22px; background: #f7f7f7;">
-          <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px;">
-            <h2>Your Monthly Mess Service Has Been Extended</h2>
-
-            <p>Hello <b>${name}</b>,</p>
-
-            <p>
-              Good news! The mess owner at <b>${messName}</b> has added 
-              <b>${extra} additional day(s)</b> to your Monthly Mess subscription.
-            </p>
-
-            <p>
-              Your validity period has now been updated accordingly. You will continue 
-              receiving your daily meal services without interruption based on your selected plan.
-            </p>
-
-            <p>
-              This extension is usually granted in situations such as bonus days, adjustment of missed days, 
-              or extension requests approved by the mess owner.
-            </p>
-
-            <p style="margin-top: 20px;">
-              Regards,<br/>
-              <b>MessMate Support Team</b>
-            </p>
-          </div>
-        </div>
-        `,
-        );
+    if (addDays) {
+      const base = new Date(reg.joining_date || Date.now());
+      base.setDate(base.getDate() + Number(addDays));
+      fields.joining_date = base.toISOString();
+      if (member?.email) {
+        await sendMailSafe({ to: member.email, ...registrationExtendedMail({ name: member.username, messName: mess.name, days: addDays }) }, log);
       }
     }
 
-    const { data: updated, error: updErr } = await supabase
-      .from("new_mess_customer")
-      .update(updateFields)
-      .eq("id", userId)
-      .select()
-      .single();
-    if (updErr) throw updErr;
+    const updated = await registrationRepository.update(reg.id, fields);
+    await deleteCacheKeys([cacheKeys.consumerMonthly(reg.consumer_id)]);
+    audit(AuditEvent.REGISTRATION_CHANGED, { actorId: session.user.id, targetId: reg.id, action: "update", fields: Object.keys(fields) }, log);
+    return json({ message: "Updated successfully", updated });
+  },
+);
 
-    return NextResponse.json(
-      { message: "Updated successfully", updated },
-      { status: 200 },
-    );
-  } catch (error) {
-    return NextResponse.json({ message: error.message }, { status: 500 });
+export const DELETE = createRoute({ name: "owner.registrations.delete", ...COMMON, body: registrationDeleteSchema }, async ({ params, session, body, log }) => {
+  const mess = await requireMessOwner(session, params.id);
+  const reg = await loadRegistrationOfMess(mess.id, body.userId || body.id || body._id);
+  const member = await memberOf(reg);
+
+  await registrationRepository.delete(reg.id);
+  await deleteCacheKeys([cacheKeys.consumerMonthly(reg.consumer_id)]);
+  audit(AuditEvent.REGISTRATION_CHANGED, { actorId: session.user.id, targetId: reg.id, action: "delete" }, log);
+
+  if (member?.email) {
+    await sendMailSafe({ to: member.email, ...registrationRemovedMail({ name: member.username, messName: mess.name }) }, log);
   }
-}
-
-export async function DELETE(request) {
-  try {
-    const payload = await request.json();
-    const userId = payload.userId || payload.id || payload._id;
-
-    if (!userId) {
-      return NextResponse.json({ message: "User ID missing" }, { status: 400 });
-    }
-
-    const { data: user } = await supabase
-      .from("new_mess_customer")
-      .select("*, mess(*)")
-      .eq("id", userId)
-      .single();
-
-    const customerIds = Array.isArray(user?.customers)
-      ? user.customers
-      : user?.customers?.ids || [];
-    const consumerId =
-      Array.isArray(customerIds) && customerIds.length ? customerIds[0] : null;
-    const { data: consumer } =
-      consumerId &&
-      (await supabase
-        .from("consumer")
-        .select("*")
-        .eq("id", consumerId)
-        .single());
-
-    const email = consumer?.email;
-    const name = consumer?.username || "User";
-    const messName = user?.mess?.name;
-
-    const { error: delErr } = await supabase
-      .from("new_mess_customer")
-      .delete()
-      .eq("id", userId);
-    if (delErr) throw delErr;
-
-    if (email) {
-      await sendMail(
-        email,
-        "Mess Registration Removed - MessMate",
-        `
-        <div style="font-family: Arial; padding: 22px; background: #f7f7f7;">
-          <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px;">
-            <h2>Your Monthly Mess Registration Has Been Removed</h2>
-
-            <p>Hello <b>${name}</b>,</p>
-
-            <p>
-              This is to inform you that your registration for the 
-              <b>${messName}</b> Monthly Mess has been removed by the mess owner.
-            </p>
-
-            <p>
-              This means you will no longer receive meals or services under the Monthly Mess plan. 
-              Mess owners may remove registrations due to plan expiry, non-payment, or administrative updates.
-            </p>
-
-            <p>
-              If you believe this action was taken incorrectly or wish to reapply, 
-              you may contact the mess owner directly through MessMate or submit a new request.
-            </p>
-
-            <p style="margin-top: 20px;">
-              Regards,<br/>
-              <b>MessMate Support Team</b>
-            </p>
-          </div>
-        </div>
-        `,
-      );
-    }
-
-    return NextResponse.json(
-      { message: "User deleted successfully" },
-      { status: 200 },
-    );
-  } catch (error) {
-    return NextResponse.json({ message: error.message }, { status: 500 });
-  }
-}
+  return json({ message: "User deleted successfully" });
+});

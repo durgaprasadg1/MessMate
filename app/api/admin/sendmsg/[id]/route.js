@@ -1,94 +1,53 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import supabase from "@/lib/supabaseClient";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { notFound, forbidden } from "@/lib/server/errors/httpErrors";
+import { adminMessageSchema } from "@/lib/server/validation/schemas";
+import { messRepository, messageRepository } from "@/lib/server/repositories/messes";
+import { deleteCacheKeys } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import { audit, AuditEvent } from "@/lib/server/logging/audit";
 
-export async function POST(request, { params }) {
-  try {
-    const { id } = await params || {};
+/** Admin sends a notice to a mess. */
+export const POST = createRoute(
+  { name: "admin.sendmsg", auth: "admin", uuid: ["id"], body: adminMessageSchema },
+  async ({ params, body }) => {
+    const mess = await messRepository.getOwnership(params.id);
+    if (!mess) throw notFound("Mess not found");
+    await messageRepository.create(mess.id, body.message);
+    await deleteCacheKeys([cacheKeys.mess(mess.id)]);
+    return json({ message: "Message received" });
+  },
+);
 
-    const body = await request.json();
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+/** Admin blocks / unblocks a mess (kept on this URL for UI compatibility). */
+export const PATCH = createRoute(
+  { name: "admin.mess.block", auth: "admin", uuid: ["id"], bodyType: "none" },
+  async ({ params, session, log }) => {
+    const mess = await messRepository.getOwnership(params.id);
+    if (!mess) throw notFound("Mess not found");
+    const updated = await messRepository.setBlocked(mess.id, !mess.is_blocked);
+    await deleteCacheKeys([cacheKeys.mess(mess.id), cacheKeys.messList(), cacheKeys.adminMesses()]);
+    audit(AuditEvent.MESS_BLOCK_TOGGLED, { actorId: session.user.id, actorRole: "admin", targetId: mess.id, blocked: updated.is_blocked }, log);
+    return json({ message: "Mess open/close updated", mess: updated });
+  },
+);
+
+/**
+ * Delete a notice. Here `[id]` is the MESSAGE id (that is how the UI calls it).
+ * Allowed for admins and for the owner of the mess the notice was sent to.
+ */
+export const DELETE = createRoute(
+  { name: "message.delete", auth: "session", uuid: ["id"], bodyType: "none" },
+  async ({ params, session }) => {
+    const msg = await messageRepository.getById(params.id);
+    if (!msg) throw notFound("Message not found");
+    if (!session.user.isAdmin) {
+      const mess = await messRepository.getOwnership(msg.to_mess_id);
+      if (!mess || mess.owner_id !== session.user.id) throw forbidden();
     }
-
-    const { data: mess, error: messErr } = await supabase
-      .from("mess")
-      .select("id, owner_id")
-      .eq("id", id)
-      .single();
-    if (messErr) throw messErr;
-    if (!mess) {
-      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
-    }
-
-    const { error: createErr } = await supabase.from("message").insert({
-      message: body.message,
-      to_mess_id: mess.id,
-    });
-    if (createErr) throw createErr;
-
-    return NextResponse.json({ message: "Message received" }, { status: 200 });
-  } catch (err) {
-    console.error("/api/admin/sendmsg/[id] error:", err);
-    return NextResponse.json(
-      { message: "Server error", details: err?.message },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PATCH(req, { params }) {
-  try {
-    const { id } = await params || {};
-
-    const { data: mess, error: messErr } = await supabase
-      .from("mess")
-      .select("id, is_blocked")
-      .eq("id", id)
-      .single();
-    if (messErr) throw messErr;
-
-    if (!mess) {
-      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
-    }
-
-    const { data: updated, error: updErr } = await supabase
-      .from("mess")
-      .update({ is_blocked: !mess.is_blocked })
-      .eq("id", id)
-      .select()
-      .single();
-    if (updErr) throw updErr;
-
-    return NextResponse.json(
-      { message: "Mess open/close updated", mess: updated },
-      { status: 200 }
-    );
-  } catch (err) {
-    console.error("Error fetching Mess by ID:", err);
-    return NextResponse.json(
-      { message: "Some Server error", error: err.message },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request, { params }) {
-  try {
-    const { id } = await params || {};
-    const { error: delErr } = await supabase
-      .from("message")
-      .delete()
-      .eq("id", id);
-    if (delErr) throw delErr;
-    return NextResponse.json({ message: "Message deleted" }, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching Msg by ID:", error);
-    return NextResponse.json(
-      { message: "Some Server error", error: error.message },
-      { status: 500 }
-    );
-  }
-}
+    await messageRepository.delete(msg.id);
+    await deleteCacheKeys([cacheKeys.mess(msg.to_mess_id)]);
+    const remaining = await messageRepository.listForMess(msg.to_mess_id);
+    return json({ message: "Message deleted", alert: remaining.map((m) => ({ ...m, _id: m.id })) });
+  },
+);

@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Loading from "@/Component/Others/Loading";
@@ -33,7 +34,7 @@ export default function YourMessRegisteredUser() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`/api/owner/${messId}/new-reg-customers`);
+      const res = await apiFetch(`/api/owner/${messId}/new-reg-customers`);
       const data = await res.json();
 
       if (!res.ok) return setUsers([]);
@@ -138,7 +139,7 @@ export default function YourMessRegisteredUser() {
 
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/owner/${messId}/new-reg-customers`, {
+      const res = await apiFetch(`/api/owner/${messId}/new-reg-customers`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -162,7 +163,7 @@ export default function YourMessRegisteredUser() {
   const toggleAllow = async (userId, currentState) => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/owner/${messId}/new-reg-customers`, {
+      const res = await apiFetch(`/api/owner/${messId}/new-reg-customers`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -187,7 +188,7 @@ export default function YourMessRegisteredUser() {
 
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/owner/${messId}/new-reg-customers`, {
+      const res = await apiFetch(`/api/owner/${messId}/new-reg-customers`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId }),
@@ -216,7 +217,7 @@ export default function YourMessRegisteredUser() {
 
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/owner/${messId}/new-reg-customers`, {
+      const res = await apiFetch(`/api/owner/${messId}/new-reg-customers`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

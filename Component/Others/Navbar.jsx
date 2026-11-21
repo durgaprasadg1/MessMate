@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Menu, X, Home, Clock, LogOut, LayoutDashboard, UserX, UserPlus, LogIn, Bell } from "lucide-react";
@@ -39,7 +40,7 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
   const fetchUser = useCallback(async () => {
     if (!consumerid || isOwner || isAdmin) return;
     try {
-      const res = await fetch(`/api/consumer/${consumerid}`, {
+      const res = await apiFetch(`/api/consumer/${consumerid}`, {
         cache: "no-store",
       });
       if (!res.ok) {

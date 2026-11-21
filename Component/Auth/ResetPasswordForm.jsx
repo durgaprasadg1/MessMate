@@ -1,8 +1,11 @@
 "use client";
+import { apiFetch } from "@/lib/apiFetch";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Loading from "@/Component/Others/Loading";
+import PasswordStrength from "./PasswordStrength";
+import { validatePasswordStrength } from "@/lib/passwordRules";
 
 const ResetPasswordForm = ({ token }) => {
   const router = useRouter();
@@ -14,17 +17,15 @@ const ResetPasswordForm = ({ token }) => {
     e.preventDefault();
     setLoading(true);
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).+$/;
-    if (!passwordRegex.test(password)) {
-      toast.error(
-        "Password must contain at least one uppercase letter, one lowercase letter, and one special character"
-      );
+    const problems = validatePasswordStrength(password);
+    if (problems.length) {
+      toast.error(`Password must contain ${problems.join(", ")}`);
       setLoading(false);
       return;
     }
 
     try {
-      const res = await fetch(`/api/auth/reset-password/${token}`, {
+      const res = await apiFetch(`/api/auth/reset-password/${token}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -43,7 +44,7 @@ const ResetPasswordForm = ({ token }) => {
       toast.success(data.message || "Password updated successfully");
       router.push("login");
       setTimeout(() => router.push("/login"), 1500);
-    } catch (error) {
+    } catch {
       toast.error("Server Error");
       setLoading(false);
     }
@@ -75,12 +76,14 @@ const ResetPasswordForm = ({ token }) => {
               type="password"
               id="newPassword"
               placeholder="Enter new password"
-              minLength={6}
+              minLength={12}
+              autoComplete="new-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring focus:ring-gray-400"
             />
+            <PasswordStrength password={password} />
           </div>
 
           <button

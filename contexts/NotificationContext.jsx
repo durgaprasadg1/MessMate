@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { io } from "socket.io-client";
@@ -45,26 +46,16 @@ export const NotificationProvider = ({ children }) => {
 
     const socketInstance = io({
       path: SOCKET_PATH,
+      withCredentials: true,
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
     });
 
-    socketInstance.on("connect", () => {
-      console.log("Socket connected");
-      socketInstance.emit("join", session.user.id);
-
-      if (session.user.role === "owner" && session.user.messId) {
-        socketInstance.emit("join-mess", session.user.messId);
-      }
-    });
-
-    socketInstance.on("disconnect", () => {
-      console.log("Socket disconnected");
-    });
+    // Rooms are assigned by the server from the signed session cookie
+    // (`withCredentials` sends it); the client can no longer choose rooms.
 
     socketInstance.on("notification", (data) => {
-      console.log("New notification received:", data);
       setNotifications((prev) => [data, ...prev]);
       setUnreadCount((prev) => prev + 1);
 
@@ -84,7 +75,7 @@ export const NotificationProvider = ({ children }) => {
 
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("/api/notifications");
+        const res = await apiFetch("/api/notifications");
         if (res.ok) {
           const data = await res.json();
           setNotifications(data.notifications || []);
@@ -100,7 +91,7 @@ export const NotificationProvider = ({ children }) => {
 
   const markAsRead = async (notificationId) => {
     try {
-      const res = await fetch(`/api/notifications/${notificationId}`, {
+      const res = await apiFetch(`/api/notifications/${notificationId}`, {
         method: "PATCH",
       });
 
@@ -119,7 +110,7 @@ export const NotificationProvider = ({ children }) => {
 
   const markAllAsRead = async () => {
     try {
-      const res = await fetch("/api/notifications/mark-all-read", {
+      const res = await apiFetch("/api/notifications/mark-all-read", {
         method: "PATCH",
       });
 
@@ -134,7 +125,7 @@ export const NotificationProvider = ({ children }) => {
 
   const clearNotifications = async () => {
     try {
-      const res = await fetch("/api/notifications", {
+      const res = await apiFetch("/api/notifications", {
         method: "DELETE",
       });
 

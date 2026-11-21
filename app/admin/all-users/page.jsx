@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AdminSidebar from "@/Component/Admin/AdminSidebar";
@@ -18,7 +19,7 @@ export default function AllUsersPage() {
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        const res = await fetch("/api/consumer", { cache: "no-store" });
+        const res = await apiFetch("/api/consumer", { cache: "no-store" });
 
         if (!res.ok) {
           setError("Some Error Occured");
@@ -43,7 +44,7 @@ export default function AllUsersPage() {
   const handleToggleBlock = async (user) => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/admin/blockings/users/${user._id}`, {
+      const res = await apiFetch(`/api/admin/blockings/users/${user._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "toggleOpen" }),
@@ -73,7 +74,7 @@ export default function AllUsersPage() {
     setActionLoading(true);
 
     try {
-      const res = await fetch(`/api/admin/warn-user/${user._id}`, {
+      const res = await apiFetch(`/api/admin/warn-user/${user._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });

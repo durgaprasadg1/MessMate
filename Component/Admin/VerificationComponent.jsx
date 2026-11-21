@@ -1,5 +1,7 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
+import { safeHttpsUrl, mapsUrl } from "@/lib/safeHref";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Loading from "../Others/Loading";
@@ -15,7 +17,7 @@ const VerificationComponent = () => {
   const fetchPendingMesses = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/mess/pending", { cache: "no-store" });
+      const res = await apiFetch("/api/mess/pending", { cache: "no-store" });
       if (!res.ok) throw new Error("Failed to fetch pending messes");
       const text = await res.text();
       const data = text ? JSON.parse(text) : [];
@@ -34,7 +36,7 @@ const VerificationComponent = () => {
   const handleVerify = async (id) => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/mess/${id}/make-verified`, {
+      const res = await apiFetch(`/api/mess/${id}/make-verified`, {
         method: "POST",
       });
       if (!res.ok) throw new Error("Verification failed");
@@ -50,7 +52,7 @@ const VerificationComponent = () => {
   const handleDeny = async (id) => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/mess/${id}/deny-verification`, {
+      const res = await apiFetch(`/api/mess/${id}/deny-verification`, {
         method: "POST",
       });
       if (!res.ok) throw new Error("Denial failed");
@@ -129,19 +131,20 @@ const VerificationComponent = () => {
         const mess = row.original;
         return (
           <div className="flex flex-wrap gap-2">
-            <Link href={mess.image?.url || "#"} target="_blank">
+            <Link href={safeHttpsUrl(mess.image?.url)} target="_blank" rel="noopener noreferrer">
               <button className="px-2 py-1 text-xs rounded bg-stone-900 text-white hover:bg-stone-800">
                 Banner
               </button>
             </Link>
-            <Link href={mess.certificate?.url || "#"} target="_blank">
+            <Link href={safeHttpsUrl(mess.certificate?.url)} target="_blank" rel="noopener noreferrer">
               <button className="px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
                 Certificate
               </button>
             </Link>
             <Link
-              href={`https://www.google.com/maps?q=${mess.lat},${mess.lon}`}
+              href={mapsUrl(mess.lat, mess.lon)}
               target="_blank"
+              rel="noopener noreferrer"
             >
               <button className="px-2 py-1 text-xs rounded bg-stone-100 text-stone-800 hover:bg-stone-200">
                 Map

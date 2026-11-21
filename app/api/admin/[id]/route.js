@@ -1,41 +1,23 @@
-import { NextResponse } from "next/server";
-import supabase from "@/lib/supabaseClient";
-import { getJsonCache, setJsonCache } from "../../../../lib/redis";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { notFound } from "@/lib/server/errors/httpErrors";
+import { getJsonCache, setJsonCache } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import { adminRepository } from "@/lib/server/repositories/accounts";
+import { toAdminDto } from "@/lib/server/repositories/dto";
+import { requireSelf } from "@/lib/server/auth/guards";
 
-const TTL_SECONDS = 60 * 2;
+export const GET = createRoute(
+  { name: "admin.profile", auth: "admin", uuid: ["id"] },
+  async ({ params, session }) => {
+    requireSelf(session, params.id);
+    const key = cacheKeys.adminProfile(params.id);
+    const cached = await getJsonCache(key);
+    if (cached !== null) return json({ admin: cached, message: "Admin found" });
 
-export async function GET(request, { params }) {
-  try {
-    const { id } = await params;
-    const tenantId = request.headers.get("x-tenant-id") || "public";
-    const cacheKey = `tenant:${tenantId}:admin:${id}:profile`;
-    const cached = await getJsonCache(cacheKey);
-    if (cached !== null) {
-      return NextResponse.json(
-        { admin: cached, message: "Admin found" },
-        { status: 200 },
-      );
-    }
-
-    const { data: admin, error } = await supabase
-      .from("admin")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (error) throw error;
-
-    if (!admin) {
-      return NextResponse.json({ message: "Admin not found" }, { status: 404 });
-    }
-
-    await setJsonCache(cacheKey, admin, TTL_SECONDS);
-
-    return NextResponse.json(
-      { admin, message: "Admin found" },
-      { status: 200 },
-    );
-  } catch (error) {
-    console.error("Error fetching admin:", error);
-    return NextResponse.json({ message: "Server error" }, { status: 500 });
-  }
-}
+    const admin = toAdminDto(await adminRepository.findById(params.id));
+    if (!admin) throw notFound("Admin not found");
+    await setJsonCache(key, admin, 120);
+    return json({ admin, message: "Admin found" });
+  },
+);

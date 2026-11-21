@@ -1,5 +1,7 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
+import { mapsUrl } from "@/lib/safeHref";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -109,7 +111,7 @@ export default function ConsumerMonthlyMess() {
     }
 
     try {
-      const res = await fetch(`/api/consumer/${userId}/monthly-mess`);
+      const res = await apiFetch(`/api/consumer/${userId}/monthly-mess`);
       const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
@@ -359,8 +361,9 @@ export default function ConsumerMonthlyMess() {
                               type="button"
                               onClick={() =>
                                 window.open(
-                                  `https://www.google.com/maps?q=${activeSubscription.mess.lat},${activeSubscription.mess.lon}`,
+                                  mapsUrl(activeSubscription.mess.lat, activeSubscription.mess.lon),
                                   "_blank",
+                                  "noopener,noreferrer",
                                 )
                               }
                               className="w-full rounded-lg border border-orange-200 bg-orange-50 py-2 text-sm font-semibold text-orange-800 hover:bg-orange-100"

@@ -1,109 +1,33 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { conflict } from "@/lib/server/errors/httpErrors";
+import { Limits } from "@/lib/server/security/rateLimiter";
+import { ownerSignupSchema } from "@/lib/server/validation/schemas";
+import { getPasswordService } from "@/lib/server/auth/passwordService";
+import { isEmailTaken } from "@/lib/server/services/accountService";
 import supabase from "@/lib/supabaseClient";
+import { audit, AuditEvent } from "@/lib/server/logging/audit";
 
-export async function POST(request) {
-  try {
-    const body = await request.json();
+export const POST = createRoute(
+  { name: "auth.register-owner", auth: "public", rateLimit: Limits.signup, body: ownerSignupSchema },
+  async ({ body, ip, log }) => {
+    if (await isEmailTaken(body.email)) throw conflict("Email is already registered.");
 
-    const { username, email, address, upi, phoneNumber, password } = body;
-    if (!username || !email || !password || !phoneNumber || !address || !upi) {
-      return NextResponse.json(
-        { message: "All fields are required." },
-        { status: 400 }
-      );
-    }
-
-    const emailRegex =
-      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { message: "Invalid email format." },
-        { status: 400 }
-      );
-    }
-
-    const upiRegex = /^[\w.-]{2,}@[a-zA-Z]{2,}$/;
-    if (!upiRegex.test(upi)) {
-      return NextResponse.json(
-        { message: "Invalid UPI/VPA ID format." },
-        { status: 400 }
-      );
-    }
-    
-    if (!/^[0-9]{10}$/.test(phoneNumber)) {
-      return NextResponse.json(
-        { message: "Phone number must be 10 digits." },
-        { status: 400 }
-      );
-    }
-    const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).+$/;
-    if (!passwordRegex.test(password)) {
-      return NextResponse.json(
-        {
-          message:
-            "Password must contain uppercase, lowercase & special character.",
-        },
-        { status: 400 }
-      );
-    }
-    const ownerExists = await supabase
-      .from("owner")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
-    const userExists = await supabase
-      .from("consumer")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
-    if (ownerExists.data || userExists.data) {
-      return NextResponse.json(
-        { message: "Email is already registered." },
-        { status: 409 }
-      );
-    }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    const { data: newOwner, error } = await supabase
+    const { data: owner, error } = await supabase
       .from("owner")
       .insert({
-        name: username,
-        email,
-        phone_number: phoneNumber,
-        upi,
-        address,
-        password: hashedPassword,
+        name: body.username,
+        email: body.email,
+        phone_number: body.phoneNumber,
+        upi: body.upi,
+        address: body.address,
+        password: await getPasswordService().hash(body.password),
       })
       .select("id, name")
       .single();
     if (error) throw error;
+    audit(AuditEvent.OWNER_SIGNUP, { actorId: owner.id, ip }, log);
 
-    return NextResponse.json(
-      {
-        message: "Registration successful!",
-        id: newOwner.id,
-        username: newOwner.name,
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    if (error.code === 11000) {
-      const field = Object.keys(error.keyValue)[0];
-      return NextResponse.json(
-        {
-          message: `Duplicate entry: ${field} already exists.`,
-        },
-        { status: 409 }
-      );
-    }
-    console.error("REGISTRATION ERROR:", error);
-    return NextResponse.json(
-      {
-        message: "Internal server error. Try again later.",
-      },
-      { status: 500 }
-    );
-  }
-}
+    return json({ message: "Registration successful!", id: owner.id, username: owner.name }, 201);
+  },
+);

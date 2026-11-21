@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { use, useEffect, useState, useCallback } from "react";
 import ConsumerHistoryUI from "../../../../Component/Consumer/ConsumerHistory";
 import { useSession } from "next-auth/react";
@@ -17,7 +18,7 @@ export default function ConsumerHistory({ params }) {
   const fetchHistory = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/consumer/${consumerid}/history`, {
+      const res = await apiFetch(`/api/consumer/${consumerid}/history`, {
         cache: "no-store",
       });
 
@@ -48,7 +49,7 @@ export default function ConsumerHistory({ params }) {
       return;
     setClearing(true);
     try {
-      const res = await fetch(`/api/consumer/${consumerid}/history`, {
+      const res = await apiFetch(`/api/consumer/${consumerid}/history`, {
         method: "DELETE",
       });
       const data = await res.json();

@@ -4,7 +4,7 @@ MessMate is a full-stack mess management platform built with Next.js App Router.
 
 This README is written as the current project source of truth. It reflects the present app structure, runtime, integrations, and local setup expectations.
 
-## What The Platform Does
+## What The Platform Does 
 
 MessMate is designed to manage the complete lifecycle of a mess business:
 
@@ -12,7 +12,7 @@ MessMate is designed to manage the complete lifecycle of a mess business:
 - Mess owners register new messes, manage menu and profile details, track orders, verify customers, and review analytics.
 - Administrators verify messes, monitor users, review reports, and manage moderation workflows.
 
-The application also includes supporting flows such as password reset, notifications, keepalive endpoints, and secret/admin registration routes for internal onboarding.
+The application also includes supporting flows such as password reset, notifications, keepalive endpoints, and a seed script for the first administrator (there is no public admin-registration page).
 
 ## Product Capabilities
 
@@ -93,7 +93,7 @@ flowchart LR
 - `app/mess/` contains mess-facing views, booking flows, and status pages.
 - `app/owner/` contains owner dashboards, analytics, and mess management screens.
 - `app/notifications/` contains the notification inbox.
-- `app/register-owner/` and `app/secret/register-admin/` support onboarding and internal admin registration.
+- `app/register-owner/` supports owner onboarding. The first admin is created with `npm run seed:admin`; further admins are created by an existing admin through `POST /api/create-admin`.
 - `app/api/` contains all server route handlers for authentication, booking, admin actions, consumer flows, keepalive, socket support, notifications, and owner workflows.
 
 ### Shared UI And Logic
@@ -102,7 +102,7 @@ flowchart LR
 - `components/ui/` contains reusable UI primitives.
 - `contexts/` holds React context providers such as notifications.
 - `hooks/` contains client-side reusable hooks.
-- `lib/` contains service clients, server utilities, socket bootstrapping, Redis helpers, validation helpers, and base URL logic.
+- `lib/` contains service clients, socket bootstrapping, Redis helpers and base URL logic. `lib/server/` is the backend core: config, logging, errors, http (`createRoute`), auth, security, mail, repositories and services (see `SECURITY_CHANGES.md`). `lib/apiFetch.js` is the single browser-to-API helper.
 - `validators/` contains Zod-style or schema-based input validation modules.
 
 ### Platform Files
@@ -140,7 +140,7 @@ flowchart LR
 
 ### Supabase
 
-Supabase is the primary database integration. Both browser-side and server-side clients are configured through shared utilities in `lib/`. Server-side access uses privileged credentials where needed, while browser access uses the public key.
+Supabase is the primary database integration. Both browser-side and server-side clients are configured through shared utilities in `lib/`. All database access happens on the server with the service-role key; the browser never talks to Supabase directly (Row Level Security is enabled with no public policies).
 
 ### Authentication
 
@@ -234,8 +234,18 @@ npm run start
 - `npm run build`: creates the production Next.js build.
 - `npm run start`: starts the production server.
 - `npm run lint`: runs ESLint across the codebase.
-- `npm run test:auth`: runs authentication-focused tests.
-- `npm run test:e2e-auth`: runs end-to-end authentication tests.
+- `npm run typecheck`: TypeScript check.
+- `npm test`: runs the automated test-suite (Vitest): unit tests, authorization tests for the real route handlers, and static guards that fail if an unprotected handler is added.
+- `npm run test:watch`: tests in watch mode.
+- `npm run seed:admin`: creates the first admin (reads `ADMIN_EMAIL`, `ADMIN_PASSWORD` and the Supabase variables from the environment).
+- `npm run audit:prod`: `npm audit` for production dependencies.
+
+## Security, Logging and CI
+
+- Read **`SECURITY_CHANGES.md`** first: it lists every change, the steps you must do manually (SQL migration, env vars, webhook), and what was intentionally left out.
+- Copy `.env.example` to `.env.local` and fill it in. `NEXTAUTH_SECRET` must be at least 32 characters; production refuses to start otherwise.
+- All server code logs through `lib/server/logging/logger.js` (JSON lines in production, secrets/e-mails redacted). Security events go to the `audit` channel (`channel: "audit"`). Set `LOG_LEVEL` to change verbosity.
+- GitHub Actions (`.github/workflows/ci.yml`) runs lint, typecheck, tests, a production build, `npm audit` and a Docker build on every push and pull request.
 
 ## Operational Notes
 
@@ -258,7 +268,7 @@ The project is compatible with containerized and platform-based deployment.
 1. Create a branch for the change.
 2. Implement the update and verify it locally.
 3. Run the relevant lint or test command.
-4. Open a pull request with a concise summary of the change.
+4. Open a pull request with a concise summary of the change .
 
 ## Suggested Project Summary
 

@@ -1,286 +1,93 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import supabase from "@/lib/supabaseClient";
-import {
-  notifyOrderCancelled,
-  notifyOrderCompleted,
-  notifyOrderTaken,
-  notifyOrderRefunded,
-} from "@/lib/notifications";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { notFound, forbidden, badRequest } from "@/lib/server/errors/httpErrors";
+import { orderActionSchema } from "@/lib/server/validation/schemas";
+import { orderRepository } from "@/lib/server/repositories/orders";
+import { messRepository } from "@/lib/server/repositories/messes";
+import { requireMessOwner } from "@/lib/server/auth/guards";
+import { deleteCacheKeys } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import { audit, AuditEvent } from "@/lib/server/logging/audit";
+import { notifyOrderCancelled, notifyOrderCompleted, notifyOrderTaken, notifyOrderRefunded } from "@/lib/notifications";
 
-export async function PATCH(request, { params }) {
-  try {
-    const { id, orderid } = await params;
-    const body = await request.json();
-    const action = body.action;
+const COMMON = { auth: "session", uuid: ["id", "orderid"] };
 
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-
-    const { data: order, error: orderErr } = await supabase
-      .from("order")
-      .select("*")
-      .eq("id", orderid)
-      .single();
-    if (orderErr) throw orderErr;
-    if (!order)
-      return NextResponse.json({ message: "Order not found" }, { status: 404 });
-
-    if (action === "cancel") {
-      if (order.isTaken)
-        return NextResponse.json(
-          { message: "Cannot cancel, order already taken" },
-          { status: 403 }
-        );
-      if (order.consumer.toString() !== session.user.id)
-        return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-
-      try {
-        await supabase
-          .from("order")
-          .update({
-            is_cancelled: true,
-            refund_initiated: order.status === "paid",
-            status: order.status === "paid" ? "failed" : order.status,
-          })
-          .eq("id", orderid);
-
-        // Notify owner about cancellation
-        try {
-          const { data: mess } = await supabase
-            .from("mess")
-            .select("id,name, owner:owner_id(*)")
-            .eq("id", order.mess_id)
-            .single();
-          if (mess?.owner) {
-            await notifyOrderCancelled(
-              order.id,
-              mess.owner.id,
-              "Owner",
-              order.mess_id,
-              mess.name || "your mess",
-              "customer"
-            );
-          }
-        } catch (notifErr) {
-          console.error("Notification failed:", notifErr);
-        }
-
-        return NextResponse.json(
-          { message: "Order cancelled; refund will be started soon" },
-          { status: 200 }
-        );
-      } catch (e) {
-        console.error("Cancel order failed", e);
-        return NextResponse.json({ message: "Server error" }, { status: 500 });
-      }
-      finally{
-          const tenantId = request.headers.get("x-tenant-id") || "public";
-          await deleteCacheKeys([`tenant:${tenantId}:mess:${order.mess_id}:orders`]);
-
-      }
-    }
-
-    if (action === "take") {
-      const { data: mess } = await supabase
-        .from("mess")
-        .select("id,name, owner:owner_id(*)")
-        .eq("id", order.mess_id)
-        .single();
-      if (!mess)
-        return NextResponse.json(
-          { message: "Mess not found" },
-          { status: 404 }
-        );
-      if (!mess.owner || mess.owner.id !== session.user.id)
-        return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-
-      await supabase
-        .from("order")
-        .update({ is_taken: true })
-        .eq("id", orderid);
-
-      // Notify consumer that order is taken
-      try {
-        await notifyOrderTaken(
-          order.id,
-          order.consumer_id,
-          order.mess_id,
-          mess?.name || "the mess"
-        );
-      } catch (notifErr) {
-        console.error("Notification failed:", notifErr);
-      }
-      finally{
-          const tenantId = request.headers.get("x-tenant-id") || "public";
-          await deleteCacheKeys([`tenant:${tenantId}:mess:${order.mess_id}:orders`]);
-
-      }
-
-      return NextResponse.json(
-        { message: "Order marked as taken" },
-        { status: 200 }
-      );
-    }
-
-    if (action === "refund" || action === "returnPayment") {
-      const { data: mess } = await supabase
-        .from("mess")
-        .select("id,name, owner:owner_id(*)")
-        .eq("id", order.mess_id)
-        .single();
-      if (!mess)
-        return NextResponse.json(
-          { message: "Mess not found" },
-          { status: 404 }
-        );
-      if (!mess.owner || mess.owner.id !== session.user.id)
-        return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-
-      try {
-        await supabase
-          .from("order")
-          .update({
-            is_cancelled: true,
-            refund_initiated: true,
-            status: order.status === "paid" ? "refunded" : "failed",
-          })
-          .eq("id", orderid);
-
-        // Notify consumer about refund
-        try {
-          await notifyOrderRefunded(
-            order.id,
-            order.consumer_id,
-            order.mess_id,
-            mess?.name || "the mess",
-            order.total_price / 100
-          );
-        } catch (notifErr) {
-          console.error("Notification failed:", notifErr);
-        }
-        finally{
-          const tenantId = request.headers.get("x-tenant-id") || "public";
-          await deleteCacheKeys([`tenant:${tenantId}:mess:${order.mess_id}:orders`]);
-
-      }
-
-        return NextResponse.json(
-          { message: "Refund initiated and order marked cancelled" },
-          { status: 200 }
-        );
-      } catch (e) {
-        console.error("Refund order failed", e);
-        return NextResponse.json({ message: "Server error" }, { status: 500 });
-      }
-      finally{
-          const tenantId = request.headers.get("x-tenant-id") || "public";
-          await deleteCacheKeys([`tenant:${tenantId}:mess:${order.mess_id}:orders`]);
-
-      }
-    }
-
-    if (action === "markDone") {
-      const { data: mess } = await supabase
-        .from("mess")
-        .select("id,name, owner:owner_id(*)")
-        .eq("id", order.mess_id)
-        .single();
-      if (!mess)
-        return NextResponse.json(
-          { message: "Mess not found" },
-          { status: 404 }
-        );
-      if (!mess.owner || mess.owner.id !== session.user.id)
-        return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-
-      await supabase
-        .from("order")
-        .update({ done: true, status: "completed" })
-        .eq("id", orderid);
-
-      // Notify consumer that order is completed
-      try {
-        await notifyOrderCompleted(
-          order.id,
-          order.consumer_id,
-          order.mess_id,
-          mess?.name || "the mess"
-        );
-      } catch (notifErr) {
-        console.error("Notification failed:", notifErr);
-      }
-      finally{
-          const tenantId = request.headers.get("x-tenant-id") || "public";
-          await deleteCacheKeys([`tenant:${tenantId}:mess:${order.mess_id}:orders`]);
-
-      }
-
-      return NextResponse.json(
-        { message: "Order marked completed" },
-        { status: 200 }
-      );
-    }
-
-  
-    
-
-    return NextResponse.json({ message: "Unknown action" }, { status: 400 });
-  } catch (err) {
-    console.error("Order PATCH error:", err);
-    return NextResponse.json(
-      { message: "Server error", error: err.message },
-      { status: 500 }
-    );
-  }
+async function loadOrder(params) {
+  const order = await orderRepository.findById(params.orderid);
+  // the order must belong to the mess in the URL (prevents mixing ids)
+  if (!order || order.mess_id !== params.id) throw notFound("Order not found");
+  return order;
 }
 
-export async function DELETE(request, { params }) {
+const safeNotify = async (fn, log) => {
   try {
-    const { id, orderid } = await params;
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-
-    const { data: order } = await supabase
-      .from("order")
-      .select("*")
-      .eq("id", orderid)
-      .single();
-    if (!order)
-      return NextResponse.json({ message: "Order not found" }, { status: 404 });
-
-    const { data: mess } = await supabase
-      .from("mess")
-      .select("*")
-      .eq("id", order.mess_id)
-      .single();
-    if (!mess)
-      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
-    if (!mess.ownerId || mess.ownerId !== session.user.id)
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-
-    if (order.done)
-      return NextResponse.json(
-        { message: "Cannot delete a completed order" },
-        { status: 400 }
-      );
-
-    try {
-    await supabase.from("order").delete().eq("id", orderid);
-
-      return NextResponse.json({ message: "Order deleted" }, { status: 200 });
-    } catch (e) {
-      console.error("Delete order failed", e);
-      return NextResponse.json({ message: "Server error" }, { status: 500 });
-    }
+    await fn();
   } catch (err) {
-    console.error("Order DELETE error:", err);
-    return NextResponse.json(
-      { message: "Server error", error: err.message },
-      { status: 500 }
-    );
+    log.warn("Notification failed", { err });
   }
-}
+};
+
+export const PATCH = createRoute({ name: "order.action", ...COMMON, body: orderActionSchema }, async ({ params, session, body, log }) => {
+  const order = await loadOrder(params);
+  const { action } = body;
+  const finish = async (message, extra = {}) => {
+    await deleteCacheKeys([cacheKeys.messOrders(order.mess_id), cacheKeys.consumerHistory(order.consumer_id)]);
+    audit(AuditEvent.ORDER_ACTION, { actorId: session.user.id, targetId: order.id, action }, log);
+    return json({ message, ...extra });
+  };
+
+  if (action === "cancel") {
+    if (order.consumer_id !== session.user.id) throw forbidden();
+    if (order.is_taken) throw forbidden("Cannot cancel, order already taken");
+    if (order.is_cancelled || order.done) throw badRequest("Order can no longer be cancelled");
+
+    await orderRepository.update(order.id, {
+      is_cancelled: true,
+      refund_initiated: order.status === "paid",
+      status: order.status === "paid" ? "failed" : order.status,
+    });
+    const mess = await messRepository.getWithOwner(order.mess_id);
+    if (mess?.owner) {
+      await safeNotify(() => notifyOrderCancelled(order.id, mess.owner.id, "Owner", order.mess_id, mess.name || "your mess", "customer"), log);
+    }
+    return finish("Order cancelled; refund will be started soon");
+  }
+
+  // Everything else is an owner action on a mess they own.
+  const mess = await requireMessOwner(session, order.mess_id);
+  if (order.is_cancelled && action !== "refund" && action !== "returnPayment") throw badRequest("Order is cancelled");
+
+  if (action === "take") {
+    await orderRepository.update(order.id, { is_taken: true });
+    await safeNotify(() => notifyOrderTaken(order.id, order.consumer_id, order.mess_id, mess.name || "the mess"), log);
+    return finish("Order marked as taken");
+  }
+
+  if (action === "refund" || action === "returnPayment") {
+    await orderRepository.update(order.id, {
+      is_cancelled: true,
+      refund_initiated: true,
+      status: order.status === "paid" ? "refunded" : "failed",
+    });
+    await safeNotify(
+      () => notifyOrderRefunded(order.id, order.consumer_id, order.mess_id, mess.name || "the mess", order.total_price / 100),
+      log,
+    );
+    return finish("Refund initiated and order marked cancelled");
+  }
+
+  // markDone
+  await orderRepository.update(order.id, { done: true, status: "completed" });
+  await safeNotify(() => notifyOrderCompleted(order.id, order.consumer_id, order.mess_id, mess.name || "the mess"), log);
+  return finish("Order marked completed");
+});
+
+export const DELETE = createRoute({ name: "order.delete", ...COMMON, bodyType: "none" }, async ({ params, session, log }) => {
+  const order = await loadOrder(params);
+  await requireMessOwner(session, order.mess_id);
+  if (order.done) throw badRequest("Cannot delete a completed order");
+  await orderRepository.deleteOne(order.id);
+  await deleteCacheKeys([cacheKeys.messOrders(order.mess_id)]);
+  audit(AuditEvent.ORDER_ACTION, { actorId: session.user.id, targetId: order.id, action: "delete" }, log);
+  return json({ message: "Order deleted" });
+});

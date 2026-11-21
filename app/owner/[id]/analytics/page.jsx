@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -45,7 +46,7 @@ export default function AnalyticsPage() {
         setError(null);
 
         const api = `/api/owner/${id}/analytics`;
-        const res = await fetch(api, { cache: "no-store" });
+        const res = await apiFetch(api, { cache: "no-store" });
 
         const data = await res.json();
 

@@ -1,243 +1,114 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import supabase from "@/lib/supabaseClient";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
 import { getJsonCache, setJsonCache } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import supabase from "@/lib/supabaseClient";
+import { orderRepository } from "@/lib/server/repositories/orders";
+import { requireMessOwner } from "@/lib/server/auth/guards";
 
-const TTL_SECONDS = 60 *3;
+const TTL_SECONDS = 60 * 3;
+const dayKey = (d) => d.toISOString().split("T")[0];
+const lastNDays = (n) =>
+  Array.from({ length: n }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (n - 1 - i));
+    return dayKey(d);
+  });
 
-export async function GET(request, { params }) {
-  try {
-    const { id: messId } = (await params) || {};
-    if (!messId) {
-      return NextResponse.json({ message: "Invalid mess id" }, { status: 400 });
-    }
+// NOTE: `[id]` is the MESS id here (that is how the dashboard links to it).
+export const GET = createRoute({ name: "owner.analytics", auth: "owner", uuid: ["id"] }, async ({ params, session }) => {
+  const mess = await requireMessOwner(session, params.id);
+  const key = cacheKeys.messAnalytics(mess.id);
+  const cached = await getJsonCache(key);
+  if (cached !== null) return json(cached);
 
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user?.isOwner) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const last30 = new Date();
+  last30.setDate(last30.getDate() - 30);
+  const last30Iso = last30.toISOString();
 
-    const tenantId = request.headers.get("x-tenant-id") || "public";
-    const cacheKey = `tenant:${tenantId}:mess:${messId}:analytics`;
-    const cached = await getJsonCache(cacheKey);
-    if (cached !== null) {
-      return NextResponse.json(cached, { status: 200 });
-    }
+  const monthlyOrders = await orderRepository.paidSince(mess.id, startOfMonth, "no_of_plate, total_price");
+  const totalMeals = monthlyOrders.reduce((s, o) => s + (o.no_of_plate || 1), 0);
+  const totalRevenueRaw = monthlyOrders.reduce((s, o) => s + (o.total_price || 0), 0);
 
-    const { data: messExists } = await supabase
-      .from("mess")
-      .select("id")
-      .eq("id", messId)
-      .single();
-    if (!messExists) {
-      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
-    }
+  const { data: recentReviews = [] } = await supabase.from("review").select("rating").eq("mess_id", mess.id).gte("created_at", last30Iso);
+  const avgRating = recentReviews.length
+    ? parseFloat((recentReviews.reduce((s, r) => s + (r.rating || 0), 0) / recentReviews.length).toFixed(1))
+    : 0;
 
-    const messIds = [messId];
+  const cancelledOrders = await orderRepository.countSince(mess.id, startOfMonth, { cancelledOnly: true });
+  const totalOrdersThisMonth = await orderRepository.countSince(mess.id, startOfMonth);
+  const churnRate = totalOrdersThisMonth > 0 ? parseFloat(((cancelledOrders / totalOrdersThisMonth) * 100).toFixed(1)) : 0;
 
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const last30Days = new Date();
-    last30Days.setDate(last30Days.getDate() - 30);
-
-    const { data: monthlyOrders = [] } = await supabase
-      .from("order")
-      .select("no_of_plate, total_price")
-      .eq("status", "paid")
-      .gte("created_at", startOfMonth.toISOString())
-      .eq("mess_id", messId);
-
-    const totalMeals = monthlyOrders.reduce(
-      (sum, o) => sum + (o.noOfPlate || 1),
-      0,
-    );
-    const totalRevenueRaw = monthlyOrders.reduce(
-      (sum, o) => sum + (o.totalPrice || 0),
-      0,
-    );
-
-    const { data: recentReviews = [] } = await supabase
-      .from("review")
-      .select("rating")
-      .eq("mess_id", messId)
-      .gte("created_at", last30Days.toISOString());
-
-    const avgRating =
-      recentReviews.length > 0
-        ? parseFloat(
-            (
-              recentReviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
-              recentReviews.length
-            ).toFixed(1),
-          )
-        : 0;
-
-    const { count: cancelledOrders = 0 } = await supabase
-      .from("order")
-      .select("id", { count: "exact", head: true })
-      .eq("mess_id", messId)
-      .eq("is_cancelled", true)
-      .gte("created_at", startOfMonth.toISOString());
-
-    const { count: totalOrdersThisMonth = 0 } = await supabase
-      .from("order")
-      .select("id", { count: "exact", head: true })
-      .eq("mess_id", messId)
-      .gte("created_at", startOfMonth.toISOString());
-
-    const churnRate =
-      totalOrdersThisMonth > 0
-        ? parseFloat(
-            ((cancelledOrders / totalOrdersThisMonth) * 100).toFixed(1),
-          )
-        : 0;
-
-    const { data: last30DaysOrders = [] } = await supabase
-      .from("order")
-      .select("no_of_plate, created_at")
-      .eq("mess_id", messId)
-      .eq("status", "paid")
-      .gte("created_at", last30Days.toISOString());
-
-    const dailyMealsMap = {};
-    for (let i = 0; i < 30; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() - (29 - i));
-      const key = d.toISOString().split("T")[0];
-      dailyMealsMap[key] = 0;
-    }
-
-    last30DaysOrders.forEach((order) => {
-      const dateKey = new Date(order.createdAt).toISOString().split("T")[0];
-      if (Object.prototype.hasOwnProperty.call(dailyMealsMap, dateKey)) {
-        dailyMealsMap[dateKey] += order.noOfPlate || 1;
-      }
-    });
-
-    const dailyMealsTrend = Object.entries(dailyMealsMap).map(
-      ([date, meals]) => ({
-        date,
-        meals,
-      }),
-    );
-
-    const { data: allOrders = [] } = await supabase
-      .from("order")
-      .select("created_at")
-      .eq("mess_id", messId)
-      .gte("created_at", last30Days.toISOString());
-
-    const timeSlots = { morning: 0, lunch: 0, dinner: 0 };
-    allOrders.forEach((order) => {
-      const hour = new Date(order.createdAt).getHours();
-      if (hour >= 6 && hour < 11) timeSlots.morning++;
-      else if (hour >= 11 && hour < 16) timeSlots.lunch++;
-      else if (hour >= 18 && hour < 23) timeSlots.dinner++;
-    });
-
-    const peakTimeSlots = Object.entries(timeSlots)
-      .map(([slot, count]) => ({ slot, count }))
-      .sort((a, b) => b.count - a.count);
-
-    const { data: negativeReviews = [] } = await supabase
-      .from("review")
-      .select("id, rating, feedback, created_at, author:author_id(username)")
-      .eq("mess_id", messId)
-      .lte("rating", 3)
-      .order("created_at", { ascending: false })
-      .limit(5);
-
-    const negativeReviewsData = negativeReviews.map((r) => ({
-      id: String(r._id),
-      rating: r.rating,
-      feedback: r.feedback || "No feedback",
-      date: new Date(r.createdAt).toLocaleDateString(),
-      username: r.author?.username
-        ? r.author.username[0] + "***" + r.author.username.slice(-1)
-        : "Anonymous",
-    }));
-
-    const { data: ordersWithDish = [] } = await supabase
-      .from("order")
-      .select("selected_dish_name, selected_dish_price, no_of_plate")
-      .eq("mess_id", messId)
-      .eq("status", "paid")
-      .not("selected_dish_name", "is", null);
-
-    const dishMap = {};
-    ordersWithDish.forEach((order) => {
-      const dish = order.selectedDishName;
-      if (!dishMap[dish]) {
-        dishMap[dish] = { count: 0, revenue: 0 };
-      }
-      dishMap[dish].count += order.noOfPlate || 1;
-      dishMap[dish].revenue +=
-        (order.selectedDishPrice || 0) * (order.noOfPlate || 1);
-    });
-
-    const platePerformance = Object.entries(dishMap)
-      .map(([dish, data]) => ({
-        dish,
-        count: data.count,
-        revenue: data.revenue,
-      }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
-
-    const { data: wastageRecords = [] } = await supabase
-      .from("wastage")
-      .select("date, cooked_qty, served_qty, plate_name")
-      .eq("mess_id", messId)
-      .gte("date", last30Days.toISOString());
-
-    const wastageMap = {};
-    for (let i = 0; i < 30; i++) {
-      const d = new Date();
-      d.setDate(d.getDate() - (29 - i));
-      const key = d.toISOString().split("T")[0];
-      wastageMap[key] = { cooked: 0, served: 0 };
-    }
-
-    wastageRecords.forEach((w) => {
-      const dateKey = new Date(w.date).toISOString().split("T")[0];
-      if (Object.prototype.hasOwnProperty.call(wastageMap, dateKey)) {
-        wastageMap[dateKey].cooked += w.cookedQty || 0;
-        wastageMap[dateKey].served += w.servedQty || 0;
-      }
-    });
-
-    const wastageData = Object.entries(wastageMap).map(([date, data]) => {
-      const wastagePercent =
-        data.cooked > 0
-          ? (((data.cooked - data.served) / data.cooked) * 100).toFixed(1)
-          : 0;
-      return { date, wastage: parseFloat(wastagePercent) };
-    });
-
-    const payload = {
-      summaryCards: {
-        totalMeals,
-        totalRevenue: totalRevenueRaw / 100,
-        avgRating,
-        cancellations: cancelledOrders,
-        churnRate,
-      },
-      dailyMealsTrend,
-      peakTimeSlots,
-      negativeReviews: negativeReviewsData,
-      platePerformance,
-      wastageData,
-    };
-
-    await setJsonCache(cacheKey, payload, TTL_SECONDS);
-
-    return NextResponse.json(payload, { status: 200 });
-  } catch (error) {
-    console.error("Analytics API error:", error);
-    return NextResponse.json(
-      { message: "Server error", error: error.message },
-      { status: 500 },
-    );
+  const dailyMap = Object.fromEntries(lastNDays(30).map((d) => [d, 0]));
+  for (const o of await orderRepository.paidSince(mess.id, last30Iso, "no_of_plate, created_at")) {
+    const k = dayKey(new Date(o.created_at));
+    if (k in dailyMap) dailyMap[k] += o.no_of_plate || 1;
   }
-}
+  const dailyMealsTrend = Object.entries(dailyMap).map(([date, meals]) => ({ date, meals }));
+
+  const slots = { morning: 0, lunch: 0, dinner: 0 };
+  for (const o of await orderRepository.allSince(mess.id, last30Iso, "created_at")) {
+    const h = new Date(o.created_at).getHours();
+    if (h >= 6 && h < 11) slots.morning++;
+    else if (h >= 11 && h < 16) slots.lunch++;
+    else if (h >= 18 && h < 23) slots.dinner++;
+  }
+  const peakTimeSlots = Object.entries(slots).map(([slot, count]) => ({ slot, count })).sort((a, b) => b.count - a.count);
+
+  const { data: negative = [] } = await supabase
+    .from("review")
+    .select("id, rating, feedback, created_at, author:author_id(username)")
+    .eq("mess_id", mess.id)
+    .lte("rating", 3)
+    .order("created_at", { ascending: false })
+    .limit(5);
+  const negativeReviews = negative.map((r) => ({
+    id: String(r.id),
+    rating: r.rating,
+    feedback: r.feedback || "No feedback",
+    date: new Date(r.created_at).toLocaleDateString(),
+    username: r.author?.username ? `${r.author.username[0]}***${r.author.username.slice(-1)}` : "Anonymous",
+  }));
+
+  const dishMap = {};
+  for (const o of await orderRepository.paidWithDish(mess.id)) {
+    const d = (dishMap[o.selected_dish_name] ??= { count: 0, revenue: 0 });
+    d.count += o.no_of_plate || 1;
+    d.revenue += (o.selected_dish_price || 0) * (o.no_of_plate || 1);
+  }
+  const platePerformance = Object.entries(dishMap)
+    .map(([dish, v]) => ({ dish, ...v }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10);
+
+  const { data: wastage = [] } = await supabase
+    .from("wastage")
+    .select("date, cooked_qty, served_qty")
+    .eq("mess_id", mess.id)
+    .gte("date", last30Iso);
+  const wMap = Object.fromEntries(lastNDays(30).map((d) => [d, { cooked: 0, served: 0 }]));
+  for (const w of wastage) {
+    const k = dayKey(new Date(w.date));
+    if (k in wMap) {
+      wMap[k].cooked += w.cooked_qty || 0;
+      wMap[k].served += w.served_qty || 0;
+    }
+  }
+  const wastageData = Object.entries(wMap).map(([date, v]) => ({
+    date,
+    wastage: v.cooked > 0 ? parseFloat((((v.cooked - v.served) / v.cooked) * 100).toFixed(1)) : 0,
+  }));
+
+  const payload = {
+    summaryCards: { totalMeals, totalRevenue: totalRevenueRaw / 100, avgRating, cancellations: cancelledOrders, churnRate },
+    dailyMealsTrend,
+    peakTimeSlots,
+    negativeReviews,
+    platePerformance,
+    wastageData,
+  };
+  await setJsonCache(key, payload, TTL_SECONDS);
+  return json(payload);
+});

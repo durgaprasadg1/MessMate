@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -34,7 +35,7 @@ useEffect(() => {
   const fetchAnalytics = async () => {
     try {
       const api = `/api/owner/${id}`;
-      const res = await fetch(api, { cache: "no-store" });
+      const res = await apiFetch(api, { cache: "no-store" });
 
       const data = await res.json();
       if (!res.ok) {
@@ -43,7 +44,6 @@ useEffect(() => {
       }
 
       setMessData(data.owner.messes[0]);
-      console.log("Fetched Data:", data);
 
     } catch (err) {
       console.error("Analytics fetch error:", err);

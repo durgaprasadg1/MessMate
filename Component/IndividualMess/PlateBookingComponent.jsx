@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
@@ -28,7 +29,7 @@ export default function BookingForm({ mess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/api/mess/${mess._id}/booking`, {
+      const res = await apiFetch(`/api/mess/${mess._id}/booking`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ noOfPlate, menutype: menuType, selectedDish }),
@@ -52,7 +53,7 @@ export default function BookingForm({ mess }) {
         order_id: order.id,
         handler: async function (response) {
           try {
-            const verifyRes = await fetch(`/api/mess/${mess._id}/booking`, {
+            const verifyRes = await apiFetch(`/api/mess/${mess._id}/booking`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({

@@ -1,191 +1,51 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import supabase from "@/lib/supabaseClient";
-import {
-  deleteCacheKeys,
-  getJsonCache,
-  setJsonCache,
-} from "../../../../lib/redis";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { notFound } from "@/lib/server/errors/httpErrors";
+import { getJsonCache, setJsonCache, deleteCacheKeys } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import { messRepository } from "@/lib/server/repositories/messes";
+import { toMessPublicDto } from "@/lib/server/repositories/dto";
+import { requireMessOwner } from "@/lib/server/auth/guards";
+import { audit, AuditEvent } from "@/lib/server/logging/audit";
 
 const TTL_SECONDS = 60 * 2;
+const invalidate = (id) => deleteCacheKeys([cacheKeys.mess(id), cacheKeys.messList(), cacheKeys.adminMesses()]);
 
-export async function GET(request, { params }) {
-  try {
-    const { id } = (await params) || {};
-    const tenantId = request.headers.get("x-tenant-id") || "public";
-    const cacheKey = `tenant:${tenantId}:mess:${id}`;
-    const cached = await getJsonCache(cacheKey);
-
-    const hasMonthlyShape =
-      cached &&
-      Object.prototype.hasOwnProperty.call(cached, "monthlyMessFee") &&
-      Object.prototype.hasOwnProperty.call(cached, "monthlyMessDuration");
-
-    if (cached !== null && hasMonthlyShape) {
-      const response = NextResponse.json(cached, { status: 200 });
-      response.headers.set("x-redis-cache", "HIT");
-      response.headers.set("x-redis-key", cacheKey);
-      return response;
-    }
-
-    const { data: mess } = await supabase
-      .from("mess")
-      .select(
-        "*, alerts:message(*), vegMenuRef:veg_menu_ref_id(*), nonVegMenuRef:non_veg_menu_ref_id(*), reviews:review(*, author:author_id(*))",
-      )
-      .eq("id", id)
-      .single();
-
-    if (!mess) {
-      console.warn("[API GET /mess/:id] Mess not found for id:", id);
-      const debug = request.nextUrl.searchParams.get("debug") === "1";
-
-      if (debug) {
-        return NextResponse.json(
-          {
-            message: "Mess not found",
-            id,
-          },
-          { status: 404 },
-        );
-      }
-
-      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
-    }
-
-    const shaped = {
-      _id: mess.id,
-      name: mess.name,
-      description: mess.description,
-      email: mess.email,
-      upi: mess.upi,
-      monthlyMessFee: Number(mess.monthly_mess_fee || 0),
-      monthlyMessDuration: Number(mess.monthly_mess_duration || 30),
-      address: mess.address,
-      mealTime: mess.meal_time,
-      vegMenu: mess.veg_menu,
-      vegPrice: mess.veg_price,
-      nonVegPrice: mess.non_veg_price,
-      nonVegMenu: mess.non_veg_menu,
-      vegMenuRef: mess.vegMenuRef,
-      nonVegMenuRef: mess.nonVegMenuRef,
-      owner: mess.owner_id,
-      category: mess.category,
-      isOpen: mess.is_open,
-      ownerName: mess.owner_name,
-      adharNumber: mess.adhar_number,
-      phoneNumber: mess.phone_number,
-      lat: mess.lat,
-      lon: mess.lon,
-      isLimited: mess.is_limited,
-      isVerified: mess.is_verified,
-      createdAt: mess.created_at,
-      certificate: { url: mess.certificate_url },
-      image: { url: mess.image_url },
-      isBlocked: mess.is_blocked,
-      alerts: mess.alerts,
-      reviews: mess.reviews,
-    };
-
-    await setJsonCache(cacheKey, shaped, TTL_SECONDS);
-
-    const response = NextResponse.json(shaped, { status: 200 });
-    response.headers.set("x-redis-cache", "MISS");
-    response.headers.set("x-redis-key", cacheKey);
-    return response;
-  } catch (error) {
-    console.error("[API GET /mess/:id] Error fetching mess by ID:", error);
-    return NextResponse.json(
-      { message: "Server error", error: error.message },
-      { status: 500 },
-    );
+// Public detail page data (no e-mail / UPI / Aadhaar / certificate, reviewers expose only a display name).
+export const GET = createRoute({ name: "mess.detail", auth: "public", cache: "public", uuid: ["id"] }, async ({ params }) => {
+  const key = cacheKeys.mess(params.id);
+  const cached = await getJsonCache(key);
+  if (cached !== null) {
+    const res = json(cached);
+    res.headers.set("x-redis-cache", "HIT");
+    return res;
   }
-}
+  const row = await messRepository.getPublicDetail(params.id);
+  if (!row) throw notFound("Mess not found");
 
-export async function PATCH(request, { params }) {
-  try {
-    const { id } = (await params) || {};
-    const tenantId = request.headers.get("x-tenant-id") || "public";
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  const shaped = toMessPublicDto(row);
+  shaped.alert = shaped.alerts?.map((m) => ({ ...m, _id: m.id })) ?? [];
+  await setJsonCache(key, shaped, TTL_SECONDS);
+  const res = json(shaped);
+  res.headers.set("x-redis-cache", "MISS");
+  return res;
+});
 
-    const { data: mess } = await supabase
-      .from("mess")
-      .select("id, owner_id, is_open")
-      .eq("id", id)
-      .single();
-    if (!mess)
-      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
+// Owner toggles open / closed.
+export const PATCH = createRoute({ name: "mess.toggle-open", auth: "owner", uuid: ["id"], bodyType: "none" }, async ({ params, session }) => {
+  const mess = await requireMessOwner(session, params.id);
+  const updated = await messRepository.setOpen(mess.id, !mess.is_open);
+  await invalidate(mess.id);
+  return json({ message: updated.is_open ? "Mess Opened" : "Mess Closed", mess: updated });
+});
 
-    const ownerId = mess.owner_id;
-    if (!ownerId || ownerId !== session.user.id) {
-      return NextResponse.json(
-        { message: "Forbidden: not the owner" },
-        { status: 403 },
-      );
-    }
-
-    const { data: updatedMess, error } = await supabase
-      .from("mess")
-      .update({ is_open: !mess.is_open })
-      .eq("id", id)
-      .select()
-      .single();
-    if (error) throw error;
-
-    await deleteCacheKeys([
-      `tenant:${tenantId}:mess:${id}`,
-      `tenant:${tenantId}:messes:all`,
-    ]);
-
-    return NextResponse.json(
-      {
-        message: updatedMess.is_open ? "Mess Opened" : "Mess Closed",
-        mess: updatedMess,
-      },
-      { status: 200 },
-    );
-  } catch (error) {
-    console.error("PATCH error:", error);
-    return NextResponse.json(
-      { message: "Server error", error: error.message },
-      { status: 500 },
-    );
-  }
-}
-
-export async function DELETE(request, { params }) {
-  try {
-    const { id } = (await params) || {};
-    const tenantId = request.headers.get("x-tenant-id") || "public";
-    const { data: deletedMess, error } = await supabase
-      .from("mess")
-      .delete()
-      .eq("id", id)
-      .select("id")
-      .maybeSingle();
-    if (error) throw error;
-
-    if (!deletedMess) {
-      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
-    }
-
-    await deleteCacheKeys([
-      `tenant:${tenantId}:mess:${id}`,
-      `tenant:${tenantId}:messes:all`,
-    ]);
-
-    return NextResponse.json(
-      { message: "Mess Deleted Successfully" },
-      { status: 200 },
-    );
-  } catch (error) {
-    console.error("Error fetching mess by ID:", error);
-    return NextResponse.json(
-      { message: "Server error", error: error.message },
-      { status: 500 },
-    );
-  }
-}
+// Owner (own mess) or admin may delete.
+export const DELETE = createRoute({ name: "mess.delete", auth: "session", uuid: ["id"], bodyType: "none" }, async ({ params, session, log }) => {
+  const mess = await requireMessOwner(session, params.id, { allowAdmin: true });
+  const deleted = await messRepository.delete(mess.id);
+  if (!deleted) throw notFound("Mess not found");
+  await invalidate(mess.id);
+  await deleteCacheKeys([cacheKeys.messPending(), cacheKeys.ownerMesses(mess.owner_id)]);
+  audit(AuditEvent.MESS_DELETED, { actorId: session.user.id, targetId: mess.id }, log);
+  return json({ message: "Mess Deleted Successfully" });
+});

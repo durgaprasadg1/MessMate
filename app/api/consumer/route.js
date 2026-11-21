@@ -1,30 +1,18 @@
-import { NextResponse } from "next/server";
-import supabase from "@/lib/supabaseClient";
-import { getJsonCache, setJsonCache } from "../../../lib/redis";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { getJsonCache, setJsonCache } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import { consumerRepository } from "@/lib/server/repositories/accounts";
+import { toConsumerAdminDto } from "@/lib/server/repositories/dto";
 
-const TTL_SECONDS = 60 * 2 ;
+const TTL_SECONDS = 60 * 2;
 
-export async function GET() {
-  try {
-    const tenantId = "public";
-    const cacheKey = `tenant:${tenantId}:consumers:all`;
-    const cached = await getJsonCache(cacheKey);
-    if (cached !== null) {
-      return NextResponse.json(cached, { status: 200 });
-    }
-
-    const { data: consumers, error } = await supabase
-      .from("consumer")
-      .select("*, reviews:review(*)");
-    if (error) throw error;
-
-    await setJsonCache(cacheKey, consumers, TTL_SECONDS);
-    return NextResponse.json(consumers, { status: 200 });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { error: "Failed to fetch messes" },
-      { status: 500 },
-    );
-  }
-}
+/** Admin-only list of consumers. Never contains password hashes or tokens. */
+export const GET = createRoute({ name: "consumers.list", auth: "admin" }, async () => {
+  const key = cacheKeys.consumersAll();
+  const cached = await getJsonCache(key);
+  if (cached !== null) return json(cached);
+  const consumers = (await consumerRepository.listForAdmin()).map(toConsumerAdminDto);
+  await setJsonCache(key, consumers, TTL_SECONDS);
+  return json(consumers);
+});

@@ -1,10 +1,10 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useEffect, useState } from "react";
 import AllMess from "@/Component/AllMess/AdminAllMess";
 import MessNotFound from "@/Component/Others/MessNotFound";
 import Loading from "@/Component/Others/Loading";
-import { getBaseUrl } from "@/lib/getBaseUrl";
 
 export default function AllMessToAdmin() {
   const [messes, setMesses] = useState([]);
@@ -15,31 +15,14 @@ export default function AllMessToAdmin() {
     const load = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/mess`, { cache: "no-store" });
+        // The server already returns the admin view in the shape the UI needs.
+        const res = await apiFetch(`/api/admin/messes`, { cache: "no-store" });
         if (!res.ok) {
           setError(true);
           return;
         }
         const text = await res.text();
-        const data = text ? JSON.parse(text) : [];
-        const shaped = (data || []).map((m) => ({
-          _id: m.id,
-          name: m.name,
-          ownerName: m.owner_name,
-          owner: m.owner_id,
-          phoneNumber: m.phone_number,
-          category: m.category,
-          isOpen: m.is_open,
-          isVerified: m.is_verified,
-          isBlocked: m.is_blocked,
-          adharNumber: m.adhar_number,
-          lat: m.lat,
-          lon: m.lon,
-          image: { url: m.image_url },
-          certificate: { url: m.certificate_url },
-          createdAt: m.created_at,
-        }));
-        setMesses(shaped);
+        setMesses(text ? JSON.parse(text) : []);
       } catch (err) {
         console.error("Error fetching messes:", err);
         setError(true);

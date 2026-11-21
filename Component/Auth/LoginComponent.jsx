@@ -1,5 +1,5 @@
 "use client";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,8 @@ const LoginComponent = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", mfaCode: "" });
+  const [needsMfa, setNeedsMfa] = useState(false);
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
 
@@ -45,15 +46,26 @@ const LoginComponent = () => {
         redirect: false,
         email: form.email,
         password: form.password,
+        mfaCode: form.mfaCode.trim(),
       });
 
-      if (result?.error) {
+      if (result?.error === "MFA_REQUIRED") {
+        setNeedsMfa(true);
+        toast.info("Enter the 6-digit code from your authenticator app");
+      } else if (result?.error === "MFA_INVALID") {
+        setForm((prev) => ({ ...prev, mfaCode: "" }));
+        toast.error("Invalid authentication code");
+      } else if (result?.error?.startsWith("Too many attempts")) {
+        toast.error("Too many attempts. Please wait a few minutes and try again.");
+      } else if (result?.error) {
         toast.error("Invalid credentials or internet issue");
       } else {
         toast.success("Login successful");
-        if (session?.user?.isAdmin) {
+        // read the fresh session (the hook value is stale right after signIn)
+        const fresh = await getSession();
+        if (fresh?.user?.isAdmin) {
           router.push("/admin");
-        } else if (session?.user?.isOwner) {
+        } else if (fresh?.user?.isOwner) {
           router.push("/owner");
         } else {
           router.push("/mess");
@@ -101,6 +113,7 @@ const LoginComponent = () => {
                   <input
                     type="email"
                     name="email"
+                    autoComplete="username"
                     value={form.email}
                     onChange={handleChange}
                     placeholder="Enter your email"
@@ -128,6 +141,7 @@ const LoginComponent = () => {
                     <input
                       type={show ? "text" : "password"}
                       name="password"
+                      autoComplete="current-password"
                       value={form.password}
                       onChange={handleChange}
                       placeholder="Enter your password"
@@ -145,6 +159,29 @@ const LoginComponent = () => {
                     </button>
                   </div>
                 </div>
+
+
+                {needsMfa && (
+                  <div>
+                    <label className="text-[11px] font-semibold uppercase tracking-[0.13em] text-orange-500 pl-1">
+                      Authenticator code
+                    </label>
+                    <input
+                      type="text"
+                      name="mfaCode"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      value={form.mfaCode}
+                      onChange={handleChange}
+                      placeholder="6-digit code or recovery code"
+                      maxLength={16}
+                      required
+                      autoFocus
+                      className="w-full px-4 py-3.5 rounded-2xl border border-orange-200 bg-orange-50/35 text-sm font-medium text-stone-800
+                      focus:outline-none focus:ring-2 focus:ring-orange-400/35 focus:border-orange-400 transition-all placeholder:text-stone-400"
+                    />
+                  </div>
+                )}
 
                 <button
                   type="submit"

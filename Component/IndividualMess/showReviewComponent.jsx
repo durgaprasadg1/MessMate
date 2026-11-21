@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from "@/lib/apiFetch";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 
@@ -7,7 +8,7 @@ const ShowReviewComponent = ({ reviews = [], mess, isAdmin = false }) => {
 
   const deleteReview = async (revId) => {
     try {
-      let res = await fetch(`/api/mess/${mess._id}/review/${revId}`, {
+      let res = await apiFetch(`/api/mess/${mess._id}/review/${revId}`, {
         method: "DELETE",
       });
       if (!res.ok) {

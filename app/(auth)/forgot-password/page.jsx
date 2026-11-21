@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from "@/lib/apiFetch";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import Loading from "../../../Component/Others/Loading";
@@ -19,7 +20,7 @@ export default function ForgotPasswordPage() {
     const email = formData.get("forgotEmail");
 
     try {
-      const res = await fetch("/api/auth/forgot-password", {
+      const res = await apiFetch("/api/auth/forgot-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -37,7 +38,7 @@ export default function ForgotPasswordPage() {
 
       toast.success("Mail sent successfully");
     } catch (error) {
-      console.log("Error in forget-password route :", error);
+      console.error("Error in forgot-password request");
       toast.error("Server Error");
     }
 

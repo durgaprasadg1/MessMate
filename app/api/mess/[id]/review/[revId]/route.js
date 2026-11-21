@@ -1,72 +1,24 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import supabase from "@/lib/supabaseClient";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { notFound, forbidden } from "@/lib/server/errors/httpErrors";
+import { messRepository, reviewRepository } from "@/lib/server/repositories/messes";
 import { deleteCacheKeys } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
 
-export async function DELETE(request, { params }) {
-  try {
-    const { id, revId } = await params;
-    const tenantId = request.headers.get("x-tenant-id") || "public";
-    const session = await getServerSession(authOptions);
-    if (!session)
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+// The review's author or the owner of the reviewed mess may delete it.
+export const DELETE = createRoute({ name: "mess.review.delete", auth: "session", uuid: ["id", "revId"], bodyType: "none" }, async ({ params, session }) => {
+  const review = await reviewRepository.getById(params.revId);
+  if (!review || review.mess_id !== params.id) throw notFound("Review not found");
 
-    const { data: review } = await supabase
-      .from("review")
-      .select("*")
-      .eq("id", revId)
-      .single();
-    if (!review) {
-      return NextResponse.json(
-        { message: "Review not found" },
-        { status: 404 }
-      );
-    }
-
-    const authorId = review.authorId;
-
-    let allowed = false;
-    if (authorId && authorId === session.user.id) allowed = true;
-    if (!allowed) {
-      const { data: mess } = await supabase
-        .from("mess")
-        .select("owner_id")
-        .eq("id", id)
-        .single();
-      const ownerId = mess?.owner_id || null;
-      if (ownerId && ownerId === session.user.id) allowed = true;
-    }
-
-    if (!allowed) {
-      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
-    }
-
-    const { data: deletedReview, error } = await supabase
-      .from("review")
-      .delete()
-      .eq("id", revId)
-      .select("id")
-      .maybeSingle();
-    if (error) throw error;
-    if (!deletedReview) {
-      return NextResponse.json(
-        { message: "Review not found" },
-        { status: 404 }
-      );
-    }
-
-    await deleteCacheKeys([`tenant:${tenantId}:mess:${id}`]);
-
-    return NextResponse.json(
-      { message: "Review Deleted Successfully" },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error("Error deleting review:", error);
-    return NextResponse.json(
-      { message: "Server error", error: error.message },
-      { status: 500 }
-    );
+  let allowed = review.author_id === session.user.id;
+  if (!allowed) {
+    const mess = await messRepository.getOwnership(params.id);
+    allowed = Boolean(mess?.owner_id) && mess.owner_id === session.user.id;
   }
-}
+  if (!allowed) throw forbidden();
+
+  const deleted = await reviewRepository.delete(review.id);
+  if (!deleted) throw notFound("Review not found");
+  await deleteCacheKeys([cacheKeys.mess(params.id), cacheKeys.messAnalytics(params.id)]);
+  return json({ message: "Review Deleted Successfully" });
+});

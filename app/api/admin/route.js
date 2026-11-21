@@ -1,35 +1,19 @@
-import supabase from "@/lib/supabaseClient";
-import { getJsonCache, setJsonCache } from "../../../lib/redis";
-
-const TTL_SECONDS = 60 *2;
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { getJsonCache, setJsonCache } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import { consumerRepository } from "@/lib/server/repositories/accounts";
 
 export const dynamic = "force-dynamic";
+const TTL_SECONDS = 60 * 2;
 
-export async function GET() {
-  try {
-    const tenantId = "public";
-    const cacheKey = `tenant:${tenantId}:admin:users`;
-    const cached = await getJsonCache(cacheKey);
-    if (cached !== null) {
-      return Response.json(cached, { status: 200 });
-    }
+export const GET = createRoute({ name: "admin.users", auth: "admin" }, async () => {
+  const key = cacheKeys.adminUsers();
+  const cached = await getJsonCache(key);
+  if (cached !== null) return json(cached);
 
-    const { data: users, error } = await supabase
-      .from("consumer")
-      .select("id, username, email")
-      .order("id", { ascending: false })
-      .limit(200);
-    if (error) throw error;
-
-    const payload = { success: true, users };
-    await setJsonCache(cacheKey, payload, TTL_SECONDS);
-
-    return Response.json(payload, { status: 200 });
-  } catch (error) {
-    console.error("Users API Error:", error);
-    return Response.json(
-      { success: false, message: "Failed to fetch users" },
-      { status: 500 },
-    );
-  }
-}
+  const users = await consumerRepository.listRecent(200);
+  const payload = { success: true, users };
+  await setJsonCache(key, payload, TTL_SECONDS);
+  return json(payload);
+});

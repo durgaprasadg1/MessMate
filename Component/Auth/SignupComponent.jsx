@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from "@/lib/apiFetch";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useRouter, usePathname } from "next/navigation";
@@ -7,6 +8,8 @@ import Loading from "../Others/Loading";
 import { useSession } from "next-auth/react";
 import Navbar from "../Others/Navbar";
 import AuthOrbitPanel from "./AuthOrbitPanel";
+import PasswordStrength from "./PasswordStrength";
+import { validatePasswordStrength } from "@/lib/passwordRules";
 
 const RegisterComponent = () => {
   const { data: session, status } = useSession();
@@ -80,12 +83,11 @@ const RegisterComponent = () => {
       return;
     }
 
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).+$/;
+    const passwordProblems = validatePasswordStrength(form.password);
 
-    if (!passwordRegex.test(form.password)) {
+    if (passwordProblems.length) {
       setLoading(false);
-      const msg =
-        "Password must contain uppercase, lowercase & special character";
+      const msg = `Password must contain ${passwordProblems.join(", ")}`;
       toast.error(msg);
       setMessage(` ${msg}`);
       return;
@@ -96,7 +98,7 @@ const RegisterComponent = () => {
         ? "/api/auth/register-owner"
         : "/api/auth/signup";
 
-      const res = await fetch(endpoint, {
+      const res = await apiFetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -243,10 +245,11 @@ const RegisterComponent = () => {
                     <input
                       type={show ? "text" : "password"}
                       name="password"
+                      autoComplete="new-password"
                       value={form.password}
                       onChange={handleChange}
                       placeholder="Create a strong password"
-                      minLength={8}
+                      minLength={12}
                       required
                       className="w-full px-4 py-3.5 rounded-2xl border border-orange-200 bg-orange-50/35 text-sm font-medium text-stone-800
                       focus:outline-none focus:ring-2 focus:ring-orange-400/35 focus:border-orange-400 transition-all placeholder:text-stone-400 pr-12"
@@ -259,6 +262,7 @@ const RegisterComponent = () => {
                       {show ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
+                  <PasswordStrength password={form.password} />
                 </div>
 
                 <button

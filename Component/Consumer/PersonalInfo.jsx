@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from "@/lib/apiFetch";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Loading from "@/Component/Others/Loading";
@@ -6,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { Pencil, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import MfaSettings from "@/Component/Security/MfaSettings";
 
 export default function PersonalInfo({ consumerid }) {
   const router = useRouter();
@@ -25,7 +27,8 @@ export default function PersonalInfo({ consumerid }) {
 
         const domain = adminFlag ? "admin" : ownerFlag ? "owner" : "consumer";
 
-        const res = await fetch(`/api/${domain}/${consumerid}`);
+        // the id comes from the signed session, never from the URL
+        const res = await apiFetch(`/api/${domain}/${session.user.id}`);
         const data = await res.json();
 
         if (!res.ok) {
@@ -176,6 +179,8 @@ export default function PersonalInfo({ consumerid }) {
               </div>
             </div>
           </div>
+
+          {(isAdmin || isOwner) && <MfaSettings />}
 
         </motion.div>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
@@ -18,7 +19,7 @@ export default function useOrderActions({
   const patchOrder = async (action) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/mess/${messId}/orders/${orderId}`, {
+      const res = await apiFetch(`/api/mess/${messId}/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),

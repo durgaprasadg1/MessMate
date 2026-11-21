@@ -12,4 +12,4 @@ jobs:
     steps:
       - name: Ping keepalive endpoint
         run: |
-          curl -L https://mess-mate-pi.vercel.app/api/keepalive
+          curl --fail --silent --show-error -L https://mess-mate-pi.vercel.app/api/keepalive

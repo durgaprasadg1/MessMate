@@ -1,84 +1,28 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import supabase from "@/lib/supabaseClient";
-import {
-  deleteCacheKeys,
-  getJsonCache,
-  setJsonCache,
-} from "../../../lib/redis";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { getJsonCache, setJsonCache, deleteCacheKeys } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import { notificationRepository } from "@/lib/server/repositories/notifications";
 
-const TTL_SECONDS = 60 * 2;
+export const GET = createRoute({ name: "notifications.list", auth: "session" }, async ({ session }) => {
+  const key = cacheKeys.notifications(session.user.id);
+  const cached = await getJsonCache(key);
+  if (cached !== null) return json(cached);
 
-export async function GET(request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const [notifications, unreadCount] = await Promise.all([
+    notificationRepository.listFor(session.user.id),
+    notificationRepository.unreadCount(session.user.id),
+  ]);
+  const payload = {
+    notifications: notifications.map((n) => ({ ...n, _id: n.id, isRead: n.is_read, createdAt: n.created_at })),
+    unreadCount,
+  };
+  await setJsonCache(key, payload, 120);
+  return json(payload);
+});
 
-    const tenantId = request.headers.get("x-tenant-id") || "public";
-    const cacheKey = `tenant:${tenantId}:notifications:${session.user.id}`;
-    const cached = await getJsonCache(cacheKey);
-    if (cached !== null) {
-      return NextResponse.json(cached, { status: 200 });
-    }
-
-    const { data: notifications, error } = await supabase
-      .from("notification")
-      .select("*")
-      .eq("recipient_id", session.user.id)
-      .order("created_at", { ascending: false })
-      .limit(50);
-    if (error) throw error;
-
-    const { count: unreadCount = 0 } = await supabase
-      .from("notification")
-      .select("id", { count: "exact", head: true })
-      .eq("recipient_id", session.user.id)
-      .eq("is_read", false);
-
-    const payload = {
-      notifications,
-      unreadCount,
-    };
-
-    await setJsonCache(cacheKey, payload, TTL_SECONDS);
-
-    return NextResponse.json(payload, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching notifications:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch notifications" },
-      { status: 500 },
-    );
-  }
-}
-
-export async function DELETE(request) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { error } = await supabase
-      .from("notification")
-      .delete()
-      .eq("recipient_id", session.user.id);
-    if (error) throw error;
-
-    const tenantId = request.headers.get("x-tenant-id") || "public";
-    await deleteCacheKeys([
-      `tenant:${tenantId}:notifications:${session.user.id}`,
-    ]);
-
-    return NextResponse.json({ message: "All notifications cleared" });
-  } catch (error) {
-    console.error("Error clearing notifications:", error);
-    return NextResponse.json(
-      { error: "Failed to clear notifications" },
-      { status: 500 },
-    );
-  }
-}
+export const DELETE = createRoute({ name: "notifications.clear", auth: "session", bodyType: "none" }, async ({ session }) => {
+  await notificationRepository.deleteAll(session.user.id);
+  await deleteCacheKeys([cacheKeys.notifications(session.user.id)]);
+  return json({ message: "All notifications cleared" });
+});

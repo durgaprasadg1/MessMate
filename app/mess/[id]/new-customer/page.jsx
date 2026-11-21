@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/Component/Others/Navbar";
@@ -33,13 +34,13 @@ const NewCustomerToMess = () => {
   useEffect(() => {
     const fetchMessAndRegistrations = async () => {
       try {
-        const messRes = await fetch(`/api/mess/${messId}`);
+        const messRes = await apiFetch(`/api/mess/${messId}`);
         if (messRes.ok) {
           const messData = await messRes.json();
           setMess(messData);
         }
 
-        const regRes = await fetch(
+        const regRes = await apiFetch(
           `/api/consumer/${messId}/check-registrations`,
         );
         if (regRes.ok) {
@@ -149,7 +150,7 @@ const NewCustomerToMess = () => {
     try {
       setLoading(true);
 
-      const res = await fetch(`/api/mess/${messId}/new-customer`, {
+      const res = await apiFetch(`/api/mess/${messId}/new-customer`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(formData),
@@ -179,7 +180,7 @@ const NewCustomerToMess = () => {
           handler: async function (response) {
             paymentHandled = true;
             try {
-              const verifyRes = await fetch(
+              const verifyRes = await apiFetch(
                 `/api/mess/${messId}/new-customer`,
                 {
                   method: "PATCH",
@@ -228,7 +229,7 @@ const NewCustomerToMess = () => {
             ondismiss: async function () {
               if (!paymentHandled && dbOrderId) {
                 try {
-                  await fetch(`/api/mess/${messId}/new-customer`, {
+                  await apiFetch(`/api/mess/${messId}/new-customer`, {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

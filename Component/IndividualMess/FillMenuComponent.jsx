@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -47,7 +48,7 @@ export default function MessMenuComponent({
     let mounted = true;
     async function fetchMenuDoc() {
       try {
-        const res = await fetch(
+        const res = await apiFetch(
           `/api/mess/${messId}/menu?menutype=${menutype}`,
           { cache: "no-store" }
         );
@@ -70,7 +71,7 @@ export default function MessMenuComponent({
           );
         }
       } catch (e) {
-        console.warn("Could not fetch menu doc", e);
+        console.error("Could not fetch menu doc");
       }
     }
     fetchMenuDoc();
@@ -152,7 +153,7 @@ export default function MessMenuComponent({
         replace: replaceWholeMenu,
         deletedDishIds,
       };
-      const res = await fetch(`/api/mess/${messId}/menu`, {
+      const res = await apiFetch(`/api/mess/${messId}/menu`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),

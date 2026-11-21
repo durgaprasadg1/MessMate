@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -22,7 +23,7 @@ export default function EditUserInfoPage({ messID }) {
   useEffect(() => {
     async function fetchUser() {
       try {
-        const res = await fetch(`/api/mess/${messID}`, { cache: "no-store" });
+        const res = await apiFetch(`/api/mess/${messID}`, { cache: "no-store" });
         if (!res.ok) throw new Error("Failed to fetch user info");
 
         const data = await res.json();
@@ -53,7 +54,7 @@ export default function EditUserInfoPage({ messID }) {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/mess/${messID}/edit-info`, {
+      const res = await apiFetch(`/api/mess/${messID}/edit-info`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(messData),

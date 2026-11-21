@@ -1,651 +1,179 @@
-import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import nodemailer from "nodemailer";
-import crypto from "crypto";
-import supabase from "@/lib/supabaseClient";
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
-});
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { notFound, forbidden, badRequest } from "@/lib/server/errors/httpErrors";
+import { Limits } from "@/lib/server/security/rateLimiter";
+import { newCustomerSchema, newCustomerPatchSchema } from "@/lib/server/validation/schemas";
+import { messRepository } from "@/lib/server/repositories/messes";
+import { registrationRepository } from "@/lib/server/repositories/registrations";
+import { consumerRepository } from "@/lib/server/repositories/accounts";
+import { requireActiveConsumer } from "@/lib/server/auth/guards";
+import { getPaymentGateway, verifyCheckoutSignature, newReceipt } from "@/lib/server/services/paymentService";
+import { isMembershipPaymentComplete, remainingDays } from "@/lib/server/services/membership";
+import { sendMailSafe } from "@/lib/server/mail/mailer";
+import { monthlyRequestMail, paymentSuccessMail } from "@/lib/server/mail/templates";
+import { deleteCacheKeys } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import { audit, AuditEvent } from "@/lib/server/logging/audit";
 
 const RAZORPAY_MIN_AMOUNT_PAISE = 100;
+const FOOD_MAP = { veg: "Veg", both: "Both", nonveg: "Non-Veg", "non-veg": "Non-Veg" };
 
-const isMembershipPaymentComplete = (registration = {}) => {
-  const mode = (registration.payment_mode || "").toLowerCase();
-  if (mode === "cash") return true;
-  return (
-    registration.payment_verified === true ||
-    registration.payment_status === "paid"
-  );
+const overlaps = (existing, requested) => {
+  const hasDay = (d) => d === "Day" || d === "Day + Night";
+  const hasNight = (d) => d === "Night" || d === "Day + Night";
+  return (hasDay(existing) && hasDay(requested)) || (hasNight(existing) && hasNight(requested));
 };
 
-export async function POST(request, { params }) {
-  try {
-    const { id } = (await params) || {};
+export const POST = createRoute(
+  { name: "registration.create", auth: "consumer", uuid: ["id"], rateLimit: { ...Limits.payment, by: "user" }, body: newCustomerSchema },
+  async ({ params, session, body, log }) => {
+    const consumer = await requireActiveConsumer(session, "Your account is blocked by admin. You cannot register for a mess.");
 
-    if (!id) {
-      return NextResponse.json(
-        { message: "Mess ID is required" },
-        { status: 400 },
-      );
-    }
+    const mess = await messRepository.getForBooking(params.id);
+    if (!mess) throw notFound("Mess not found");
+    if (mess.is_blocked) throw forbidden("This mess is not accepting registrations right now.");
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: consumer } = await supabase
-      .from("consumer")
-      .select("*")
-      .eq("id", session.user.id)
-      .single();
-    if (!consumer) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
-
-    if (consumer.isBlocked) {
-      return NextResponse.json(
-        {
-          message:
-            "Your account is blocked by admin. You cannot register for a mess.",
-        },
-        { status: 403 },
-      );
-    }
-
-    const { data: allUserRegistrations = [] } = await supabase
-      .from("new_mess_customer")
-      .select("*, mess:mess_id(monthly_mess_duration)")
-      .eq("consumer_id", session.user.id);
-
-    const completedRegistrations = allUserRegistrations.filter(
+    const all = (await registrationRepository.listForConsumer(session.user.id, "mess:mess_id(monthly_mess_duration)")).filter(
       isMembershipPaymentComplete,
     );
+    const active = all.filter((reg) => remainingDays(reg, reg.mess?.monthly_mess_duration || 30) > 0);
 
-    const today = new Date();
-    const activeRegistrations = completedRegistrations.filter((reg) => {
-      const joining = new Date(reg.joining_date);
-      const diffDays = Math.floor((today - joining) / (1000 * 60 * 60 * 24));
-      const totalDuration = Number(reg.mess?.monthly_mess_duration || 30);
-      const remaining = Math.max(totalDuration - diffDays, 0);
-      return remaining > 0;
-    });
-
-    const body = await request.json();
-    const {
-      name,
-      phone,
-      address,
-      gender,
-      college,
-      duration,
-      foodPreference,
-      emergencyContact,
-      paymentMode,
-    } = body || {};
-    const normalizedPaymentMode = (paymentMode || "").toLowerCase();
-
-    const existingCustomer = completedRegistrations.find(
-      (registration) => registration.mess_id === id,
-    );
-
-    if (existingCustomer) {
-      const joining = new Date(existingCustomer.joining_date);
-      const diffDays = Math.floor((today - joining) / (1000 * 60 * 60 * 24));
-
-      const totalDuration = Number(
-        existingCustomer.mess?.monthly_mess_duration || 30,
-      );
-      const remaining = Math.max(totalDuration - diffDays, 0);
-
-      if (remaining > 0) {
-        const existingDuration = existingCustomer.duration;
-        const newDuration = duration;
-
-        const hasSameDay =
-          (existingDuration === "Day" && newDuration === "Day") ||
-          (existingDuration === "Day + Night" &&
-            (newDuration === "Day" || newDuration === "Day + Night")) ||
-          (existingDuration === "Day" && newDuration === "Day + Night");
-
-        const hasSameNight =
-          (existingDuration === "Night" && newDuration === "Night") ||
-          (existingDuration === "Day + Night" &&
-            (newDuration === "Night" || newDuration === "Day + Night")) ||
-          (existingDuration === "Night" && newDuration === "Day + Night");
-
-        if (hasSameDay || hasSameNight) {
-          return NextResponse.json(
-            {
-              message: `You are already registered in this mess for ${existingDuration} with ${remaining} day(s) remaining. You cannot register for the same meal time again.`,
-            },
-            { status: 403 },
-          );
-        }
+    const sameMess = all.find((r) => r.mess_id === params.id);
+    if (sameMess) {
+      const remaining = remainingDays(sameMess, sameMess.mess?.monthly_mess_duration || 30);
+      if (remaining > 0 && overlaps(sameMess.duration, body.duration)) {
+        throw forbidden(
+          `You are already registered in this mess for ${sameMess.duration} with ${remaining} day(s) remaining. You cannot register for the same meal time again.`,
+        );
       }
     }
 
-    const phoneRe = /^[6-9]\d{9}$/;
-    const durationEnum = ["Day", "Night", "Day + Night"];
-    const genderEnum = ["Male", "Female", "Other"];
-    const paymentModeEnum = ["upi", "cash"];
+    const hasDay = active.some((r) => r.duration === "Day" || r.duration === "Day + Night");
+    const hasNight = active.some((r) => r.duration === "Night" || r.duration === "Day + Night");
+    if (body.duration === "Day" && hasDay)
+      throw forbidden("You are already registered for Day meal time. Please cancel your existing Day registration first.");
+    if (body.duration === "Night" && hasNight)
+      throw forbidden("You are already registered for Night meal time. Please cancel your existing Night registration first.");
+    if (body.duration === "Day + Night" && (hasDay || hasNight))
+      throw forbidden("You cannot register for Day + Night because you already have a Day or Night registration. Please cancel your existing registration first.");
 
-    if (!name || !phone || !duration) {
-      return NextResponse.json(
-        { message: "Missing required fields: name, phone, or duration" },
-        { status: 400 },
-      );
+    if (body.emergencyContact && !/^[6-9]\d{9}$/.test(body.emergencyContact)) throw badRequest("Invalid emergency contact number");
+
+    const mappedFood = FOOD_MAP[(body.foodPreference || "").trim().toLowerCase()] || null;
+    if (body.foodPreference && !mappedFood) throw badRequest("Invalid food preference");
+    if (body.foodPreference) {
+      const cat = mess.category?.toLowerCase();
+      const pref = body.foodPreference.toLowerCase();
+      if (cat === "veg" && pref !== "veg") throw badRequest("This is a vegetarian mess. You can only select 'Veg' as your food preference.");
+      if (cat === "non-veg" && pref === "veg") throw badRequest("This is a non-vegetarian mess. Vegetarian options may not be available.");
     }
 
-    const hasDay = activeRegistrations.some(
-      (reg) => reg.duration === "Day" || reg.duration === "Day + Night",
-    );
-    const hasNight = activeRegistrations.some(
-      (reg) => reg.duration === "Night" || reg.duration === "Day + Night",
-    );
-    if (duration === "Day" && hasDay) {
-      return NextResponse.json(
-        {
-          message:
-            "You are already registered for Day meal time. Please cancel your existing Day registration first.",
-        },
-        { status: 403 },
-      );
-    }
+    // Amount is computed server-side from the mess's configured fee.
+    let amountRupees = Number(mess.monthly_mess_fee || 0);
+    if (body.duration === "Day + Night") amountRupees *= 2;
 
-    if (duration === "Night" && hasNight) {
-      return NextResponse.json(
-        {
-          message:
-            "You are already registered for Night meal time. Please cancel your existing Night registration first.",
-        },
-        { status: 403 },
-      );
-    }
-
-    if (duration === "Day + Night" && (hasDay || hasNight)) {
-      return NextResponse.json(
-        {
-          message:
-            "You cannot register for Day + Night because you already have a Day or Night registration. Please cancel your existing registration first.",
-        },
-        { status: 403 },
-      );
-    }
-
-    if (!phoneRe.test(phone)) {
-      return NextResponse.json(
-        { message: "Invalid phone number" },
-        { status: 400 },
-      );
-    }
-
-    if (emergencyContact && !phoneRe.test(emergencyContact)) {
-      return NextResponse.json(
-        { message: "Invalid emergency contact number" },
-        { status: 400 },
-      );
-    }
-
-    if (!durationEnum.includes(duration)) {
-      return NextResponse.json(
-        { message: "Invalid duration value" },
-        { status: 400 },
-      );
-    }
-
-    if (!paymentModeEnum.includes(normalizedPaymentMode)) {
-      return NextResponse.json(
-        { message: "Invalid payment mode. Choose 'upi' or 'cash'." },
-        { status: 400 },
-      );
-    }
-
-    if (gender && !genderEnum.includes(gender)) {
-      return NextResponse.json(
-        { message: "Invalid gender value" },
-        { status: 400 },
-      );
-    }
-
-    const foodMap = {
-      veg: "Veg",
-      both: "Both",
-      nonveg: "Non-Veg",
-      "non-veg": "Non-Veg",
+    const base = {
+      consumer_id: consumer.id,
+      customers: [consumer.id],
+      mess_id: params.id,
+      duration: body.duration,
+      phone: body.phone,
+      payment_mode: body.paymentMode,
+      name: body.name,
+      address: body.address,
+      gender: body.gender || null,
+      college: body.college,
+      food_preference: mappedFood,
+      emergency_contact: body.emergencyContact || null,
+      joining_date: new Date().toISOString(),
+      total_amount: amountRupees,
     };
 
-    const mappedFoodPref =
-      foodMap[(foodPreference || "").trim().toLowerCase()] || null;
-
-    if (foodPreference && !mappedFoodPref) {
-      return NextResponse.json(
-        { message: "Invalid food preference" },
-        { status: 400 },
-      );
-    }
-
-    const { data: mess } = await supabase
-      .from("mess")
-      .select("*")
-      .eq("id", id)
-      .single();
-    if (!mess) {
-      return NextResponse.json({ message: "Mess not found" }, { status: 404 });
-    }
-
-    if (foodPreference) {
-      const messCategory = mess.category?.toLowerCase();
-      const userPref = foodPreference.toLowerCase();
-
-      if (messCategory === "veg" && userPref !== "veg") {
-        return NextResponse.json(
-          {
-            message:
-              "This is a vegetarian mess. You can only select 'Veg' as your food preference.",
-          },
-          { status: 400 },
-        );
-      }
-
-      if (messCategory === "non-veg" && userPref === "veg") {
-        return NextResponse.json(
-          {
-            message:
-              "This is a non-vegetarian mess. Vegetarian options may not be available.",
-          },
-          { status: 400 },
-        );
-      }
-    }
-
-    let calculatedAmount = Number(mess.monthly_mess_fee || 0);
-    if (duration === "Day + Night") {
-      calculatedAmount = calculatedAmount * 2;
-    }
-
-    if (normalizedPaymentMode === "upi") {
-      const Razorpay = (await import("razorpay")).default;
-      const razor = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_SECRET,
-      });
-
-      const amount = Math.round(calculatedAmount * 100);
+    if (body.paymentMode === "upi") {
+      const amount = Math.round(amountRupees * 100);
       if (amount < RAZORPAY_MIN_AMOUNT_PAISE) {
-        return NextResponse.json(
-          {
-            message:
-              "Online payment amount is too low. Please choose cash payment or contact the mess owner.",
-          },
-          { status: 400 },
-        );
+        throw badRequest("Online payment amount is too low. Please choose cash payment or contact the mess owner.");
       }
-
-      const rOrder = await razor.orders.create({
-        amount,
-        currency: "INR",
-        receipt: `mess_reg_${Date.now()}`,
+      const rOrder = await getPaymentGateway().createOrder({ amount, receipt: newReceipt("mess_reg") });
+      const reg = await registrationRepository.create({
+        ...base,
+        razorpay_order_id: rOrder.id,
+        payment_status: "created",
+        payment_verified: false,
       });
-
-      const { data: messCustomer, error } = await supabase
-        .from("new_mess_customer")
-        .insert({
-          consumer_id: consumer.id,
-          customers: [consumer.id],
-          mess_id: id,
-          duration,
-          phone,
-          payment_mode: normalizedPaymentMode,
-          name,
-          address,
-          gender,
-          college,
-          food_preference: mappedFoodPref,
-          emergency_contact: emergencyContact,
-          joining_date: new Date().toISOString(),
-          razorpay_order_id: rOrder.id,
-          total_amount: calculatedAmount,
-          payment_status: "created",
-          payment_verified: false,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-
-      return NextResponse.json(
-        {
-          message: "Order created for payment",
-          order: rOrder,
-          dbOrderId: messCustomer.id,
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-          amount: calculatedAmount,
-        },
-        { status: 200 },
-      );
-    }
-
-    const recipientName = consumer.username || "User";
-    const recipientEmail = consumer.email;
-
-    const { data: messCustomer, error } = await supabase
-      .from("new_mess_customer")
-      .insert({
-        consumer_id: consumer.id,
-        customers: [consumer.id],
-        mess_id: id,
-        duration,
-        phone,
-        payment_mode: normalizedPaymentMode,
-        name,
-        address,
-        gender,
-        college,
-        food_preference: mappedFoodPref,
-        emergency_contact: emergencyContact,
-        joining_date: new Date().toISOString(),
-        total_amount: calculatedAmount,
-        payment_status: "paid",
-        payment_verified: true,
-      })
-      .select()
-      .single();
-    if (error) throw error;
-
-    await supabase
-      .from("consumer")
-      .update({ have_monthly_mess: true })
-      .eq("id", consumer.id);
-
-    try {
-      await transporter.sendMail({
-        from: `"MessMate Support" <${process.env.MAIL_USER}>`,
-        to: recipientEmail,
-        subject: "Request For Monthly Mess - MessMate",
-        html: `
-        <div style="font-family: Arial, sans-serif; padding: 24px; background: #f5f5f5;">
-          <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e5e5e5;">
-            <h2 style="margin-top: 0; margin-bottom: 16px; font-size: 20px;">
-              Your Mess Application Has Been Submitted Successfully
-            </h2>
-
-            <p>Hello <b>${recipientName}</b>,</p>
-
-            <p>Your application for the <b>Daily Mess</b> at <b>${mess.name}</b> has been submitted successfully.</p>
-
-            <p>If you have applied for a <b>Monthly Mess plan</b>, please allow up to <b>24 hours</b> for the mess owner to review and approve your request.</p>
-
-            <p>You will receive an email update as soon as the owner takes action. Thank you for choosing MessMate.</p>
-
-            <p>Regards,<br/><b>MessMate Support Team</b></p>
-          </div>
-        </div>
-        `,
+      return json({
+        message: "Order created for payment",
+        order: rOrder,
+        dbOrderId: reg.id,
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: amountRupees,
       });
-    } catch (mailErr) {
-      console.error("Failed to send mail:", mailErr);
     }
 
-    return NextResponse.json(
-      {
-        message: "New Customer Added Successfully.",
-        customer: messCustomer,
-      },
-      { status: 200 },
-    );
-  } catch (error) {
-    console.error("ERROR in Registering new Customer:", error);
-    const parsedStatus = Number(error?.status || error?.statusCode);
-    const status = Number.isFinite(parsedStatus) ? parsedStatus : 500;
-    const message = error?.message || "Internal Server Error";
-    return NextResponse.json(
-      { message, error: error?.message || null },
-      { status },
-    );
-  }
-}
+    const reg = await registrationRepository.create({ ...base, payment_status: "paid", payment_verified: true });
+    await consumerRepository.markHasMonthlyMess(consumer.id);
+    await deleteCacheKeys([cacheKeys.consumerProfile(consumer.id), cacheKeys.consumerMonthly(consumer.id)]);
+    audit(AuditEvent.REGISTRATION_CHANGED, { actorId: consumer.id, targetId: reg.id, action: "create-cash" }, log);
 
-export async function PATCH(request) {
-  try {
-    const body = await request.json();
-    const { action } = body;
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      dbOrderId,
-    } = body;
+    await sendMailSafe({ to: consumer.email, ...monthlyRequestMail({ name: consumer.username, messName: mess.name }) }, log);
+    return json({ message: "New Customer Added Successfully.", customer: reg });
+  },
+);
 
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+export const PATCH = createRoute(
+  { name: "registration.verify", auth: "consumer", uuid: ["id"], rateLimit: { ...Limits.payment, by: "user" }, body: newCustomerPatchSchema },
+  async ({ params, session, body, log }) => {
+    const consumer = await requireActiveConsumer(session, "Your account is blocked.");
+
+    if (body.action === "cancel") {
+      const pending = await registrationRepository.findById(body.dbOrderId, "id, mess_id, consumer_id, payment_status, payment_verified");
+      if (!pending) throw notFound("Registration not found");
+      if (pending.consumer_id !== session.user.id) throw forbidden("Unauthorized");
+      if (pending.payment_verified || pending.payment_status === "paid") {
+        return json({ message: "Payment already completed for this registration." }, 409);
+      }
+      await registrationRepository.delete(pending.id);
+      return json({ message: "Payment cancelled. Registration request was not submitted." });
     }
 
-    const { data: consumer } = await supabase
-      .from("consumer")
-      .select("*")
-      .eq("id", session.user.id)
-      .single();
-    if (!consumer) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    const { razorpay_order_id: orderId, razorpay_payment_id: paymentId, razorpay_signature: signature, dbOrderId } = body;
+    const reg = dbOrderId
+      ? await registrationRepository.findById(dbOrderId, "id, mess_id, consumer_id, razorpay_order_id, total_amount, duration")
+      : await registrationRepository.findByRazorpayOrderId(orderId);
+    if (!reg || reg.mess_id !== params.id) throw notFound("Registration not found");
+    if (reg.consumer_id !== session.user.id) throw forbidden("Unauthorized");
+    if (reg.razorpay_order_id !== orderId) throw badRequest("Order mismatch");
+
+    if (!verifyCheckoutSignature({ orderId, paymentId, signature })) {
+      await registrationRepository.markFailed(reg.id);
+      audit(AuditEvent.PAYMENT_SIGNATURE_INVALID, { actorId: consumer.id, targetId: reg.id }, log);
+      throw badRequest("Invalid payment signature");
     }
 
-    if (consumer.isBlocked) {
-      return NextResponse.json(
-        { message: "Your account is blocked." },
-        { status: 403 },
-      );
-    }
+    const transitioned = await registrationRepository.markPaidIfPending(reg.id, { paymentId, signature });
+    audit(AuditEvent.PAYMENT_VERIFIED, { actorId: consumer.id, targetId: reg.id, firstTime: transitioned }, log);
 
-    if (action === "cancel") {
-      if (!dbOrderId) {
-        return NextResponse.json(
-          { message: "Missing registration reference" },
-          { status: 400 },
-        );
-      }
-
-      const { data: pendingRegistration } = await supabase
-        .from("new_mess_customer")
-        .select("id, consumer_id, payment_status, payment_verified")
-        .eq("id", dbOrderId)
-        .single();
-
-      if (!pendingRegistration) {
-        return NextResponse.json(
-          { message: "Registration not found" },
-          { status: 404 },
-        );
-      }
-
-      if (pendingRegistration.consumer_id !== session.user.id) {
-        return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
-      }
-
-      if (
-        pendingRegistration.payment_verified ||
-        pendingRegistration.payment_status === "paid"
-      ) {
-        return NextResponse.json(
-          { message: "Payment already completed for this registration." },
-          { status: 409 },
-        );
-      }
-
-      const { error: deleteErr } = await supabase
-        .from("new_mess_customer")
-        .delete()
-        .eq("id", dbOrderId);
-
-      if (deleteErr) throw deleteErr;
-
-      return NextResponse.json(
+    if (transitioned) {
+      await consumerRepository.markHasMonthlyMess(consumer.id);
+      await deleteCacheKeys([cacheKeys.consumerProfile(consumer.id), cacheKeys.consumerMonthly(consumer.id)]);
+      const mess = await messRepository.getOwnership(reg.mess_id);
+      await sendMailSafe(
         {
-          message: "Payment cancelled. Registration request was not submitted.",
+          to: consumer.email,
+          ...paymentSuccessMail({
+            name: consumer.username,
+            messName: mess?.name,
+            paymentId,
+            orderId,
+            amount: reg.total_amount,
+            duration: reg.duration,
+          }),
         },
-        { status: 200 },
+        log,
       );
     }
 
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return NextResponse.json(
-        { message: "Missing payment details" },
-        { status: 400 },
-      );
-    }
-
-    const secret = process.env.RAZORPAY_SECRET;
-    const expectedSign = crypto
-      .createHmac("sha256", secret)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest("hex");
-
-    const { data: messCustomer } = dbOrderId
-      ? await supabase
-          .from("new_mess_customer")
-          .select("*")
-          .eq("id", dbOrderId)
-          .single()
-      : await supabase
-          .from("new_mess_customer")
-          .select("*")
-          .eq("razorpay_order_id", razorpay_order_id)
-          .single();
-
-    if (!messCustomer) {
-      return NextResponse.json(
-        { message: "Registration not found" },
-        { status: 404 },
-      );
-    }
-
-    if (messCustomer.consumer_id !== session.user.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 403 });
-    }
-
-    if (expectedSign === razorpay_signature) {
-      await supabase
-        .from("new_mess_customer")
-        .update({
-          payment_status: "paid",
-          razorpay_payment_id: razorpay_payment_id,
-          razorpay_signature: razorpay_signature,
-          payment_verified: true,
-        })
-        .eq("id", messCustomer.id);
-
-      await supabase
-        .from("consumer")
-        .update({ have_monthly_mess: true })
-        .eq("id", consumer.id);
-
-      const { data: mess } = await supabase
-        .from("mess")
-        .select("*")
-        .eq("id", messCustomer.mess_id)
-        .single();
-
-      const recipientName = consumer.username || "User";
-      const recipientEmail = consumer.email;
-
-      try {
-        await transporter.sendMail({
-          from: `"MessMate Support" <${process.env.MAIL_USER}>`,
-          to: recipientEmail,
-          subject: "Payment Successful - Monthly Mess Registration",
-          html: `
-          <div style="font-family: Arial, sans-serif; padding: 24px; background: #f5f5f5;">
-            <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #e5e5e5;">
-              <h2 style="margin-top: 0; margin-bottom: 16px; font-size: 20px; color: #10b981;">
-                ✅ Payment Successful - Registration Confirmed
-              </h2>
-
-              <p>Hello <b>${recipientName}</b>,</p>
-
-              <p>Your payment for the <b>Monthly Mess</b> at <b>${
-                mess.name
-              }</b> has been successfully received and verified.</p>
-
-              <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-                <h3 style="margin: 0 0 12px 0; font-size: 16px;">Payment Invoice</h3>
-                <table style="width: 100%; border-collapse: collapse;">
-                  <tr>
-                    <td style="padding: 8px 0; color: #6b7280;">Transaction ID:</td>
-                    <td style="padding: 8px 0; font-weight: bold; text-align: right;">${razorpay_payment_id}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; color: #6b7280;">Order ID:</td>
-                    <td style="padding: 8px 0; font-weight: bold; text-align: right;">${razorpay_order_id}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; color: #6b7280;">Amount Paid:</td>
-                    <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #10b981;">₹${
-                      messCustomer.total_amount ?? 0
-                    }</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; color: #6b7280;">Duration:</td>
-                    <td style="padding: 8px 0; font-weight: bold; text-align: right;">${
-                      messCustomer.duration
-                    }</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; color: #6b7280;">Payment Date:</td>
-                    <td style="padding: 8px 0; font-weight: bold; text-align: right;">${new Date().toLocaleDateString()}</td>
-                  </tr>
-                </table>
-              </div>
-
-              <p>Your mess registration is now complete. Please allow up to <b>24 hours</b> for the mess owner to review and approve your request.</p>
-
-              <p>You can access your payment invoice anytime from your dashboard.</p>
-
-              <p>Thank you for choosing MessMate!</p>
-
-              <p>Regards,<br/><b>MessMate Support Team</b></p>
-            </div>
-          </div>
-          `,
-        });
-      } catch (mailErr) {
-        console.error("Failed to send payment confirmation mail:", mailErr);
-      }
-
-      const { data: populatedCustomer } = await supabase
-        .from("new_mess_customer")
-        .select("*, mess:mess_id(*), consumer:consumer_id(*)")
-        .eq("id", messCustomer.id)
-        .single();
-
-      return NextResponse.json(
-        {
-          message: "Payment verified successfully. Registration complete.",
-          customer: populatedCustomer,
-        },
-        { status: 200 },
-      );
-    } else {
-      await supabase
-        .from("new_mess_customer")
-        .update({ payment_status: "failed" })
-        .eq("id", messCustomer.id);
-
-      return NextResponse.json(
-        { message: "Invalid payment signature" },
-        { status: 400 },
-      );
-    }
-  } catch (error) {
-    console.error("ERROR in payment verification:", error);
-    return NextResponse.json(
-      { message: "Internal Server Error", error: error.message },
-      { status: 500 },
-    );
-  }
-}
+    const customer = (await registrationRepository.listDetailedForConsumer(consumer.id)).find((r) => r.id === reg.id);
+    return json({ message: "Payment verified successfully. Registration complete.", customer });
+  },
+);

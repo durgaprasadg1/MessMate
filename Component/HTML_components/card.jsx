@@ -1,4 +1,5 @@
 
+import { apiFetch } from "@/lib/apiFetch";
 import KeyVals from './keyValuepairs'
 import Button from "../Others/Button"
 import { toast } from 'react-toastify';
@@ -12,7 +13,7 @@ const Card = ({ user }) => {
     try {
       setLoading(true);
 
-      const res = await fetch(`/api/admin/blockings/users/${userId}`, {
+      const res = await apiFetch(`/api/admin/blockings/users/${userId}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

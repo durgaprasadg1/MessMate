@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import AdminSidebar from "@/Component/Admin/AdminSidebar";
 import SectionPart from "@/Component/Section/SectionPartLinks";
 import SectionStats from "@/Component/Section/SectionStats";
@@ -35,7 +36,7 @@ export default function AdminLandingPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await fetch("/api/admin/get-all-data", { cache: "no-store" });
+        const res = await apiFetch("/api/admin/get-all-data", { cache: "no-store" });
         if (!res.ok) {
           console.error("Failed to fetch admin data:", res.status);
           setError(true);

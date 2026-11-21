@@ -1,66 +1,27 @@
-import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import supabase from "@/lib/supabaseClient";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { conflict } from "@/lib/server/errors/httpErrors";
+import { Limits } from "@/lib/server/security/rateLimiter";
+import { consumerSignupSchema } from "@/lib/server/validation/schemas";
+import { getPasswordService } from "@/lib/server/auth/passwordService";
+import { isEmailTaken } from "@/lib/server/services/accountService";
+import { consumerRepository } from "@/lib/server/repositories/accounts";
+import { audit, AuditEvent } from "@/lib/server/logging/audit";
 
-export async function POST(request) {
-  try {
-    const body = await request.json();
-    const { username, email, phoneNumber, address, password } = body;
-    if (!username || !email || !password || !phoneNumber || !address) {
-      return NextResponse.json(
-        { message: "All fields are required." },
-        { status: 400 }
-      );
-    }
+export const POST = createRoute(
+  { name: "auth.signup", auth: "public", rateLimit: Limits.signup, body: consumerSignupSchema },
+  async ({ body, ip, log }) => {
+    if (await isEmailTaken(body.email)) throw conflict("A user with this email already exists.");
 
-    const existedRes = await supabase
-      .from("consumer")
-      .select("id")
-      .eq("email", email)
-      .single();
-    if (!existedRes.error && existedRes.data) {
-      return NextResponse.json(
-        { message: "A user with this email already exists." },
-        { status: 409 }
-      );
-    }
+    const created = await consumerRepository.create({
+      username: body.username,
+      email: body.email,
+      phone: body.phoneNumber,
+      address: body.address,
+      passwordHash: await getPasswordService().hash(body.password),
+    });
+    audit(AuditEvent.SIGNUP, { actorId: created.id, ip }, log);
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const { data: newUser, error } = await supabase
-      .from("consumer")
-      .insert({
-        username,
-        email,
-        phone: phoneNumber,
-        address,
-        password: hashedPassword,
-        have_monthly_mess: false,
-      })
-      .select("id, username")
-      .single();
-    if (error) throw error;
-
-    return NextResponse.json(
-      {
-        message: " Registration successful!",
-        id: newUser.id,
-        username: newUser.username,
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    if (error.code === "PGRST116") {
-      return NextResponse.json(
-        { message: "Duplicate entry: email already exists." },
-        { status: 409 }
-      );
-    }
-
-    console.error("Error during registration:", error);
-    return NextResponse.json(
-      { message: "Internal server error. Please try again later." },
-      { status: 500 }
-    );
-  }
-}
+    return json({ message: " Registration successful!", id: created.id, username: created.username }, 201);
+  },
+);

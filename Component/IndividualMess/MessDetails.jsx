@@ -1,5 +1,6 @@
 "use client";
 
+import { mapsUrl } from "@/lib/safeHref";
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import ReviewSection from "./ReviewComponent";
@@ -26,14 +27,13 @@ export default function MessDetails({ mess }) {
           setIsOpen(!!d.isOpen);
         }
       } catch (err) {
-        console.log("Error handling mess status update:", err);
+        console.error("Error handling mess status update");
       }
     };
     window.addEventListener("messStatusUpdate", handler);
     return () => window.removeEventListener("messStatusUpdate", handler);
   }, [mess._id]);
 
-  console.log("Mess : ", mess)
   return (
     <div className="min-h-screen py-8 px-4 sm:px-8 mt-16 md:mt-0 bg-slate-50 md:pl-[25vw] flex flex-col transition-[padding] duration-0 ease-linear">
       <div className="max-w-6xl mx-auto w-full flex flex-col gap-8 mt-6 pb-20">
@@ -103,8 +103,9 @@ export default function MessDetails({ mess }) {
                     </p>
                     {mess.lat && mess.lon && (
                       <Link
-                        href={`https://www.google.com/maps?q=${mess.lat},${mess.lon}`}
+                        href={mapsUrl(mess.lat, mess.lon)}
                         target="_blank"
+                        rel="noopener noreferrer"
                         className="no-underline!"
                       >
                         <p className="text-xs font-semibold text-orange-500 hover:text-orange-600 mt-1 flex items-center gap-1">

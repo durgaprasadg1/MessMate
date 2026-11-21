@@ -1,102 +1,29 @@
-import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
-import supabase from "@/lib/supabaseClient";
+import { createRoute } from "@/lib/server/http/apiHandler";
+import { json } from "@/lib/server/http/respond";
+import { notFound } from "@/lib/server/errors/httpErrors";
+import { Limits } from "@/lib/server/security/rateLimiter";
+import { messRepository } from "@/lib/server/repositories/messes";
+import { sendMailSafe } from "@/lib/server/mail/mailer";
+import { messVerifiedMail } from "@/lib/server/mail/templates";
+import { getEnv } from "@/lib/server/config/env";
 import { deleteCacheKeys } from "@/lib/redis";
+import { cacheKeys } from "@/lib/server/cache/cacheKeys";
+import { audit, AuditEvent } from "@/lib/server/logging/audit";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
-  },
-});
+export const POST = createRoute(
+  { name: "admin.mess.verify", auth: "admin", uuid: ["id"], rateLimit: { ...Limits.admin, by: "user" }, bodyType: "none" },
+  async ({ params, session, log }) => {
+    const mess = await messRepository.getForVerification(params.id);
+    if (!mess) throw notFound("Mess not found");
 
-export async function POST(req, { params }) {
-  try {
-    const { id } = await params;
-    const tenantId = req.headers.get("x-tenant-id") || "public";
-     const { data: mess, error } = await supabase
-       .from("mess")
-       .select("*")
-       .eq("id", id)
-       .single();
-      if (error) throw error;
-      if (!mess)
-        return NextResponse.json(
-          { message: "Mess not found" },
-          { status: 404 }
-        );
+    await messRepository.setVerified(mess.id);
+    await deleteCacheKeys([cacheKeys.mess(mess.id), cacheKeys.messList(), cacheKeys.messPending(), cacheKeys.adminMesses(), cacheKeys.ownerMesses(mess.owner_id)]);
+    audit(AuditEvent.MESS_VERIFIED, { actorId: session.user.id, actorRole: "admin", targetId: mess.id }, log);
 
-      const recipientEmail = mess.email;
-      const recipientName = mess.ownerName || mess.name || "User";
-        const messName = mess.messName;
-        const dashboardLink = 'https://https://mess-mate-pi.vercel.app/'
-
-    try {
-      await transporter.sendMail({
-        from: `"MessMate Support" <${process.env.MAIL_USER}>`,
-        to: recipientEmail,
-        subject: "Verification Done - MessMate",
-        html: `
-        <div style="font-family: Arial; padding: 20px; background: #f5f5f5;">
-          <div style="background: white; padding: 20px; border-radius: 8px;">
-            <h2>Mess Verification Approved</h2>
-            <p>Hello <b>${recipientName}</b>,</p>
-            <p>
-              We’re happy to inform you that your mess verification request has been 
-              <b>approved</b>.
-            </p>
-            <p>
-              Your mess <b>${messName}</b> has been successfully added to 
-              <b>MessMate</b>. You can now manage your mess details, view registrations, 
-              and use all available features from your dashboard.
-            </p>
-            <p style="margin-top: 20px;">
-              <a 
-                href="${dashboardLink}" 
-                style="
-                  display: inline-block;
-                  padding: 10px 18px;
-                  border-radius: 4px;
-                  background: #4caf50;
-                  color: #ffffff;
-                  text-decoration: none;
-                  font-weight: bold;
-                "
-              >
-                Go to Dashboard
-              </a>
-            </p>
-            <p style="margin-top: 20px;">
-              If you did not make this request or believe this was a mistake, 
-              please contact our support team immediately.
-            </p>
-            <p>Best regards,<br/>MessMate Support</p>
-          </div>
-        </div>
-      `,
-      });
-    } catch (mailErr) {
-      console.error("Failed to send aprroval email:", mailErr);
-    }
-
-      await supabase
-        .from("mess")
-        .update({ is_verified: true })
-        .eq("id", id);
-
-    await deleteCacheKeys([
-      `tenant:${tenantId}:mess:${id}`,
-      `tenant:${tenantId}:messes:all`,
-      `tenant:${tenantId}:messes:pending`,
-    ]);
-
-    return NextResponse.json({ message: "Verified Mess" });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { error: "Failed to Verify messes" },
-      { status: 500 }
+    await sendMailSafe(
+      { to: mess.email, ...messVerifiedMail({ ownerName: mess.owner_name || mess.name, messName: mess.name, dashboardLink: getEnv().baseUrl || "/" }) },
+      log,
     );
-  }
-}
+    return json({ message: "Verified Mess" });
+  },
+);

@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/apiFetch";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -35,7 +36,7 @@ export default function OrderActionOwner({
     setLoading(true);
     setActionDone(true);
     try {
-      const res = await fetch(`/api/mess/${messId}/orders/${orderId}`, {
+      const res = await apiFetch(`/api/mess/${messId}/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "take" }),
@@ -82,7 +83,7 @@ export default function OrderActionOwner({
     setLoading(true);
     setActionDone(true);
     try {
-      const res = await fetch(`/api/mess/${messId}/orders/${orderId}`, {
+      const res = await apiFetch(`/api/mess/${messId}/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "refund" }),
@@ -113,7 +114,7 @@ export default function OrderActionOwner({
     setLoading(true);
     setActionDone(true);
     try {
-      const res = await fetch(`/api/mess/${messId}/orders/${orderId}`, {
+      const res = await apiFetch(`/api/mess/${messId}/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "markDone" }),
