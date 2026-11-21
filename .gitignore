@@ -55,3 +55,6 @@ TODOs
 .env.*
 !.env.example
 tsconfig.tsbuildinfo
+
+
+# nothing much
