@@ -28,7 +28,7 @@ const Panel = ({ mess }) => {
       } else {
         toast.success("Opened Successfully");
       }
-      window.location.reload();
+      router.refresh(); // re-renders the page data in place (no full reload)
     } catch (err) {
       console.error(err);
       toast.error("Update failed");

@@ -4,23 +4,24 @@ import { apiFetch } from "@/lib/apiFetch";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Menu, X, Home, Clock, LogOut, LayoutDashboard, UserX, UserPlus, LogIn, Bell } from "lucide-react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
+import useSWR from "swr";
+import { useExplore } from "@/contexts/ExploreContext";
 import ProfileComponent from "./ProfileComponent";
 import Button from "../../Component/Others/Button";
-import { toast } from "react-toastify";
 import NotificationBell from "./NotificationBell";
 import Image from "next/image";
 
-const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
+const Navbar = () => {
+  const { searchQuery, setSearchQuery, radius, setRadius, location, requestLocation } = useExplore();
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin;
   const isOwner = session?.user?.isOwner;
   const pathname = usePathname();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [consumerData, setConsumerData] = useState({});
   const consumerid = session?.user?.id;
 
   const handleLogout = async () => {
@@ -31,67 +32,38 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
   const handleHistoryClick = () =>
     router.push(`/consumer/${session?.user?.id}/history`);
 
-  const handleLoginClick = async () => {
-    router.push("/login");
-    await signIn();
-    router.refresh();
-  };
+  // One cached request shared by every page (no 10 s polling, no re-fetch per page change).
+  const { data: profile } = useSWR(
+    consumerid && !isOwner && !isAdmin ? `/api/consumer/${consumerid}` : null,
+    async (url) => {
+      const res = await apiFetch(url, { cache: "no-store" });
+      if (!res.ok) throw new Error("profile");
+      return res.json();
+    },
+    { revalidateOnFocus: false, shouldRetryOnError: false },
+  );
+  const consumerData = { haveMonthlyMess: profile?.consumer?.haveMonthlyMess ?? false };
 
-  const fetchUser = useCallback(async () => {
-    if (!consumerid || isOwner || isAdmin) return;
-    try {
-      const res = await apiFetch(`/api/consumer/${consumerid}`, {
-        cache: "no-store",
-      });
-      if (!res.ok) {
-        toast.error("Something went wrong");
-      }
-      const data = await res.json();
-      setConsumerData({
-        haveMonthlyMess: data.consumer.haveMonthlyMess ?? false,
-      });
-    } catch {
-      toast.error("Error fetching user data");
-    }
-  }, [consumerid, isOwner, isAdmin]);
-
-  useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  useEffect(() => {
-    if (!consumerid || isOwner || isAdmin) return;
-    const interval = setInterval(fetchUser, 10000);
-    return () => clearInterval(interval);
-  }, [fetchUser, consumerid, isOwner, isAdmin]);
-
-  const handleRadiusChange = (event) => {
+  const handleRadiusChange = async (event) => {
     const value = event.target.value;
     const parsed = value ? parseInt(value, 10) : null;
 
-    if (parsed) {
-      if (!navigator?.geolocation) {
-        alert("Geolocation is not supported by your browser.");
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        () => {
-          setRadius(parsed);
-        },
-        () => {
-          alert("Please allow location access to filter by distance.");
-          event.target.value = "";
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-      );
-    } else {
+    if (!parsed) {
       setRadius(null);
+      return;
+    }
+    // the position is requested once for the whole app (shared with the Explore page)
+    const coords = location.status === "granted" ? location.coords : await requestLocation();
+    if (coords) {
+      setRadius(parsed);
+    } else {
+      alert("Please allow location access to filter by distance.");
+      event.target.value = "";
     }
   };
 
   // The sidebar content to be reused in desktop & mobile drawer
-  const SidebarContent = () => (
+  const renderSidebar = () => (
     <div className="flex flex-col h-full bg-white text-slate-800">
       {/* Brand */}
       <div className="h-20 flex items-center justify-center border-b border-orange-100">
@@ -135,7 +107,7 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
               <input
                 type="text"
                 value={searchQuery || ""}
-                onChange={(e) => setSearchQuery?.(e.target.value)}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search Mess..."
                 className="bg-transparent outline-none flex-1 text-sm text-slate-700 ml-2 placeholder:text-orange-300"
               />
@@ -158,7 +130,7 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
         {!session && (
           <div className="pt-4 space-y-2">
             <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider px-2 mb-2">Get Started</div>
-            <Link href="/login" onClick={() => { handleLoginClick(); setDrawerOpen(false); }} className="flex items-center gap-3 px-4 py-3 rounded-xl transition !text-slate-600 hover:bg-orange-50/50 hover:!text-orange-500 !no-underline">
+            <Link href="/login" onClick={() => setDrawerOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl transition !text-slate-600 hover:bg-orange-50/50 hover:!text-orange-500 !no-underline">
               <LogIn size={20} />
               <span>Login</span>
             </Link>
@@ -221,7 +193,7 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
         className="hidden md:block fixed top-0 left-0 h-screen bg-white shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-50 border-r border-orange-50"
         style={{ width: 'var(--sidebar-width, 280px)' }}
       >
-        <SidebarContent />
+        {renderSidebar()}
         <div 
           onMouseDown={startResizing}
           className="absolute top-0 -right-1.5 w-3 h-full cursor-col-resize hover:bg-orange-400 active:bg-orange-600 transition-colors z-50 opacity-0 hover:opacity-100"
@@ -265,7 +237,7 @@ const Navbar = ({ searchQuery, setSearchQuery, radius, setRadius }) => {
                       <X size={20} />
                    </button>
                 </div>
-                <SidebarContent />
+                {renderSidebar()}
              </motion.div>
           </motion.div>
         )}

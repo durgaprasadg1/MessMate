@@ -47,9 +47,19 @@ describe("proxy route guard", () => {
   it("public mess pages stay public", async () => {
     expect((await run(`/mess/${UUID_A}`, null)).location).toBeNull();
   });
-  it("signed-in users are bounced away from /login", async () => {
-    expect((await run("/login", consumer)).location).toMatch(/\/$/);
-    expect((await run("/login", null)).location).toBeNull();
+  it("signed-in users are sent straight to THEIR dashboard from the auth pages", async () => {
+    for (const p of ["/login", "/signup", "/register-owner"]) {
+      expect((await run(p, consumer)).location, p).toMatch(/\/mess$/);
+      expect((await run(p, owner)).location, p).toMatch(/\/owner$/);
+      expect((await run(p, admin)).location, p).toMatch(/\/admin$/);
+      expect((await run(p, null)).location, p).toBeNull();
+    }
+  });
+  it("the landing page sends admins and owners to their dashboard, consumers stay", async () => {
+    expect((await run("/", admin)).location).toMatch(/\/admin$/);
+    expect((await run("/", owner)).location).toMatch(/\/owner$/);
+    expect((await run("/", consumer)).location).toBeNull();
+    expect((await run("/", null)).location).toBeNull();
   });
   it("owner-only mess sub pages", async () => {
     expect((await run(`/mess/${UUID_A}/update-menu`, consumer)).location).toContain("/mess");

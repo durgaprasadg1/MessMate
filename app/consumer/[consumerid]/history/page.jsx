@@ -1,13 +1,12 @@
 "use client";
 
 import { apiFetch } from "@/lib/apiFetch";
+import PageSkeleton from "@/Component/Others/PageSkeleton";
 import { use, useEffect, useState, useCallback } from "react";
 import ConsumerHistoryUI from "../../../../Component/Consumer/ConsumerHistory";
 import { useSession } from "next-auth/react";
 import { useRouter  } from "next/navigation";
 import { toast } from "react-toastify";
-import Loading from "@/Component/Others/Loading";
-import Navbar from "@/Component/Others/Navbar";
 
 export default function ConsumerHistory({ params }) {
   const { consumerid } = use(params);
@@ -88,12 +87,11 @@ export default function ConsumerHistory({ params }) {
     return () => window.removeEventListener("order-updated", onUpdate);
   }, [consumerid, fetchHistory]);
 
-  if (loading) return <Loading />;
+  if (loading) return <PageSkeleton />;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
     <div className="bg-slate-50 min-h-screen">
-      <Navbar />
       <ConsumerHistoryUI 
           orders={orders} 
           consumerid={consumerid}

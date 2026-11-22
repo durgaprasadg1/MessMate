@@ -53,17 +53,10 @@ export default function OrderActionOwner({
             })
           );
         } catch (e) {}
+        // soft refresh (no full page reload): local state is already updated
         try {
-          if (typeof window !== "undefined") {
-            window.location.reload(true);
-          } else {
-            router.refresh();
-          }
-        } catch (e) {
-          try {
-            router.refresh();
-          } catch (e) {}
-        }
+          router.refresh();
+        } catch (e) {}
       } else {
         toast.error(data.message || "Failed to take order");
         setActionDone(false);

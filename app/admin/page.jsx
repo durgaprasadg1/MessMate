@@ -1,7 +1,6 @@
 "use client";
 
 import { apiFetch } from "@/lib/apiFetch";
-import AdminSidebar from "@/Component/Admin/AdminSidebar";
 import SectionPart from "@/Component/Section/SectionPartLinks";
 import SectionStats from "@/Component/Section/SectionStats";
 import { useEffect, useState } from "react";
@@ -79,7 +78,6 @@ export default function AdminLandingPage() {
       transition={{ duration: 0.4 }}
       className="role-shell text-stone-900"
     >
-      <AdminSidebar />
 
       <main className="role-container">
         <motion.header

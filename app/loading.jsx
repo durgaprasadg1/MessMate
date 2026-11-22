@@ -1,7 +1,5 @@
-import React from "react";
-import Loading from "../Component/Others/Loading";
-const Load = () => {
-  return <Loading />;
-};
+import PageSkeleton from "../Component/Others/PageSkeleton";
 
-export default Load;
+export default function Load() {
+  return <PageSkeleton />;
+}

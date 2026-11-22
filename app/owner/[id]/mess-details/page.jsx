@@ -1,13 +1,13 @@
 "use client";
 
 import { apiFetch } from "@/lib/apiFetch";
+import PageSkeleton from "@/Component/Others/PageSkeleton";
 import { mapsUrl } from "@/lib/safeHref";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Panel from "@/Component/Owner/Panel";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import OwnerNavbar from "@/Component/Owner/OwnerNavbar";
 import { useSession } from "next-auth/react";
 import Loading from "@/Component/Others/Loading";
 import EmptynessShowBox from "@/Component/Others/EmptynessShowBox";
@@ -64,13 +64,12 @@ export default function OwnedMessPage() {
   };
 
   if (status === "loading") {
-    return <Loading />;
+    return <PageSkeleton />;
   }
 
   if (!session || !isOwner) {
     return (
       <div className="role-shell pb-10">
-        <OwnerNavbar />
         <div className="pt-20">
           <EmptynessShowBox
             heading="You are not authorized to view this page."
@@ -96,7 +95,6 @@ export default function OwnedMessPage() {
 
   return (
     <div className="role-shell pb-10 sm:pb-12 md:pb-16">
-      <OwnerNavbar />
 
       <div className="role-container pt-16 sm:pt-20 md:pt-24 pb-1">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-stone-800 tracking-tight mb-2">

@@ -4,7 +4,6 @@ import { apiFetch } from "@/lib/apiFetch";
 import { useParams } from "next/navigation";
 import  { useEffect, useState } from "react";
 import Loading from "@/Component/Others/Loading";
-import OwnerNavbar from "@/Component/Owner/OwnerNavbar";
 import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
 
@@ -83,7 +82,6 @@ const MessageComponent = () => {
   return (
 
     <div className="space-y-4 role-shell">
-        <OwnerNavbar />
       <div className="role-container">
         <div className="max-w-5xl mx-auto space-y-4 w-full">
           <div className="role-section p-5 sm:p-6 flex items-center justify-between">

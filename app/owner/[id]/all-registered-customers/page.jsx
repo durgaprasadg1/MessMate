@@ -1,11 +1,11 @@
 "use client";
 
 import { apiFetch } from "@/lib/apiFetch";
+import PageSkeleton from "@/Component/Others/PageSkeleton";
 import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Loading from "@/Component/Others/Loading";
 import { toast } from "react-toastify";
-import OwnerNavbar from "@/Component/Owner/OwnerNavbar";
 import { DataTable } from "@/Component/ShadCnUI/table";
 
 export default function YourMessRegisteredUser() {
@@ -408,11 +408,10 @@ export default function YourMessRegisteredUser() {
     [showInvoiceModalFunc],
   );
 
-  if (loading) return <Loading />;
+  if (loading) return <PageSkeleton />;
 
   return (
     <div className="role-shell relative">
-      <OwnerNavbar />
 
       {actionLoading && (
         <div className="fixed inset-0 backdrop-blur-sm bg-black/50  z-50">

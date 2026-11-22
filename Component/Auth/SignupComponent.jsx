@@ -4,31 +4,24 @@ import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useRouter, usePathname } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
-import Loading from "../Others/Loading";
-import { useSession } from "next-auth/react";
-import Navbar from "../Others/Navbar";
+import AuthRedirecting from "./AuthRedirecting";
+import { useSession, signIn, getSession } from "next-auth/react";
+import { homeFor } from "@/lib/navRouting";
 import AuthOrbitPanel from "./AuthOrbitPanel";
 import PasswordStrength from "./PasswordStrength";
 import { validatePasswordStrength } from "@/lib/passwordRules";
 
 const RegisterComponent = () => {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
   const path = usePathname();
   const isOwnerFlow = path === "/register-owner";
 
+  // Already signed in (or just registered): go to the right dashboard, never show the form.
+  const signedInHome = session?.user ? homeFor(session.user) : null;
   useEffect(() => {
-    if (status === "loading") return;
-    if (!session) return;
-
-    if (session?.user?.isAdmin) {
-      router.replace("/admin");
-    } else if (session?.user?.isOwner) {
-      router.replace("/owner");
-    } else {
-      router.replace("/mess");
-    }
-  }, [session, status, router]);
+    if (signedInHome) router.replace(signedInHome);
+  }, [signedInHome, router]);
 
   const [form, setForm] = useState({
     username: "",
@@ -114,7 +107,20 @@ const RegisterComponent = () => {
         const okText = "Account created successfully!";
         setMessage(okText);
         toast.success(okText);
-        setTimeout(() => router.push("/login"), 1200);
+
+        // New users are signed in right away: no second trip to the login page.
+        const result = await signIn("credentials", {
+          redirect: false,
+          email: form.email,
+          password: form.password,
+        });
+        if (result?.error) {
+          toast.info("Please log in with your new account.");
+          router.replace("/login");
+        } else {
+          const fresh = await getSession();
+          router.replace(homeFor(fresh?.user));
+        }
       }
     } catch {
       setMessage("Server error. Please try again.");
@@ -124,11 +130,10 @@ const RegisterComponent = () => {
     }
   };
 
-  if (loading) return <Loading />;
+  if (signedInHome) return <AuthRedirecting />;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-orange-100/70 via-[#fff7ef] to-orange-50 flex flex-col md:pl-[25vw] transition-[padding] duration-0 ease-linear">
-      <Navbar />
       <div className="w-full grow p-4 sm:p-6 lg:p-8 mt-2 md:mt-0">
         <div className="mx-auto w-full max-w-6xl rounded-[2.25rem] border border-orange-200/70 bg-[#fff7ef] p-3 sm:p-4 shadow-[0_26px_60px_-36px_rgba(194,65,12,0.55)]">
           <div className="grid min-h-[760px] grid-cols-1 gap-4 lg:grid-cols-2">

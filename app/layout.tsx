@@ -1,29 +1,28 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { getServerSession } from "next-auth";
+import NextTopLoader from "nextjs-toploader";
+// Classic serif families, self-hosted (no request to Google at runtime or build time)
+import "@fontsource-variable/playfair-display";
+import "@fontsource-variable/lora";
 import "./globals.css";
 import Provider from "../Component/Others/Provider";
-import AnimatedLayout from "../Component/Others/AnimatedLayout";
+import AppShell from "../Component/Others/AppShell";
 import Script from "next/script";
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { authOptions } from "@/lib/server/auth/authOptions";
 
 export const metadata: Metadata = {
   title: "MessMate",
   description: "Your Ultimate Mess Management Solution",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Read once on the server so the client starts with the right session.
+  const session = await getServerSession(authOptions);
+
   return (
     <html lang="en">
       <head>
@@ -39,11 +38,11 @@ export default function RootLayout({
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Provider>
-          <AnimatedLayout>{children}</AnimatedLayout>
+      <body className="antialiased">
+        {/* thin orange progress bar: instant feedback the moment a link is clicked */}
+        <NextTopLoader color="#f97316" height={3} showSpinner={false} shadow="0 0 10px #f97316,0 0 5px #f97316" />
+        <Provider session={session}>
+          <AppShell>{children}</AppShell>
         </Provider>
         <Script
           src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
@@ -51,7 +50,6 @@ export default function RootLayout({
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
-
       </body>
     </html>
   );

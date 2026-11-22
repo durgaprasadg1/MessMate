@@ -15,14 +15,10 @@ import { createClient } from "@supabase/supabase-js";
 import { validatePasswordStrength } from "../lib/passwordRules.js";
 
 const need = (k) => {
-  const sec = process.env.ADMIN_EMAIL;
-  console.log("SECRET : ", sec);
-
   if (!process.env[k]) {
     console.error(`Missing required environment variable ${k}`);
     process.exit(1);
   }
-  console.log("ENV kaa Saamaan", process.env[k]);
   return process.env[k];
 };
 

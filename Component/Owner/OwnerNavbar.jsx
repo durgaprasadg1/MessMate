@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import ProfileComponent from "../Others/ProfileComponent";
 import NotificationBell from "../Others/NotificationBell";
 import Image from "next/image";
@@ -31,14 +31,6 @@ export default function OwnerNavbar() {
     await signOut({ redirect: false });
     router.push("/");
   };
-
-  useEffect(() => {
-    if (!session) return;
-    const interval = setInterval(() => {
-      router.refresh();
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [session, router]);
 
   const startResizing = useCallback((mouseDownEvent) => {
     mouseDownEvent.preventDefault();
@@ -83,7 +75,7 @@ export default function OwnerNavbar() {
 
   const isActive = (href) => pathname === href || pathname.startsWith(href + "/");
 
-  const SidebarContent = () => (
+  const renderSidebar = () => (
     <div className="flex flex-col h-full bg-white text-stone-800">
       {/* Brand */}
       <div className="h-20 flex items-center justify-center border-b border-emerald-100">
@@ -165,7 +157,7 @@ export default function OwnerNavbar() {
         className="hidden md:block fixed top-0 left-0 h-screen bg-white shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-50 border-r border-emerald-50"
         style={{ width: "var(--owner-sidebar-width, 280px)" }}
       >
-        <SidebarContent />
+        {renderSidebar()}
         <div
           onMouseDown={startResizing}
           className="absolute top-0 -right-1.5 w-3 h-full cursor-col-resize hover:bg-emerald-400 active:bg-emerald-600 transition-colors z-50 opacity-0 hover:opacity-100"
@@ -217,7 +209,7 @@ export default function OwnerNavbar() {
                   <X size={20} />
                 </button>
               </div>
-              <SidebarContent />
+              {renderSidebar()}
             </motion.div>
           </motion.div>
         )}

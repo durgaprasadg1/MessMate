@@ -1,11 +1,9 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import Navbar from "@/Component/Others/Navbar";
 export default function TermsAndConditions() {
   return (
     <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <Navbar />
       <div className="max-w-3xl mx-auto">
         <Card className="shadow-lg border rounded-2xl bg-white mt-17">
           <CardContent className="p-8 space-y-8">

@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Loading from "../Others/Loading";
-import Navbar from "../Others/Navbar";
+import AuthRedirecting from "./AuthRedirecting";
+import { homeFor } from "@/lib/navRouting";
 import { Eye, EyeOff } from "lucide-react";
 import AuthOrbitPanel from "./AuthOrbitPanel";
 
 const LoginComponent = () => {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
 
   const [form, setForm] = useState({ email: "", password: "", mfaCode: "" });
@@ -18,13 +18,11 @@ const LoginComponent = () => {
   const [loading, setLoading] = useState(false);
   const [show, setShow] = useState(false);
 
+  // Already signed in (or just signed in): go to the right dashboard and never show the form.
+  const signedInHome = session?.user ? homeFor(session.user) : null;
   useEffect(() => {
-    if (status === "loading") return; // wait for session load
-
-    if (session?.user?.isAdmin) router.replace("/admin");
-    else if (session?.user?.isOwner) router.replace("/owner");
-    else if (session?.user) router.replace("/mess");
-  }, [session, status, router]);
+    if (signedInHome) router.replace(signedInHome);
+  }, [signedInHome, router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -63,13 +61,7 @@ const LoginComponent = () => {
         toast.success("Login successful");
         // read the fresh session (the hook value is stale right after signIn)
         const fresh = await getSession();
-        if (fresh?.user?.isAdmin) {
-          router.push("/admin");
-        } else if (fresh?.user?.isOwner) {
-          router.push("/owner");
-        } else {
-          router.push("/mess");
-        }
+        router.replace(homeFor(fresh?.user));
       }
     } catch {
       toast.error("Server issue. Try again later.");
@@ -78,11 +70,10 @@ const LoginComponent = () => {
     }
   };
 
-  if (loading) return <Loading />;
+  if (signedInHome) return <AuthRedirecting />;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-orange-100/70 via-[#fff7ef] to-orange-50 flex flex-col md:pl-[25vw] transition-[padding] duration-0 ease-linear">
-      <Navbar />
 
       <div className="w-full grow p-4 sm:p-6 lg:p-8 mt-16 md:mt-0">
         <div className="mx-auto w-full max-w-6xl rounded-[2.25rem] border border-orange-200/70 bg-[#fff7ef] p-3 sm:p-4 shadow-[0_26px_60px_-36px_rgba(194,65,12,0.55)]">

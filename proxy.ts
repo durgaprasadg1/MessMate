@@ -5,7 +5,7 @@ import { getToken } from "next-auth/jwt";
 /**
  * Route protection (runs before any page renders).
  *
- *  - /login, /signup: signed-in users are sent home (unchanged behaviour)
+ *  - /login, /signup, /register-owner: signed-in users go straight to their own dashboard
  *  - /admin/**     : admins only
  *  - /owner/**     : owners only
  *  - /consumer/**  : any signed-in user, and `/consumer/<id>/...` must be YOUR id
@@ -20,7 +20,7 @@ import { getToken } from "next-auth/jwt";
  */
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const AUTH_PAGES = ["/login", "/signup"];
+const AUTH_PAGES = ["/login", "/signup", "/register-owner"];
 
 type Token = { id?: string; isAdmin?: boolean; isOwner?: boolean } | null;
 
@@ -52,7 +52,12 @@ export async function proxy(req: NextRequest) {
 
   // sign-in pages
   if (AUTH_PAGES.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
-    return token ? redirect(req, "/") : NextResponse.next();
+    return token ? redirect(req, home(token as NonNullable<Token>)) : NextResponse.next();
+  }
+
+  // landing page: admins and owners go straight to their dashboard (real HTTP redirect, no flash)
+  if (pathname === "/") {
+    return token && (token.isAdmin || token.isOwner) ? redirect(req, home(token)) : NextResponse.next();
   }
 
   const area = segments[0];
@@ -107,8 +112,10 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/login",
     "/signup",
+    "/register-owner",
     "/admin/:path*",
     "/owner/:path*",
     "/consumer/:path*",

@@ -1,9 +1,8 @@
-import { z } from "zod";
 import { createRoute } from "@/lib/server/http/apiHandler";
 import { json } from "@/lib/server/http/respond";
 import { badRequest, notFound } from "@/lib/server/errors/httpErrors";
 import { Limits } from "@/lib/server/security/rateLimiter";
-import { emailSchema, phoneSchema, upiSchema } from "@/lib/server/validation/schemas";
+import { newMessFieldsSchema } from "@/lib/server/validation/messSchemas";
 import { validateUpload, IMAGE_TYPES, CERTIFICATE_TYPES } from "@/lib/server/security/uploadValidator";
 import { uploadBanner, uploadCertificate, destroyAsset } from "@/lib/server/services/cloudinaryService";
 import { getPasswordService } from "@/lib/server/auth/passwordService";
@@ -18,36 +17,19 @@ import { audit, AuditEvent } from "@/lib/server/logging/audit";
 
 export const runtime = "nodejs";
 
-const blankToUndefined = (v) => (v === "" || v === null || v === undefined ? undefined : v);
-const optionalNumber = (schema) => z.preprocess(blankToUndefined, schema);
-
-const fieldsSchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  upi: upiSchema,
-  email: emailSchema,
-  description: z.string().trim().max(1000).default(""),
-  address: z.string().trim().max(300).default(""),
-  category: z.string().trim().min(1).max(30),
-  limits: z.enum(["true", "false"]).default("true"),
-  ownerName: z.string().trim().max(100).default(""),
-  adharNumber: z.string().trim().regex(/^[0-9]{12}$/, "Aadhaar must be 12 digits"),
-  phoneNumber: phoneSchema,
-  monthlyMessFee: optionalNumber(z.coerce.number().min(0).max(100000).default(0)),
-  // "0" is the UI placeholder ("Select Duration"): fall back to the 30 day default
-  monthlyMessDuration: z.preprocess((v) => (Number(v) > 0 ? v : undefined), z.coerce.number().int().min(1).max(366).default(30)),
-  lat: optionalNumber(z.coerce.number().min(-90).max(90).default(0)),
-  lon: optionalNumber(z.coerce.number().min(-180).max(180).default(0)),
-});
-
 export const POST = createRoute(
   { name: "owner.new-mess", auth: "owner", uuid: ["id"], bodyType: "formData", rateLimit: { ...Limits.upload, by: "user" } },
   async ({ params, session, body: form, log }) => {
     requireSelf(session, params.id);
 
-    const parsed = fieldsSchema.safeParse(Object.fromEntries([...form.entries()].filter(([, v]) => typeof v === "string")));
+    const parsed = newMessFieldsSchema.safeParse(Object.fromEntries([...form.entries()].filter(([, v]) => typeof v === "string")));
     if (!parsed.success) {
       const first = parsed.error.issues[0];
-      throw badRequest(first?.message && first.path.length ? `${first.path.join(".")}: ${first.message}` : "Invalid input");
+      // location errors are written for the owner; others are prefixed with the field name
+      const userFacing = ["lat", "lon"].includes(first?.path?.[0]);
+      throw badRequest(
+        first?.message && first.path.length && !userFacing ? `${first.path.join(".")}: ${first.message}` : first?.message || "Invalid input",
+      );
     }
     const f = parsed.data;
 

@@ -1,14 +1,12 @@
 "use client";
 
 import { apiFetch } from "@/lib/apiFetch";
+import PageSkeleton from "@/Component/Others/PageSkeleton";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useNotifications } from "@/contexts/NotificationContext";
-import Navbar from "@/Component/Others/Navbar";
-import Loading from "@/Component/Others/Loading";
 import Link from "next/link";
-import OwnerNavbar from "../../Component/Owner/OwnerNavbar";
 import { toast } from "react-toastify";
 
 export default function NotificationsPage() {
@@ -56,7 +54,7 @@ useEffect(() => {
 }, [id, session]);  // <-- cleaned deps
 
   if (!session) {
-    return <Loading />;
+    return <PageSkeleton />;
   }
 
   const filteredNotifications = notifications.filter((notif) => {
@@ -120,7 +118,6 @@ useEffect(() => {
 
   return (
     <>
-      {isOwner ? <OwnerNavbar /> : <Navbar />}
       <div
         className={`${
           isOwner ? "bg-gray-950" : "bg-white"

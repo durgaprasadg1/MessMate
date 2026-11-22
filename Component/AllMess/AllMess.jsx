@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
-import Navbar from "../Others/Navbar";
-import Loading from "@/Component/Others/Loading";
+import { useMemo, useEffect } from "react";
+import { useExplore } from "@/contexts/ExploreContext";
+import { withDistances, filterByRadius, sortByDistance, formatDistance } from "@/lib/geo";
 import Link from "next/link";
 import { Star, MapPin, Heart, ArrowRight } from "lucide-react";
 import Image from "next/image";
@@ -11,50 +11,17 @@ export default function ConsumerAllMesses({
   messes = [],
   filteredMesses: passedFiltered,
 }) {
+  // search text, radius and the (single) geolocation request live in the shared context
+  const { searchQuery, radius, location, requestLocation } = useExplore();
+  const userLocation = location.status === "granted" ? location.coords : null;
+  const locationLoading = location.status === "idle" || location.status === "loading";
+  const locationDenied = location.status === "denied";
 
-  // console.log(messes)
-  const [searchQuery, setSearchQuery] = useState("");
-  const [radius, setRadius] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
-  const [locationDenied, setLocationDenied] = useState(false);
-  const [locationLoading, setLocationLoading] = useState(true);
-
+  // ask for the position once; the list is shown immediately and distances fill in later
   useEffect(() => {
-    if (!navigator?.geolocation) {
-      setLocationDenied(true);
-      setLocationLoading(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserLocation({
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-        });
-        setLocationDenied(false);
-        setLocationLoading(false);
-      },
-      () => {
-        setLocationDenied(true);
-        setLocationLoading(false);
-        setUserLocation(null);
-      },
-      { enableHighAccuracy: true, maximumAge: 30000, timeout: 12000 },
-    );
+    requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const distanceInMeters = (lat1, lon1, lat2, lon2) => {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-    const R = 6371000;
-    const toRad = (v) => (v * Math.PI) / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-    return R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  };
 
   const filteredBySearch = useMemo(() => {
     if (passedFiltered && Array.isArray(passedFiltered)) return passedFiltered;
@@ -69,22 +36,13 @@ export default function ConsumerAllMesses({
     );
   }, [messes, searchQuery, passedFiltered]);
 
+  // Haversine distance from the user to every mess, optional radius filter,
+  // and nearest-first ordering once the position is known.
   const visibleMesses = useMemo(() => {
-    const searchResults = Array.isArray(filteredBySearch)
-      ? filteredBySearch
-      : [];
-    const baseList = searchResults;
-
-    if (!radius || !userLocation) return baseList;
-    return baseList.filter((m) => {
-      const d = distanceInMeters(
-        userLocation.lat,
-        userLocation.lon,
-        m.lat,
-        m.lon,
-      );
-      return d !== null && d <= radius;
-    });
+    const list = Array.isArray(filteredBySearch) ? filteredBySearch : [];
+    const withD = withDistances(list, userLocation);
+    if (!userLocation) return withD;
+    return sortByDistance(filterByRadius(withD, radius));
   }, [filteredBySearch, radius, userLocation]);
 
   // Helper function to extract cheapest and most expensive dishes
@@ -110,12 +68,6 @@ export default function ConsumerAllMesses({
   
   return (
     <div className="min-h-screen bg-slate-50 md:pl-[25vw] flex flex-col transition-[padding] duration-0 ease-linear">
-      <Navbar
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        radius={radius}
-        setRadius={setRadius}
-      />
 
       <main className="flex-1 py-10 px-6 max-w-screen-2xl mx-auto w-full">
         {/* Header Section */}
@@ -124,15 +76,11 @@ export default function ConsumerAllMesses({
             Find the perfect mess...
           </h1>
           <p className="text-sm text-slate-500 mt-2">
-            <span className="font-semibold text-orange-600">{visibleMesses.length} messes</span> found near your location
+            <span className="font-semibold text-orange-600">{visibleMesses.length} messes</span>{" "}
+            {userLocation ? "found near your location" : "found"}
+            {locationLoading && <span className="ml-2 text-xs text-slate-400">(finding distances…)</span>}
           </p>
         </div>
-
-        {locationLoading && (
-          <div className="flex justify-center my-12">
-            <Loading />
-          </div>
-        )}
 
         {!locationLoading && locationDenied && (
           <div className="mb-6 p-4 rounded-xl text-orange-800 bg-orange-100 border border-orange-200 shadow-sm max-w-2xl text-sm font-medium">
@@ -141,17 +89,10 @@ export default function ConsumerAllMesses({
           </div>
         )}
 
-        {!locationLoading && (
+        {(
           <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto">
             {visibleMesses.map((mess) => {
-              const dist = userLocation
-                ? distanceInMeters(
-                    userLocation.lat,
-                    userLocation.lon,
-                    mess.lat,
-                    mess.lon,
-                  )
-                : null;
+              const dist = mess.distance;
 
               const vegExtremes = getDishExtremes(mess.vegMenu);
               const nonVegExtremes = getDishExtremes(mess.nonVegMenu);
@@ -229,9 +170,7 @@ export default function ConsumerAllMesses({
                       {dist !== null && (
                         <div className="mt-1 flex items-center text-xs text-slate-500 gap-1.5 ml-[22px]">
                            <strong className="text-orange-600 font-semibold">
-                             {dist >= 1000
-                             ? `${(dist / 1000).toFixed(1)} km`
-                             : `${Math.round(dist)} m`}
+                             {formatDistance(dist)}
                            </strong>
                            <span>from your location</span>
                         </div>
@@ -322,7 +261,7 @@ export default function ConsumerAllMesses({
           </div>
         )}
 
-        {!locationLoading && visibleMesses.length === 0 && (
+        {visibleMesses.length === 0 && (
           <div className="text-center bg-white p-12 rounded-2xl border border-slate-100 shadow-sm mt-10">
             <p className="text-slate-600 font-medium text-lg">
               No messes found matching your criteria.

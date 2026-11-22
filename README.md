@@ -242,6 +242,7 @@ npm run start
 
 ## Security, Logging and CI
 
+- UI/UX work (navigation shell, fonts, OpenStreetMap + Haversine, auto-login) is described in **`UI_UX_CHANGES.md`**.
 - Read **`SECURITY_CHANGES.md`** first: it lists every change, the steps you must do manually (SQL migration, env vars, webhook), and what was intentionally left out.
 - Copy `.env.example` to `.env.local` and fill it in. `NEXTAUTH_SECRET` must be at least 32 characters; production refuses to start otherwise.
 - All server code logs through `lib/server/logging/logger.js` (JSON lines in production, secrets/e-mails redacted). Security events go to the `audit` channel (`channel: "audit"`). Set `LOG_LEVEL` to change verbosity.

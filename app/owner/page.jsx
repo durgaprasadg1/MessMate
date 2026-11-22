@@ -9,7 +9,6 @@ import {
   BarChart3,
   Rocket,
 } from "lucide-react";
-import OwnerNavbar from "../../Component/Owner/OwnerNavbar";
 import Footer from "@/Component/Others/Footer";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -75,7 +74,6 @@ export default function OwnerLandingPage() {
 
   return (
     <div className="min-h-screen bg-[#F4F7F4] flex flex-col md:pl-[280px] pt-16 md:pt-0">
-      <OwnerNavbar />
       <main className="grow">
         <section className="relative overflow-hidden bg-linear-to-b from-[#F4F7F4] to-emerald-50/40 py-12 sm:py-20 md:py-24 lg:py-32 px-4 sm:px-6">
           <div className="max-w-7xl mx-auto text-center">

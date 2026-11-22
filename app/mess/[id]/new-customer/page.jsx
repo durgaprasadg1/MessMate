@@ -3,7 +3,6 @@
 import { apiFetch } from "@/lib/apiFetch";
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Navbar from "@/Component/Others/Navbar";
 import Loading from "@/Component/Others/Loading";
 import FormInput from "@/Component/Others/FormInput";
 import SelectBox from "@/Component/Others/SelectBox";
@@ -290,7 +289,6 @@ const NewCustomerToMess = () => {
           <Loading />
         </div>
       )}
-      <Navbar />
       <main className="role-container max-w-4xl">
         <div className="role-section p-5 sm:p-6">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-500">

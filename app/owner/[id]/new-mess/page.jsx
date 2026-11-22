@@ -1,14 +1,20 @@
 "use client";
 import { apiFetch } from "@/lib/apiFetch";
-import { useEffect, useState } from "react";
+import { useState, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import Loading from "../../../../Component/Others/Loading";
 import { useSession } from "next-auth/react";
 import { toast } from "react-toastify";
 import imageCompression from "browser-image-compression";
 import { checkUpload } from "@/lib/clientUploadChecks";
 import EmptynessShowBox from "@/Component/Others/EmptynessShowBox";
-import OwnerNavbar from "@/Component/Owner/OwnerNavbar";
+import { isValidCoordinate } from "@/lib/geo";
+
+// Leaflet touches `window`, so the map is loaded in the browser only
+const LocationPicker = dynamic(() => import("@/Component/Map/LocationPicker"), {
+  ssr: false,
+  loading: () => <div className="h-[340px] animate-pulse rounded-lg bg-stone-200/70" aria-label="Loading map" />,
+});
 const NewMessForm = () => {
   const { data: session } = useSession();
 
@@ -33,28 +39,13 @@ const NewMessForm = () => {
   const [certificate, setCertificate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
-  const [locationDenied, setLocationDenied] = useState(false);
 
-  useEffect(() => {
-    if (!navigator?.geolocation) {
-      setLocationDenied(true);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setForm((s) => ({
-          ...s,
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-        }));
-        setLocationDenied(false);
-      },
-      () => {
-        setLocationDenied(true);
-      }
-    );
-  }, []);
+  const setLocation = useCallback(({ lat, lon }) => setForm((s) => ({ ...s, lat, lon })), []);
+  // suggest the address of the pin, but never overwrite what the owner already typed
+  const suggestAddress = useCallback(
+    (label) => setForm((s) => (s.address?.trim() ? s : { ...s, address: label })),
+    [],
+  );
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -183,6 +174,14 @@ const NewMessForm = () => {
       return;
     }
 
+    if (!isValidCoordinate(form.lat, form.lon)) {
+      setLoading(false);
+      const msg = "Please mark your mess location on the map";
+      toast.error(msg);
+      setMessage({ type: "error", text: msg });
+      return;
+    }
+
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => fd.append(k, v));
@@ -196,9 +195,13 @@ const NewMessForm = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data?.error || data?.message);
+        toast.error(data?.message || data?.error || "Could not submit your mess");
         return;
       }
+      toast.success(
+        "Your mess application has been submitted and is now under verification. We will e-mail you once it is approved.",
+        { autoClose: 6000 },
+      );
       setMessage({ type: "success", text: "Mess added successfully" });
       setForm({
         name: "",
@@ -213,33 +216,20 @@ const NewMessForm = () => {
         phoneNumber: "",
         monthlyMessFee: "",
         monthlyMessDuration: "",
-        lat: form.lat,
-        lon: form.lon,
+        lat: "",
+        lon: "",
       });
       setImage(null);
       setCertificate(null);
+      router.push(`/owner/${session?.user?.id}/mess-details`);
     } catch (err) {
       console.error(err);
-      toast.error(err);
-      setMessage({ type: "error", text: err.message ?? "Submission failed" });
+      toast.error("Server issue. Please try again.");
+      setMessage({ type: "error", text: "Submission failed" });
     } finally {
       setLoading(false);
     }
   };
-  const retryLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setForm((s) => ({
-          ...s,
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-        }));
-        setLocationDenied(false);
-      },
-      () => setLocationDenied(true)
-    );
-  };
-
   if (!session || session?.user?.isOwner === false) {
     return (
       <EmptynessShowBox
@@ -250,13 +240,8 @@ const NewMessForm = () => {
     );
   }
 
-  if (loading) {
-    return <Loading />;
-  }
-
   return (
     <div className="bg-[#F4F7F4] min-h-screen md:pl-[280px] pt-16 md:pt-0">
-      <OwnerNavbar />
       <div className="min-h-screen py-6 sm:py-8 md:py-12 px-3 sm:px-4 md:px-6">
         <div className="max-w-2xl mx-auto bg-white rounded-xl sm:rounded-2xl text-stone-800 shadow-md p-4 sm:p-5 md:p-6 border border-stone-200/60">
           <h3 className="text-xl sm:text-2xl font-bold text-emerald-700 mb-3 flex items-center gap-2">
@@ -277,32 +262,19 @@ const NewMessForm = () => {
             Add New Mess
           </h3>
           <p className="text-center text-stone-600 text-xs sm:text-sm mt-3 italic bg-amber-50 border border-amber-200 px-3 sm:px-4 py-2 rounded-lg shadow-sm">
-            ⚠️ Please add your mess details{" "}
+            📍 Mark the <span className="font-semibold">exact location of your mess on the map</span> below
+            (search an address, click on the map or drag the pin). Customers will see distances from this point.{" "}
             <span className="font-semibold">
-              only when you are physically present at the mess location
+              Your mess first goes for verification and is added to the list automatically once it is approved.
             </span>
-            , as your{" "}
-            <span className="font-semibold">
-              current location will be automatically tracked.{"\n"}The mess will
-              be gone for verification after successfull verification it is
-              added automatically.
-            </span>
-            .
           </p>
           <p className="text-center text-stone-600 text-xs sm:text-sm mt-3 italic bg-amber-50 border border-amber-200 px-3 sm:px-4 py-2 rounded-lg shadow-sm">
-            ⚠️ कृपया अपने मेस की जानकारी तभी जोड़ें{" "}
-            <span className="font-semibold">
-              जब आप वास्तव में मेस की लोकेशन पर मौजूद हों,
-            </span>
-            क्योंकि आपकी{" "}
-            <span className="font-semibold">
-              वर्तमान लोकेशन अपने-आप ट्रैक की जाएगी।
-            </span>
+            📍 कृपया नीचे दिए गए <span className="font-semibold">नक्शे पर अपने मेस की सही लोकेशन चुनें</span> (पता खोजें, नक्शे पर क्लिक करें
+            या पिन को खींचें)। ग्राहकों को इसी स्थान से दूरी दिखाई जाएगी।
             <br />
             <br />
             <span className="font-semibold">
-              आपकी मेस पहले वेरिफिकेशन प्रक्रिया में जाएगी और सफल वेरिफिकेशन के
-              बाद स्वतः ही सूची में जोड़ दी जाएगी।
+              आपकी मेस पहले वेरिफिकेशन प्रक्रिया में जाएगी और सफल वेरिफिकेशन के बाद स्वतः ही सूची में जोड़ दी जाएगी।
             </span>
           </p>
 
@@ -517,8 +489,16 @@ const NewMessForm = () => {
               />
             </div>
 
-            <input type="hidden" name="lat" value={form.lat} />
-            <input type="hidden" name="lon" value={form.lon} />
+            <div>
+              <label className="block font-medium text-stone-800 mb-2">
+                Mess Location (select on the map)
+              </label>
+              <LocationPicker
+                value={isValidCoordinate(form.lat, form.lon) ? { lat: form.lat, lon: form.lon } : null}
+                onChange={setLocation}
+                onAddress={suggestAddress}
+              />
+            </div>
 
             <div>
               <label className="block font-medium text-stone-800">
@@ -546,25 +526,14 @@ const NewMessForm = () => {
                 className="mt-1 w-full border-gray-600"
               />
             </div>
-            {locationDenied && (
-              <button
-                className="bg-stone-200 p-2 rounded w-full mb-2 text-stone-700 hover:bg-stone-300 transition-colors"
-                onClick={() => retryLocation()}
-              >
-                Give Your Mess Location
-              </button>
-            )}
-
             <div>
-              {!locationDenied && (
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded font-semibold transition-colors"
-                >
-                  {loading ? "Submitting..." : "Add Mess"}
-                </button>
-              )}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded font-semibold transition-colors disabled:opacity-60"
+              >
+                {loading ? "Submitting..." : "Add Mess"}
+              </button>
             </div>
           </form>
         </div>

@@ -3,7 +3,6 @@
 import { apiFetch } from "@/lib/apiFetch";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import AdminSidebar from "@/Component/Admin/AdminSidebar";
 import NotFound from "../../not-found";
 import { DataTable } from "../../../Component/ShadCnUI/table";
 import { toast } from "react-toastify";
@@ -204,7 +203,6 @@ export default function AllUsersPage() {
   if (loading)
     return (
       <div className="role-shell">
-        <AdminSidebar />
         <div className="role-container">
           <div className="role-section p-6">
             <Loading />
@@ -215,7 +213,6 @@ export default function AllUsersPage() {
 
   return (
     <div className="relative role-shell">
-      <AdminSidebar />
 
       {actionLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/70">

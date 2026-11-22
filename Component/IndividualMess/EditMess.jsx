@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import Loading from "../Others/Loading";
 import { useSession } from "next-auth/react";
-import OwnerNavbar from "../Owner/OwnerNavbar";
 export default function EditUserInfoPage({ messID }) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -75,7 +74,6 @@ export default function EditUserInfoPage({ messID }) {
 
   return (
     <div className="role-shell flex items-start justify-center">
-      <OwnerNavbar />
       <div className="role-container">
         <div className="role-section w-full max-w-3xl p-8 space-y-6 mx-auto">
           <div className="text-center">

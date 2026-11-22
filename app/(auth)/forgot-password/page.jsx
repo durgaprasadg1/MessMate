@@ -2,7 +2,6 @@
 import { apiFetch } from "@/lib/apiFetch";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import Loading from "../../../Component/Others/Loading";
 import { useRouter } from "next/navigation";
 
 export default function ForgotPasswordPage() {
@@ -44,9 +43,6 @@ export default function ForgotPasswordPage() {
 
     setLoading(false);
   };
-  if (loading) {
-    return <Loading />;
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">

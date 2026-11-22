@@ -1,12 +1,11 @@
 "use client";
 
 import { apiFetch } from "@/lib/apiFetch";
+import PageSkeleton from "@/Component/Others/PageSkeleton";
 import React, { useEffect, useMemo, useState } from "react";
-import OwnerNavbar from "@/Component/Owner/OwnerNavbar";
 import { useParams, useRouter } from "next/navigation";
 import OrderActionOwner from "@/Component/Owner/OrderActionOwner";
 import { useSession } from "next-auth/react";
-import LoadingComponent from "../../../../Component/Others/Loading";
 
 import DataTable from "@/Component/ShadCnUI/table";
 
@@ -45,6 +44,9 @@ export default function OrdersPage() {
     }
 
     fetchOrders();
+    // refetch right away when an order action finishes (instead of waiting for the next poll)
+    window.addEventListener("order-updated", fetchOrders);
+    return () => window.removeEventListener("order-updated", fetchOrders);
   }, [id]);
 
   useEffect(() => {
@@ -88,7 +90,7 @@ export default function OrdersPage() {
       const data = await res.json();
       if (res.ok) {
         alert(data.message || "Deleted completed orders");
-        router.refresh();
+        window.dispatchEvent(new CustomEvent("order-updated", { detail: { action: "clear" } }));
       } else {
         alert(data.message || "Failed to delete completed orders");
       }
@@ -224,11 +226,10 @@ export default function OrdersPage() {
     [orders]
   );
 
-  if (loading) return <LoadingComponent />;
+  if (loading) return <PageSkeleton />;
 
   return (
     <div className="role-shell text-emerald-900">
-      <OwnerNavbar />
 
       <div className="role-container space-y-4">
         <div className="role-section p-5 sm:p-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

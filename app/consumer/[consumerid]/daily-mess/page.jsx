@@ -6,7 +6,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Loading from "@/Component/Others/Loading";
-import Navbar from "@/Component/Others/Navbar";
 import InfoRow from "@/Component/Others/InfoRow";
 import MessMenuComponent from "@/Component/IndividualMess/MenuComponent";
 
@@ -163,7 +162,6 @@ export default function ConsumerMonthlyMess() {
 
   return (
     <div className="role-shell bg-[#f4f6f8]">
-      <Navbar />
 
       <main className="role-container max-w-6xl">
         <section className="rounded-[28px] border border-slate-200 bg-[#f8fafc] p-4 sm:p-6 shadow-[0_20px_42px_-22px_rgba(15,23,42,0.25)]">

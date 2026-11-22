@@ -1,6 +1,7 @@
 "use client";
 
 import { apiFetch } from "@/lib/apiFetch";
+import PageSkeleton from "@/Component/Others/PageSkeleton";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -19,8 +20,6 @@ import {
   Clock,
   AlertTriangle,
 } from "lucide-react";
-import Loading from "../../../../Component/Others/Loading";
-import OwnerNavbar from "../../../../Component/Owner/OwnerNavbar";
 import EmptynessShowBox from "../../../../Component/Others/EmptynessShowBox"; // ✅ added
 import { toast } from "react-toastify";
 
@@ -74,7 +73,7 @@ export default function AnalyticsPage() {
   }, [id, session, status]);
 
   if (status === "loading" || loading) {
-    return <Loading />;
+    return <PageSkeleton />;
   }
 
   if (status !== "authenticated" || !session?.user?.isOwner) {
@@ -110,7 +109,6 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-[#F4F7F4] md:pl-[280px] pt-16 md:pt-0">
-      <OwnerNavbar />
       <div className="max-w-7xl mx-auto mt-4 p-5">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 mt-2">
           <div className="bg-white rounded-lg p-6 border border-stone-200/60 shadow-sm">

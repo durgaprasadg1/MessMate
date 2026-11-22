@@ -2,7 +2,6 @@
 
 import { apiFetch } from "@/lib/apiFetch";
 import { useMemo, useState } from "react";
-import AdminSidebar from "../Admin/AdminSidebar";
 import { toast } from "react-toastify";
 import { DataTable } from "../ShadCnUI/table";
 import DialogBox from "../ShadCnUI/Dialog";
@@ -191,7 +190,6 @@ export default function AdminAllMesses({
 
   return (
     <div className="relative role-shell">
-      <AdminSidebar />
 
       {actionLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/70">

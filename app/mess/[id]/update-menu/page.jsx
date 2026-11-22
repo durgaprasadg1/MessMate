@@ -1,19 +1,19 @@
-import OwnerNavbar from "@/Component/Owner/OwnerNavbar";
 import MessMenuComponent from "@/Component/IndividualMess/FillMenuComponent";
-import { getBaseUrl } from "@/lib/getBaseUrl";
+import { getPublicMess } from "@/lib/server/services/messQueries";
 
 export default async function UpdateMenuPage({ params }) {
   const { id } = await params;
 
-  const base = await getBaseUrl();
-  const res = await fetch(`${base}/api/mess/${encodeURIComponent(id)}`, {
-    cache: "no-store",
-  });
+  let mess = null;
+  try {
+    ({ mess } = await getPublicMess(id));
+  } catch {
+    mess = null;
+  }
 
-  if (!res.ok) {
+  if (!mess) {
     return (
       <>
-        <OwnerNavbar />
 
         <div className="min-h-screen  flex items-center justify-center bg-gray-950">
           <div className="p-7 bg-gray-800 rounded text-white  text-center">
@@ -24,11 +24,8 @@ export default async function UpdateMenuPage({ params }) {
     );
   }
 
-  const mess = await res.json();
-
   return (
     <div className="role-shell">
-      <OwnerNavbar />
       <main className="role-container">
         <div className="space-y-4">
           <div className="role-section p-5 sm:p-7">

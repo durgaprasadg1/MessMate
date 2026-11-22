@@ -3,7 +3,6 @@ import { apiFetch } from "@/lib/apiFetch";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import Loading from "@/Component/Others/Loading";
 import PasswordStrength from "./PasswordStrength";
 import { validatePasswordStrength } from "@/lib/passwordRules";
 
@@ -57,7 +56,6 @@ const ResetPasswordForm = ({ token }) => {
       </div>
     );
   }
-  if (loading) return <Loading />;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">

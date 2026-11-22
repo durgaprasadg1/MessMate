@@ -25,11 +25,12 @@ export default function AdminSidebar() {
     router.push("/");
   };
 
-  const LinkItem = ({ item }) => {
+  const renderLink = (item) => {
     const active =
       pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
     return (
       <Link
+        key={item.href}
         href={item.href}
         className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${
           active
@@ -56,7 +57,7 @@ export default function AdminSidebar() {
         </div>
         <div className="flex-1 overflow-y-auto px-3 py-5 space-y-2">
           {navItems.map((item) => (
-            <LinkItem key={item.href} item={item} />
+            renderLink(item)
           ))}
         </div>
         <div className="border-t border-stone-200 p-4 space-y-3">
@@ -113,7 +114,7 @@ export default function AdminSidebar() {
               </div>
               <div className="flex-1 overflow-y-auto px-3 py-4 space-y-2">
                 {navItems.map((item) => (
-                  <LinkItem key={item.href} item={item} />
+                  renderLink(item)
                 ))}
               </div>
               <div className="p-4 border-t border-stone-200 space-y-3">
